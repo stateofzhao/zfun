@@ -1,0 +1,130 @@
+apply plugin: 'com.android.library'
+
+//apply plugin: 'com.android.model.library'
+
+//model {
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+    defaultConfig {
+        minSdkVersion 11
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+
+        //配置如果编译jni中的C/C++源码，这里配置后会取代 NDK默认的Android.mk来编译C/C++源码,
+        //注意如果不在这里配置ndk的话即使在 jni 中建立 Android.mk文件也不会起作用，jni中建立的
+        //Android.mk是为了使用 ndk的“命令行（cmd）”来生成.so文件用的。
+        ndk {//只有moduleName 是必选的，其它都可以省略（如果不出错的话）
+            file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")
+            moduleName = "ObserverUninstall"//编译完后生成的.so文件的名称，注意需要与java中的 System.loadLibrary("ObserverUninstall")同名
+            ldLibs "m", "log", "z", "android"//连接时使用到的库，对应Android.mk中的 LOCAL_LDLIBS
+
+            //对应Android.mk中的 LOCAL_CFLAGS
+            //CFlags.add("-I${file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")}".toString())
+            //CFlags.add("-UNDEBUG")//关闭DEBUG模式
+
+            abiFilters("armeabi-v7a", "armeabi")//指定要生成哪个CPU平台的.so文件
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            //正式版本禁用ndk调试
+            ndk {
+                debuggable false
+            }
+        }
+    }
+
+    // 引用JNI的so文件
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}
+
+//    android.ndk {//只有moduleName 是必选的，其它都可以省略（如果不出错的话）
+//
+//        file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")
+//        moduleName = "ObserverUninstall"//编译完后生成的.so文件的名称，注意需要与java中的 System.loadLibrary("ObserverUninstall")同名
+//        ldLibs.addAll(["m", "log", "z", "android"])//连接时使用到的库，对应Android.mk中的 LOCAL_LDLIBS
+//
+//        //对应Android.mk中的 LOCAL_CFLAGS
+//        CFlags.add("-I${file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")}".toString())
+//        CFlags.add("-UNDEBUG")//关闭DEBUG模式
+//
+//        abiFilters("armeabi-v7a", "armeabi")//指定要生成哪个CPU平台的.so文件
+//    }
+//
+//    android.productFlavors {
+//        create("arm7") {
+//            // You can customize the NDK configurations for each
+//            // productFlavors and buildTypes.
+//            ndk.abiFilters.add("armeabi-v7a")
+//        }
+//        create("fat") {
+//            // If ndk.abiFilters is not configured, the application
+//            // compile and package all suppported ABI.
+//            //如果 ndk.abiFilters 没有配置，就生成所有平台的 ABI
+//        }
+//
+//    }
+//
+//    android.buildTypes {
+//        release {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//
+//            //正式版本禁用ndk调试
+//            ndk {
+//                debuggable false
+//            }
+//        }
+//    }
+
+//}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:support-v4:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.android.support:design:23.1.1'
+    compile 'com.nineoldandroids:library:2.4.0'
+    compile 'com.tonicartos:stickygridheaders:1.0.1'
+    compile 'com.tonicartos:superslim:0.4.13'
+    compile 'com.squareup.okhttp:okhttp:2.5.0'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
+}
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+//注意这个是在model{}标签外面的
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        //这个东西使用了最新版本，改变了DSL的一些特性。android plugins（插件），使用
+        //com.android.model.application 和 com.android.model.library plugins(插件)替换了
+        //com.android.application 和 com.android.library plugins(插件)
+        //classpath 'com.android.tools.build:gradle-experimental:0.6.0-alpha5'
+
+        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.android.tools.build:gradle-experimental:0.2.0'
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
