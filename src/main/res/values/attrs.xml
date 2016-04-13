@@ -6,4 +6,10 @@
         <attr name="sciv_border_overlay" format="boolean" />
         <attr name="sciv_fill_color" format="color" />
     </declare-styleable>
+
+    <!-- 自定义，自动换行的横向布局 -->
+    <declare-styleable name="AutoLineLayout">
+        <attr name="itemSpace" format="dimension"></attr>
+        <attr name="lineSpace" format="dimension"></attr>
+    </declare-styleable>
 </resources>
