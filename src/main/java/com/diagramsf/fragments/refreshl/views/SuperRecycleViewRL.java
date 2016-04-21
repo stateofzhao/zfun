@@ -10,7 +10,7 @@ import com.diagramsf.fragments.refreshl.AbsRLFragmentImpl;
  * <p/>
  * Created by Diagrams on 2016/3/15 16:48
  */
-public class SuperRecycleViewRL extends SuperRecyclerView implements AbsRLFragmentImpl.PullLoadMoreView {
+public class SuperRecycleViewRL extends SuperRecyclerView implements AbsRLFragmentImpl.IPullLoadMoreView {
 
     public SuperRecycleViewRL(Context context) {
         super(context);

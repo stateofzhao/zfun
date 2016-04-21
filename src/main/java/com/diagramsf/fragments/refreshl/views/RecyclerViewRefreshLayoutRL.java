@@ -12,7 +12,7 @@ import com.diagramsf.fragments.refreshl.AbsRLFragmentImpl;
  * <p/>
  * Created by Diagrams on 2016/3/15 16:51
  */
-public class RecyclerViewRefreshLayoutRL extends RecyclerViewRefreshLayout implements AbsRLFragmentImpl.PullRefreshView {
+public class RecyclerViewRefreshLayoutRL extends RecyclerViewRefreshLayout implements AbsRLFragmentImpl.IPullRefreshView {
 
     public RecyclerViewRefreshLayoutRL(Context context) {
         super(context);

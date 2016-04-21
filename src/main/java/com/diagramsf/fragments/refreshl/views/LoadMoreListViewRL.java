@@ -12,7 +12,7 @@ import com.diagramsf.fragments.refreshl.AbsRLFragmentImpl;
  * <p/>
  * Created by Diagrams on 2016/3/15 16:49
  */
-public class LoadMoreListViewRL extends LoadMoreListView implements AbsRLFragmentImpl.PullLoadMoreView {
+public class LoadMoreListViewRL extends LoadMoreListView implements AbsRLFragmentImpl.IPullLoadMoreView {
 
     public LoadMoreListViewRL(Context context) {
         super(context);

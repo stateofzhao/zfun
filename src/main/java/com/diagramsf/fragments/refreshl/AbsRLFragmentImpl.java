@@ -5,24 +5,22 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import com.diagramsf.BasePresenter;
 import com.diagramsf.customview.pullrefresh.PullRefreshLayout;
-import com.diagramsf.net.NetFailedResult;
-import com.diagramsf.net.NetResult;
-import com.diagramsf.netrequest.loadmore.LoadMorePresenter;
-import com.diagramsf.netrequest.loadmore.LoadMorePresenterImpl;
-import com.diagramsf.netrequest.loadmore.RequestLoadMoreView;
-import com.diagramsf.netrequest.refreshrequest.RefreshRequestPresenter;
-import com.diagramsf.netrequest.refreshrequest.RefreshRequestPresenterImpl;
-import com.diagramsf.netrequest.refreshrequest.RequestRefreshView;
-import com.diagramsf.volleybox.NetResultFactory;
+import com.diagramsf.net.NetRequest;
+import com.diagramsf.netvolley.NetResultFactory;
+import com.diagramsf.netvolley.loadmore.LoadmoreContract;
+import com.diagramsf.netvolley.loadmore.LoadmorePresenter;
+import com.diagramsf.netvolley.refresh.RefreshContract;
+import com.diagramsf.netvolley.refresh.RefreshPresenter;
 
 /**
- * 下拉刷新和上拉加载更多的模板Fragment,下拉刷新控件是{@link PullRefreshView} 上拉加载更多控件
- * 是{@link PullLoadMoreView} ，(如果提取出来只需要更改一下继承就行)。
+ * 下拉刷新和上拉加载更多的模板Fragment,下拉刷新控件是{@link IPullRefreshView} 上拉加载更多控件
+ * 是{@link IPullLoadMoreView} ，(如果提取出来只需要更改一下继承就行)。
  * <p/>
  * 注意事项：
  * <p/>
- * 1.必须在onCreateView()方法中调用 {@link #initView(PullRefreshView, PullLoadMoreView)}方法
+ * 1.必须在onCreateView()方法中调用 {@link #initView(IPullRefreshView, IPullLoadMoreView)}方法
  * <p/>
  * 2.必须手动调用 {@link #doFirstLoadData()}方法才能开启数据加载
  * <p/>
@@ -32,7 +30,7 @@ import com.diagramsf.volleybox.NetResultFactory;
  * @version 1.0
  *          Created by Diagrams on 2015/11/9 18:28
  */
-public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefreshView, RequestLoadMoreView {
+public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContract.View, LoadmoreContract.View {
 
     public final static int LIMIT = 10;
 
@@ -45,8 +43,8 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     private final static String ARG_START_OFFSET = "_startOffset_AbsLoadMore";
     private final static String ARG_OFFSET = "_offset_AbsLoadMore";
 
-    private RefreshRequestPresenter mRefreshPresenter;
-    private LoadMorePresenter mLoadMorePresenter;
+    private RefreshPresenter mRefreshPresenter;
+    private LoadmorePresenter mLoadMorePresenter;
 
     private String mCancelTag;
 
@@ -58,8 +56,11 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     private boolean mEnableRefresh = true;//是否可以下拉刷新
     private boolean mEnableLoadMore = true;//是否可以上拉加载更多
 
-    protected PullRefreshView mRefreshView;
-    protected PullLoadMoreView mLoadMoreView;
+    //下拉刷新View接口
+    protected IPullRefreshView mRefreshView;
+    //上拉加载更多View接口
+    protected IPullLoadMoreView mLoadMoreView;
+
     private OnLoadMoreListener mLoadMoreListener = new OnLoadMoreListener() {
         @Override
         public void onLoadMore() {
@@ -79,7 +80,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     };
 
     /** 上拉加载更多View接口 */
-    public interface PullLoadMoreView {
+    public interface IPullLoadMoreView {
         /** 设置 上拉加载更多的监听器 */
         void setOnLoadMoreListener(OnLoadMoreListener listener);
 
@@ -103,7 +104,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     /** 下拉刷新View接口 */
-    public interface PullRefreshView {
+    public interface IPullRefreshView {
 
         /** 设置上拉刷新的监听器 */
         void setOnRefreshListener(OnRefreshListener listener);
@@ -136,8 +137,8 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        mRefreshPresenter = new RefreshRequestPresenterImpl(this);
-        mLoadMorePresenter = new LoadMorePresenterImpl(this);
+        mRefreshPresenter = new RefreshPresenter(this);
+        mLoadMorePresenter = new LoadmorePresenter(this);
 
         if (null != savedInstanceState) {//恢复之前保存的数据
             mEnableRefresh = savedInstanceState.getBoolean(ARG_ENABLE_REFRESH);
@@ -246,10 +247,10 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     /**
      * 在{@link android.support.v4.app.Fragment#onCreateView(LayoutInflater, ViewGroup, Bundle)} 方法中调用
      *
-     * @param refreshView  {@link PullRefreshView}
-     * @param loadMoreView {@link PullLoadMoreView}
+     * @param refreshView  {@link IPullRefreshView}
+     * @param loadMoreView {@link IPullLoadMoreView}
      */
-    protected void initView(PullRefreshView refreshView, PullLoadMoreView loadMoreView) {
+    protected void initView(IPullRefreshView refreshView, IPullLoadMoreView loadMoreView) {
         initRefreshView(refreshView);
         mRefreshView = refreshView;
         mLoadMoreView = loadMoreView;
@@ -287,7 +288,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
         mLoadMoreView.setLoadMoreEnable(enableLoadMore);
     }
 
-    private void initRefreshView(PullRefreshView refreshView) {
+    private void initRefreshView(IPullRefreshView refreshView) {
         if (null != refreshView) {
             //设置是否 能够下拉刷新
             refreshView.setEnableRefresh(mEnableRefresh);
@@ -317,7 +318,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
         final String url = onCreateLoadMoreURL(mOffset, mLimit);
         final String postData = onCreateLoadMorePostData(mOffset, mLimit);
         final NetResultFactory factory = onCreateLoadMoreJSONObjectResultFactory();
-        mLoadMorePresenter.doLoadMore(url, postData, mCancelTag, factory);
+        mLoadMorePresenter.doLoadmore(url, postData, mCancelTag, factory);
     }
 
     public final void onRefresh() {
@@ -344,6 +345,11 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
 
     //===========================MVP中的View回调接口==============start
     @Override
+    public void setPresenter(BasePresenter presenter) {
+
+    }
+
+    @Override
     public final void showLoadMoreProgress() {
         mLoadMoreView.loadMoreNormal();
     }
@@ -354,7 +360,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     @Override
-    public void loadMoreFail(NetFailedResult result) {
+    public void loadMoreFail(NetRequest.NetFailResult result) {
         //设置 加载更多状态
         mLoadMoreView.loadMoreFailed();
         mLoadMoreView.loadMoreComplete();
@@ -363,7 +369,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     @Override
-    public void loadMoreFinish(NetResult result) {
+    public void loadMoreFinish(NetRequest.NetSuccessResult result) {
         //更新页数
         mOffset += mLimit;
         mLoadMoreView.loadMoreComplete();
@@ -399,13 +405,13 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     @Override
-    public final void showFirstCacheResult(NetResult result) {
+    public final void showFirstCacheResult(NetRequest.NetSuccessResult result) {
         onFirstCacheLoadResult(result);
         mOffset += mLimit;//更新页数
     }
 
     @Override
-    public final void showFirstCacheFail(NetFailedResult failResult) {
+    public final void showFirstCacheFail(NetRequest.NetFailResult failResult) {
         onFirstCacheLoadFail(failResult);
     }
 
@@ -415,18 +421,18 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     @Override
-    public void showFirstNetResult(NetResult result) {
+    public void showFirstNetResult(NetRequest.NetSuccessResult result) {
         onFirstNetLoadResult(result);
     }
 
     @Override
-    public void showFirstNetFail(NetFailedResult failResult) {
+    public void showFirstNetFail(NetRequest.NetFailResult failResult) {
         onFirstNetLoadFail(failResult);
     }
 
 
     @Override
-    public void showRefreshResult(NetResult result) {
+    public void showRefreshResult(NetRequest.NetSuccessResult result) {
         //回调结果
         boolean childIntercept = onRefreshResult(result);
         //设置页数
@@ -438,7 +444,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     @Override
-    public void showRefreshFail(NetFailedResult failResult) {
+    public void showRefreshFail(NetRequest.NetFailResult failResult) {
         //回调结果
         boolean childIntercept = onRefreshFail(failResult);
         //停止刷新状态
@@ -501,7 +507,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     }
 
     /** 首次加载缓存数据失败(证明请求到了本地缓存，并且也读取成功了，但是解析缓存数据的时候挂掉了) */
-    protected void onFirstCacheLoadFail(NetFailedResult failResult) {
+    protected void onFirstCacheLoadFail(NetRequest.NetFailResult failResult) {
         onFirstCacheLoadFail();
     }
 
@@ -551,7 +557,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     /**
      * 首次加载缓存数据成功
      */
-    public abstract void onFirstCacheLoadResult(NetResult result);
+    public abstract void onFirstCacheLoadResult(NetRequest.NetSuccessResult result);
 
     /** 首次加载缓存数据失败 */
     public abstract void onFirstCacheLoadFail();
@@ -559,12 +565,12 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
     /**
      * 首次加载网络数据成功
      */
-    public abstract void onFirstNetLoadResult(NetResult result);
+    public abstract void onFirstNetLoadResult(NetRequest.NetSuccessResult result);
 
     /**
      * 首次加载网络数据失败
      */
-    public abstract void onFirstNetLoadFail(NetFailedResult failResult);
+    public abstract void onFirstNetLoadFail(NetRequest.NetFailResult failResult);
 
     /**
      * 下拉刷新加载数据成功
@@ -573,7 +579,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
      * true 表示不调用{@link PullRefreshLayout#stopRefresh()}，需要自己在合适的时机调用 {@link PullRefreshLayout#stopRefresh()}
      * 来结束刷新状态
      */
-    public abstract boolean onRefreshResult(NetResult result);
+    public abstract boolean onRefreshResult(NetRequest.NetSuccessResult result);
 
     /**
      * 下拉刷新加载数据失败
@@ -582,12 +588,12 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RequestRefres
      * true 表示不调用{@link PullRefreshLayout#stopRefresh()}，需要自己在合适的时机调用 {@link PullRefreshLayout#stopRefresh()}
      * 来结束刷新状态
      */
-    public abstract boolean onRefreshFail(NetFailedResult failResult);
+    public abstract boolean onRefreshFail(NetRequest.NetFailResult failResult);
 
     /** 上拉加载更多成功 */
-    public abstract void onLoadMoreResult(NetResult result);
+    public abstract void onLoadMoreResult(NetRequest.NetSuccessResult result);
 
     /** 上拉加载更多失败 */
-    public abstract void onLoadMoreFail(NetFailedResult failResult);
+    public abstract void onLoadMoreFail(NetRequest.NetFailResult failResult);
 
 }

@@ -10,7 +10,7 @@ import com.diagramsf.fragments.refreshl.AbsRLFragmentImpl;
  * <p/>
  * Created by Diagrams on 2016/3/15 16:50
  */
-public class AbsListPullRefreshLayoutRL extends AbsListPullRefreshLayout implements AbsRLFragmentImpl.PullRefreshView {
+public class AbsListPullRefreshLayoutRL extends AbsListPullRefreshLayout implements AbsRLFragmentImpl.IPullRefreshView {
 
     public AbsListPullRefreshLayoutRL(Context context) {
         super(context);

@@ -13,8 +13,8 @@ import android.view.ViewGroup;
  */
 public abstract class ViewAbsRLFragmentImpl extends AbsRLFragmentImpl {
 
-    private PullRefreshView mRefreshView;
-    private PullLoadMoreView mLoadMoreView;
+    private IPullRefreshView mRefreshView;
+    private IPullLoadMoreView mLoadMoreView;
 
     @Nullable
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -29,8 +29,8 @@ public abstract class ViewAbsRLFragmentImpl extends AbsRLFragmentImpl {
         super.onViewCreated(view, savedInstanceState);
     }
 
-    protected abstract PullLoadMoreView onCreateLoadMoreView();
+    protected abstract IPullLoadMoreView onCreateLoadMoreView();
 
-    protected abstract PullRefreshView onCreateRefreshView();
+    protected abstract IPullRefreshView onCreateRefreshView();
 
 }

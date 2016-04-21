@@ -25,7 +25,7 @@ import com.android.volley.Network;
 import com.android.volley.RequestQueue;
 import com.diagramsf.helpers.FileUtils;
 import com.diagramsf.helpers.OSVersionUtils;
-import com.diagramsf.volleybox.OkHttpStack;
+import com.diagramsf.netvolley.OkHttpStack;
 
 import java.io.File;
 
