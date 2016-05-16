@@ -36,6 +36,8 @@ public class LearnFragment extends Fragment {
     }
 
     // ----------------------与Activity的生命周期方法相仿
+    /** 这几个与Activity生命周期相仿的方法，需要注意一点，就是只有Activity相应的方法调用后才会分发给Fragment的这几个方法，
+    例如，点击标签切换Fragment的时候，并不会执行Fragment的这几个方法（有待验证）*/
     @Override
     public void onStart() {
         super.onStart();
