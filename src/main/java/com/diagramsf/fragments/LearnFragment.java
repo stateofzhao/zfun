@@ -36,27 +36,30 @@ public class LearnFragment extends Fragment {
     }
 
     // ----------------------与Activity的生命周期方法相仿
-    /** 这几个与Activity生命周期相仿的方法，需要注意一点，就是只有Activity相应的方法调用后才会分发给Fragment的这几个方法，
-    例如，调用Fragment的show()和hide()方法，并不会执行Fragment的这几个方法 （已验证）*/
+
+    /**
+     * 这几个与Activity生命周期相仿的方法，需要注意一点，就是只有Activity相应的方法调用或者Fragment首次add后
+     * 才会分发给Fragment的这几个方法。
+     * <p/>
+     * 像调用FragmentTranslation的show()和hide()方法，并不会执行Fragment的这几个方法 （已验证）
+     */
     @Override
     public void onStart() {
         super.onStart();
     }
-
 
     @Override
     public void onResume() {
         super.onResume();
     }
 
-
     /**
      * 在{@link Activity#onSaveInstanceState(Bundle)} 中调用此方法。（目前所学只能看出来会在{@link #onDestroyView()}之前调用,不知道
      * 何种情况下，会在 {@link #onDestroyView()} 方法之后调用，所以最好不要在此方法中调用View）
-     *
+     * <p/>
      * 注意：无论如何会在 {@link #onDestroy()}之前调用此方法。
      * Fragment中没有 onRestoreInstanceState(Bundle) 方法！
-     *
+     * <p/>
      * 注意：调用{@link android.support.v4.app.FragmentTransaction#detach(Fragment)}方法把{@link Fragment}detach掉后，
      * 不会触发这个回调！
      */
