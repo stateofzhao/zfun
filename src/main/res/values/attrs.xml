@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- 声明的View的XML属性，名称一般都是View类名，尽管这个不是必须遵守的规则，但是大部分集成开发工具
+        都会根据类名来找对应的 XML属性的，所以最好这么写-->
+    <!-- 月食动画CircleImageView-->
     <declare-styleable name="SunMoveCircleImageView">
         <attr name="sciv_border_width" format="dimension" />
         <attr name="sciv_border_color" format="color" />
@@ -7,9 +11,25 @@
         <attr name="sciv_fill_color" format="color" />
     </declare-styleable>
 
-    <!-- 自定义，自动换行的横向布局 -->
+    <!-- 自定义，自动换行的横向布局 AutoLineLayout-->
     <declare-styleable name="AutoLineLayout">
-        <attr name="itemSpace" format="dimension"></attr>
-        <attr name="lineSpace" format="dimension"></attr>
+        <attr name="itemSpace" format="dimension" />
+        <attr name="lineSpace" format="dimension" />
     </declare-styleable>
+
+    <!-- 字母导航 LetterNavigation-->
+    <declare-styleable name="LetterNavigation">
+        <attr name="direction" format="enum">
+            <enum name="horizontal" value="0" />
+            <enum name="vertical" value="1" />
+        </attr>
+        <!-- 导航字母 分割线是 %$，例如： A%$HELLO%$B-->
+        <attr name="letters" format="string" />
+        <!-- 导航字母字体size-->
+        <attr name="letterSize" format="dimension"/>
+        <!-- touch时显示的背景色-->
+        <attr name="bgColor" format="color"/>
+
+    </declare-styleable>
+
 </resources>
