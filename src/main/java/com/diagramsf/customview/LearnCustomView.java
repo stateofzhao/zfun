@@ -44,15 +44,15 @@ public class LearnCustomView extends View {
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);//调用这个父方法，能够实现设置ViewGroup自身所需的尺寸。
 
-		// 1.方法中的参数怎么来的-----由ViewGroup中的layout_width，layout_height和padding以及ViewGroup自身的layout_margin共同决定。
-		// 权值weight也是尤其需要考虑的因素，有它的存在情况可能会稍微复杂点。<P>
+		// 1.方法中的参数怎么来的-----由父View中的layout_width，layout_height和padding以及View自身的layout_margin共同决定。
+		// 权值weight也是尤其需要考虑的因素，有它的存在情况可能会稍微复杂点。参见ViewGroup的measureChildWithMargins()方法<P>
 
 		// 2. 参数 widthMeasureSpec
 		// 这个值由高32位和低16位组成，高32位保存的值叫specMode，可以通过如代码中所示的MeasureSpec.getMode()获取；低16位为specSize，同样可以由MeasureSpec.getSize()获取；
 		// 需要注意的是 padding属性是自身属性，所以也包含在这两个参数中。所以在计算时要考虑到 内容的宽高需要减去padding值；不包括marging。
 		// specMode-----
 		// MeasureSpec.EXACTLY：父视图希望子视图的大小应该是specSize中指定的。(一般对应与
-		// ViewGroup.LayoutParams.MATCH_PARENT)
+		// ViewGroup.LayoutParams.MATCH_PARENT,或者)
 		// MeasureSpec.AT_MOST：子视图的大小最多是specSize中指定的值，也就是说不建议子视图的大小超过specSize中给定的值。（一般对应与
 		// ViewGroup.LayoutParams.WRAP_CONTENT）
 		// MeasureSpec.UNSPECIFIED：我们可以随意指定视图的大小。（这个暂时不知道是怎么出来的）<P>
