@@ -1,100 +1,77 @@
-apply plugin: 'com.android.library'
+apply plugin: 'com.android.model.library'
 
-//apply plugin: 'com.android.model.library'
+model {
 
-//model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.3"
 
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
-    defaultConfig {
-        minSdkVersion 11
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        defaultConfig.with {
+            minSdkVersion.apiLevel = 11
+            targetSdkVersion.apiLevel = 23
+            versionCode = 1
+            versionName = "1.0"
+        }// end defaultConfig
 
-        //配置如果编译jni中的C/C++源码，这里配置后会取代 NDK默认的Android.mk来编译C/C++源码,
-        //注意如果不在这里配置ndk的话即使在 jni 中建立 Android.mk文件也不会起作用，jni中建立的
-        //Android.mk是为了使用 ndk的“命令行（cmd）”来生成.so文件用的。
         ndk {//只有moduleName 是必选的，其它都可以省略（如果不出错的话）
             file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")
             moduleName = "ObserverUninstall"//编译完后生成的.so文件的名称，注意需要与java中的 System.loadLibrary("ObserverUninstall")同名
-            ldLibs "m", "log", "z", "android"//连接时使用到的库，对应Android.mk中的 LOCAL_LDLIBS
+            ldLibs.addAll(["m", "log", "z", "android"])//连接时使用到的库，对应Android.mk中的 LOCAL_LDLIBS
 
             //对应Android.mk中的 LOCAL_CFLAGS
-            //CFlags.add("-I${file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")}".toString())
-            //CFlags.add("-UNDEBUG")//关闭DEBUG模式
+            CFlags.add("-I${file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")}".toString())
+            CFlags.add("-UNDEBUG")//关闭DEBUG模式
+        }// end ndk
 
-            abiFilters("armeabi-v7a", "armeabi")//指定要生成哪个CPU平台的.so文件
-        }
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-
-            //正式版本禁用ndk调试
-            ndk {
-                debuggable false
+        //指定要生成哪个CPU平台的.so文件
+        productFlavors {
+            create("arm") {
+                // You can customize the NDK configurations for each
+                // productFlavors and buildTypes.
+                ndk.abiFilters.add("armeabi")
             }
-        }
-    }
+            create("arm7") {
+                ndk.abiFilters.add("armeabi-v7a")
+            }
+            create("arm8") {
+                ndk.abiFilters.add("arm64-v8a")
+            }
+            create("x86") {
+                ndk.abiFilters.add("x86")
+            }
+            create("x86-64") {
+                ndk.abiFilters.add("x86_64")
+            }
+            create("mips") {
+                ndk.abiFilters.add("mips")
+            }
+            create("mips-64") {
+                ndk.abiFilters.add("mips64")
+            }
+            // To include all cpu architectures, leaves abiFilters empty
+            create("all")
 
-    // 引用JNI的so文件
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
+        }// end productFlavors
+
+        buildTypes {
+            release {
+                minifyEnabled = false
+                proguardFiles.add(file("proguard-rules.pro"))
+
+                //正式版本禁用ndk调试
+                ndk {
+                    debuggable = false
+                }
+            }
+        }// end buildTypes
     }
 }
 
-//    android.ndk {//只有moduleName 是必选的，其它都可以省略（如果不出错的话）
-//
-//        file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")
-//        moduleName = "ObserverUninstall"//编译完后生成的.so文件的名称，注意需要与java中的 System.loadLibrary("ObserverUninstall")同名
-//        ldLibs.addAll(["m", "log", "z", "android"])//连接时使用到的库，对应Android.mk中的 LOCAL_LDLIBS
-//
-//        //对应Android.mk中的 LOCAL_CFLAGS
-//        CFlags.add("-I${file("src/main/jni/com_diagramsj_test_jniclass_ObserverUninstall.c")}".toString())
-//        CFlags.add("-UNDEBUG")//关闭DEBUG模式
-//
-//        abiFilters("armeabi-v7a", "armeabi")//指定要生成哪个CPU平台的.so文件
-//    }
-//
-//    android.productFlavors {
-//        create("arm7") {
-//            // You can customize the NDK configurations for each
-//            // productFlavors and buildTypes.
-//            ndk.abiFilters.add("armeabi-v7a")
-//        }
-//        create("fat") {
-//            // If ndk.abiFilters is not configured, the application
-//            // compile and package all suppported ABI.
-//            //如果 ndk.abiFilters 没有配置，就生成所有平台的 ABI
-//        }
-//
-//    }
-//
-//    android.buildTypes {
-//        release {
-//            minifyEnabled false
-//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-//
-//            //正式版本禁用ndk调试
-//            ndk {
-//                debuggable false
-//            }
-//        }
-//    }
-
-//}
-
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:support-v4:23.1.1'
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:design:23.1.1'
+    compile 'com.android.support:support-v4:23.4.0'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:design:23.4.0'
     compile 'com.nineoldandroids:library:2.4.0'
     compile 'com.tonicartos:stickygridheaders:1.0.1'
     compile 'com.tonicartos:superslim:0.4.13'
@@ -114,13 +91,50 @@ buildscript {
         jcenter()
     }
     dependencies {
-        //这个东西使用了最新版本，改变了DSL的一些特性。android plugins（插件），使用
-        //com.android.model.application 和 com.android.model.library plugins(插件)替换了
-        //com.android.application 和 com.android.library plugins(插件)
-        //classpath 'com.android.tools.build:gradle-experimental:0.6.0-alpha5'
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+        // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
 
-        classpath 'com.android.tools.build:gradle:1.5.0'
-        classpath 'com.android.tools.build:gradle-experimental:0.2.0'
+        //为了在Android Studio动态编译C文件，这里使用了google的实验性Gradle插件
+        classpath 'com.android.tools.build:gradle-experimental:0.7.0-alpha1'
+
+        //这个是google的非实验性Gradle插件，可以和上面的实验性插件共存
+        //classpath 'com.android.tools.build:gradle:1.5.0'
+
+        //Gradle版本不是指的上面两个 gradle插件版本，指的是编译依赖的Gradle版本，需要另外下载
+
+        //实验性的Gradle插件的版本严格对应Gradle版本，下面是版本对照表：
+        //=======================================================
+        //    Plugin Version	Gradle Version
+        //    0.1.0	                2.5
+        //    0.2.0	                2.5
+        //    0.3.0-alpha3	        2.6
+        //    0.4.0	                2.8
+        //    0.6.0-alpha1	        2.8
+        //    0.6.0-alpha5	        2.10
+        //    0.7.0-alpha1	        2.10
+        //=======================================================
+        //可以通过修改 [./gradle/wrapper/gradle-wrapper.properties] 文件来指定Gradle版本：
+        //distributionUrl=https\://services.gradle.org/distributions/gradle-2.10-all.zip
+        //修改此行的  "gradle-2.10-all.zip" 中的 "2.10" 来指定具体的Gradle版本。
+
+        //实验性的Gradle插件 和 非实现性的Gradle插件 的DSL变化，区别参见下表：
+        //                      实验性的Gradle插件                          非实验性的Gradle插件
+        //-----------------------------------------------------------------------------
+        //插件名：               com.android.model.application              com.android.application
+        //                      如果想创建Android aar库，则使用
+        //                      com.android.model.library
+        //-----------------------------------------------------------------------------
+        //当前Model的最外层块：   model{}                                     android{}
+        //-----------------------------------------------------------------------------
+        //赋值方式：             xxx=xxx                                     xxx xxx
+        //                      如果还是写成xxx xxx这种赋值方式，会
+        //                      报Gradle sync failed: Cause: org.gradle.
+        //                      api.internal.ExtensibleDynamicObject
+        //                      这个错误
+        //-----------------------------------------------------------------------------
+        //向集合中添加元素：      使用add()方法                                 使用=
+        //-----------------------------------------------------------------------------
     }
 }
 
@@ -129,3 +143,8 @@ allprojects {
         jcenter()
     }
 }
+
+//google的实验性Gradle插件，介绍参见：
+//http://tools.android.com/tech-docs/new-build-system/gradle-experimental#TOC-Introduction
+//国内翻译的参见：
+//http://my.oschina.net/wolfcs/blog/550677
