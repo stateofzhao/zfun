@@ -16,23 +16,23 @@ import android.view.View;
  * onSizeChanged(),onDraw()即可，如果你需要更好地控制你的视图的布局参数需要实现onMeasure()方法； 自定义ViewGroup
  * 需要实现 onMeasure()和 onLayout()即可。
  * */
-public class LinearCustomView extends View {
+public class LearnCustomView extends View {
 
-	public LinearCustomView(Context context) {
+	public LearnCustomView(Context context) {
 		super(context);
 	}
 
-	public LinearCustomView(Context context, AttributeSet attrs) {
+	public LearnCustomView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
 
-	public LinearCustomView(Context context, AttributeSet attrs, int defStyleAttr) {
+	public LearnCustomView(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 	}
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-	public LinearCustomView(Context context, AttributeSet attrs,
-			int defStyleAttr, int defStyleRes) {
+	public LearnCustomView(Context context, AttributeSet attrs,
+                           int defStyleAttr, int defStyleRes) {
 		super(context, attrs, defStyleAttr, defStyleRes);
 	}
 
