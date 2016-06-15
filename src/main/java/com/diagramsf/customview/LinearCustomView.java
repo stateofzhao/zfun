@@ -82,9 +82,12 @@ public class LinearCustomView extends View {
 		
 	}
 
-	// 一般只有自定义View（非ViewGroup）重写这个方法，如果不需要根据布局属性来计算自身尺寸的话，简单重写这个方法直接用系统确定的尺寸就可以了。<p>
-	// ViewGroup一般不重写这个方法,而是重写onMeasure()方法来计算自身尺寸，因为ViewGroup需要在onMeasure()中遍历调用子View的measureChildWithMargins()方法来把布局属性传递给子View以便子View计算自身尺寸。<P>
-	// 当Android确定了View的大小后，会回调这个方法，通知你View的确切尺寸。所以这个方法一般在onMeasure()方法之后调用，有时候也不调用（View的尺寸没有变化时不调用）<P>
+	// 一般只有自定义View（非ViewGroup）重写这个方法，如果不需要根据布局属性来计算自身尺寸的话，简单重写这个方法直接用系统确定的
+	// 尺寸就可以了。<p>
+	// ViewGroup一般不重写这个方法,而是重写onMeasure()方法来计算自身尺寸，因为ViewGroup需要在onMeasure()
+	// 中遍历调用子View的measureChildWithMargins()方法来把布局属性传递给子View以便子View计算自身尺寸。<P>
+	// 当Android确定了View的大小后，会回调这个方法，通知你View的确切尺寸。所以这个方法一般在onMeasure()方法之后调用，
+	// 有时候也不调用（View的尺寸没有变化时不调用）<P>
 	// 这个方法传递进来的参数是View的确切尺寸，用来计算onDraw()方法需要绘制的尺寸。<p>
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
