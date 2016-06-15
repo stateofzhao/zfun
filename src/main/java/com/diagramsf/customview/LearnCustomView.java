@@ -36,7 +36,19 @@ public class LearnCustomView extends View {
 		super(context, attrs, defStyleAttr, defStyleRes);
 	}
 
-	// 自定义View（非ViewGroup）如果不关心 layout
+    //这个方法获取建议的最小高度
+    @Override
+    protected int getSuggestedMinimumHeight() {
+        return super.getSuggestedMinimumHeight();
+    }
+
+    //这个方法获取建议的最小宽度
+    @Override
+    protected int getSuggestedMinimumWidth() {
+        return super.getSuggestedMinimumWidth();
+    }
+
+    // 自定义View（非ViewGroup）如果不关心 layout
 	// parameters,可以不重写这个方法，只是重写onSizeChanged()方法即可。<P>
 	// 自定义ViewGroup 需要重写这个方法。<P>
 	// 这个方法就是根据布局属性（父容器的布局属性和自身布局属性共同决定）来确定自身以及子View尺寸的。
