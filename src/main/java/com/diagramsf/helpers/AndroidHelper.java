@@ -97,7 +97,7 @@ public class AndroidHelper {
      * @param textView     要缩放TextSize的 {@link TextView}
      * @param desiredWidth 文字显示的最大宽度
      */
-    public static void correcTextWidth(TextView textView, int desiredWidth) {
+    public static void correctTextWidth(TextView textView, int desiredWidth) {
         Paint paint = new Paint();
         Rect bounds = new Rect();
 
@@ -145,6 +145,35 @@ public class AndroidHelper {
             paint.getTextBounds(text, 0, text.length(), bounds);
         }
         return textSize;
+    }
+
+    /**
+     * 获取字体的高度
+     *
+     * @param textSize 像素值
+     *
+     * @return 单位是像素
+     */
+    public static float[] getTextHeight(Typeface typeface, float textSize) {
+        if (null == typeface) {
+            typeface = Typeface.DEFAULT;
+        }
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);//抗锯齿
+        textPaint.setTypeface(typeface);
+        textPaint.setTextSize(textSize);//像素值
+
+        Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+        float topY = fontMetrics.top;//指的是字符到baseLine的最高值，即ascent的最大值
+        float bomY = fontMetrics.bottom;//指的是字符到baseLine的最底值，即descent的最大值
+        float ascentY = fontMetrics.ascent;//这个是负值，baseLine的值是0，baseLine向上是负值，向下是正值
+        float descentY = fontMetrics.descent;//这个是正直
+        //        float leading = fontMetrics.leading;//行间距
+
+        float[] result = new float[2];
+        result[0] = descentY - ascentY;//字符的真实高度
+        result[1] = bomY - topY;//字符显示区域的高度(字符的最大高度)
+
+        return result;
     }
 
 }
