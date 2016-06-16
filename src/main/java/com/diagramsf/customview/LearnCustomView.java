@@ -64,7 +64,7 @@ public class LearnCustomView extends View {
 		// 需要注意的是 padding属性是自身属性，所以也包含在这两个参数中。所以在计算时要考虑到 内容的宽高需要减去padding值；不包括marging。
 		// specMode-----
 		// MeasureSpec.EXACTLY：父视图希望子视图的大小应该是specSize中指定的。(一般对应与
-		// ViewGroup.LayoutParams.MATCH_PARENT,或者)
+		// ViewGroup.LayoutParams.MATCH_PARENT,或者直接指定大小)
 		// MeasureSpec.AT_MOST：子视图的大小最多是specSize中指定的值，也就是说不建议子视图的大小超过specSize中给定的值。（一般对应与
 		// ViewGroup.LayoutParams.WRAP_CONTENT）
 		// MeasureSpec.UNSPECIFIED：我们可以随意指定视图的大小。（这个暂时不知道是怎么出来的）<P>
