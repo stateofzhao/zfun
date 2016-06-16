@@ -152,7 +152,7 @@ public class AndroidHelper {
      *
      * @param textSize 像素值
      *
-     * @return 单位是像素
+     * @return 单位是像素，第一个元素是字符的真实高度；第二个元素是字符显示区域的高度
      */
     public static float[] getTextHeight(Typeface typeface, float textSize) {
         if (null == typeface) {
@@ -172,6 +172,35 @@ public class AndroidHelper {
         float[] result = new float[2];
         result[0] = descentY - ascentY;//字符的真实高度
         result[1] = bomY - topY;//字符显示区域的高度(字符的最大高度)
+
+        return result;
+    }
+
+    /**
+     * 获取字符串的宽度
+     *
+     * @return 字符串的宽度 第一个元素是 getTextWidths()；第二个元素是 字符串的显示区域宽度；第三个元素是字符串真实宽度
+     */
+    public static float[] getTextWidth(Typeface typeface, float textSize, String text) {
+        if (null == typeface) {
+            typeface = Typeface.DEFAULT;
+        }
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);//抗锯齿
+        textPaint.setTypeface(typeface);
+        textPaint.setTextSize(textSize);//像素值
+
+        float[] widths = new float[1];//这个暂时不知道 是哪个宽度
+        textPaint.getTextWidths(text, widths);
+
+        Rect bounds = new Rect();
+        textPaint.getTextBounds(text, 0, text.length(), bounds);//字符串的显示区域宽度
+
+        float mt = textPaint.measureText(text, 0, text.length());//字符串的真实宽度
+
+        float[] result = new float[3];
+        result[0] = widths[0];
+        result[1] = bounds.width();
+        result[2] = mt;
 
         return result;
     }
