@@ -72,7 +72,8 @@ public class LearnCustomView extends View {
 
 		// 3.必须在这个方法中调用
 		// setMeasuredDimension()方法来确定自身尺寸。如果是ViewGroup还必须还要遍历调用子View（View或者ViewGroup）的
-		// measureChildWithMargins()方法(其实measureChildWithMargins()方法中只是简单的调用了View.measure()方法)。
+		// measureChildWithMargins()方法(其实measureChildWithMargins()方法中只是简单的调用了View.measure()方法，View.measure()
+		// 方法会触发调用View的onMeasure()方法)。
 		
 		// 4.其实实现是非常简单的，如果只是测量子View的尺寸直接调用measureChildWithMargins()方法即可，如果有特殊需求的话就需要来
 		// 自己制定测量子View的规则了。
