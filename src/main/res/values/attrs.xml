@@ -26,9 +26,17 @@
         <!-- 导航字母 分割线是 %$，例如： A%$HELLO%$B-->
         <attr name="letters" format="string" />
         <!-- 导航字母字体size-->
-        <attr name="letterSize" format="dimension"/>
+        <attr name="letterSize" format="dimension" />
+        <!-- 导航字母的间距-->
+        <attr name="letterSpace" format="dimension" />
+        <!-- 导航字母字体正常颜色-->
+        <attr name="normalLetterColor" format="color" />
+        <!-- 导航字母字体没触摸时的颜色-->
+        <attr name="touchedLetterColor" format="color" />
         <!-- touch时显示的背景色-->
-        <attr name="bgColor" format="color"/>
+        <attr name="touchBgColor" format="color" />
+        <!-- 是否显示touch时的背景-->
+        <attr name="showTouchBg" format="boolean" />
 
     </declare-styleable>
 

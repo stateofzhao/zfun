@@ -6,41 +6,60 @@ import android.content.res.TypedArray;
 import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Pair;
+import android.view.MotionEvent;
 import android.view.View;
 import com.diagramsf.R;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 字母导航条
- * <p/>
+ * <p>
  * Created by Diagrams on 2016/6/15 14:43
  */
 public class LetterNavigation extends View {
 
     private final static String REGULAR = "%$";
 
-    private final static int LETTER_SIZE = 15;//dp
+    private final static int LETTER_FONT_SIZE = 15;//dp
+    private final static int LETTER_SPACE = 10;//dp
     private final static int BG_COLOR = Color.TRANSPARENT;
+    private final static int NORMAL_LETTER_COLOR = Color.GRAY;
+    private final static int TOUCHED_LETTER_COLOR = Color.BLUE;
+    private final static boolean SHOW_TOUCHED_BG_COLOR = true;
 
-    private Map<Object, Object> mLetters;//要显示的字母导航集合
-    private int mLetterSize = -1;
-    private int mBgColor = -1;
-    private float mBgRx = 0f;
-    private float mBgRy = 0f;
+    private List<Pair<Object, Object>> mLetters;//要显示的字母导航集合
+    private int mLetterFontSize = -1;//导航字母字体大小
+    private int mLetterSpace = -1;//导航字母间距
+    private int mTouchBgColor = -1;//触摸到导航时，显示的背景颜色
+    private int mNormalLetterColor = -1;//触摸到导航时，字母色值
+    private int mTouchedLetterColor = -1;//没有触摸到导航时，字母色值
+    private float mBgRx = 0f; // 背景X轴上的圆角率
+    private float mBgRy = 0f; //背景Y轴上的圆角率
+
+    private float mLetterLeftX; //绘制字符的开始X轴坐标
+    private float mLetterTopY; //绘制字符的开始Y轴坐标
+    private float mLetterRightX;//绘制字符的结束X轴坐标
+    private int mChoose;//当前选中的Item的position
+
+    private float[] mItemTopY;
+
+    private int mXpading;
+    private int mContentHeight;
 
     private Paint mLetterPaint;
-    private Paint mBackGroudPaint;
+    private Paint mTextPaintTemp;
 
     private BgDrawable mBgDrawable;
 
-    private Rect mBound;//本View的矩形尺寸
-
-    private boolean mShowBg;
+    private boolean mShowTouchBg;//是否显示，触摸时的背景
+    private boolean mInTouched;//手指是否touch了
 
     public LetterNavigation(Context context) {
         super(context);
@@ -67,32 +86,201 @@ public class LetterNavigation extends View {
         init(context);
     }
 
+    public void setLetters(@NonNull List<Pair<Object, Object>> letters) {
+        mLetters = letters;
+        mItemTopY = new float[letters.size()];
+        invalidate();
+    }
+
+    public void showTouchBg(boolean show) {
+        mShowTouchBg = show;
+        invalidate();
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        measureSize(widthMeasureSpec, heightMeasureSpec);
+        if (mLetters.size() == 0) {
+            //如果直接调用super的onMeasure()方法的话，根据getSuggestedMinimumWidth() 和 getSuggestedMinimumHeight()
+            //来设置setMeasuredDimension()方法
+            setMeasuredDimension(0, 0);
+        } else {
+            int width = 0;
+            int height = 0;
 
-        mBgDrawable.setBounds(0, 0, getMeasuredWidth(), getMeasuredHeight());
+            int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+            int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+            int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+            int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+            //获取导航Item的最大宽度 和 导航Item的高度总和
+            float itemMaxWidth = 0f;
+            float itemMaxHeight = 0f;
+            for (Pair pair : mLetters) {
+                Object first = pair.first;
+                float temp = measureItemWidth(first);
+                if (temp > itemMaxWidth) {
+                    itemMaxWidth = temp;
+                }
+
+                itemMaxHeight += measureItemHeight(first);
+            }// end for
+
+            //计算最小需求宽度
+            final int iItemMaxWidth = (int) itemMaxWidth + 1;
+            final int xpad = getPaddingLeft() + getPaddingRight();
+            final int minWidth = iItemMaxWidth + xpad;
+            switch (widthMode) {
+                case MeasureSpec.AT_MOST://这个是 wrap_content
+                    width = Math.min(minWidth, widthSize);
+                    break;
+                case MeasureSpec.UNSPECIFIED://这是未知
+                    width = minWidth;
+                    break;
+                case MeasureSpec.EXACTLY://这个是match_parent或者指定了具体的数值
+                    width = widthSize;
+                    break;
+            }
+
+            //计算最小需求高度
+            final int letterSize = mLetters.size();//获取导航item个数
+            final int allLetterSpace = (letterSize - 1) * mLetterSpace;
+            final int iItemMaxHeight = (int) itemMaxHeight + 1;
+            final int minHeight = iItemMaxHeight + allLetterSpace;
+            switch (heightMode) {
+                case MeasureSpec.AT_MOST://这个是 wrap_content
+                    height = Math.min(minHeight, heightSize);
+                    break;
+                case MeasureSpec.UNSPECIFIED://这是未知
+                    height = minHeight;
+                    break;
+                case MeasureSpec.EXACTLY://这个是match_parent或者指定了具体的数值
+                    height = heightSize;
+                    break;
+            }
+
+            //设置View尺寸
+            setMeasuredDimension(width, height);
+        }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        mBgDrawable.setBounds(0, 0, w, h);
+        mLetterPaint.setTextSize(mLetterFontSize);
+
+        mXpading = getPaddingLeft() + getPaddingRight();
+        mContentHeight = w - mXpading;
+
+        mLetterLeftX = getPaddingLeft();
+        mLetterTopY = getPaddingTop();
+        mLetterRightX = mLetterLeftX + mContentHeight;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        mBgDrawable.draw(canvas);
+        if (mShowTouchBg && mInTouched) {
+            mBgDrawable.draw(canvas);
+        }
+
+        /**
+         * 设置绘制文字时起始点X坐标的位置
+         * CENTER:以文字的宽度的中心点为起始点向两边绘制
+         * LEFT:以文字左边为起始点向右边开始绘制
+         * RIGHT:以文字宽度的右边为起始点向左边绘制
+         */
+        mLetterPaint.setTextAlign(Paint.Align.CENTER);
+        mLetterPaint.setFakeBoldText(true);
+        for (int i = 0; i < mLetters.size(); i++) {
+            Pair<Object, Object> one = mLetters.get(i);
+            if (i == 0) {
+                mLetterTopY = getPaddingTop();
+            }
+
+            Object first = one.first;
+            if (first instanceof String || first instanceof Character) {
+                if (i == mChoose && mInTouched) {
+                    mLetterPaint.setColor(mTouchedLetterColor);
+                } else {
+                    mLetterPaint.setColor(mNormalLetterColor);
+                }
+                Paint.FontMetrics fontMetrics = mLetterPaint.getFontMetrics();
+                float textBoundCenterX = (mLetterLeftX + mLetterRightX) / 2;
+                canvas.drawText(first.toString(), textBoundCenterX, Math.abs(fontMetrics.ascent) + mLetterTopY,
+                        mLetterPaint);
+            } else {
+                // FIXME: 2016/6/17 lzf 这里以后还可以添加绘制图片
+            }
+            mItemTopY[i] = mLetterTopY;
+            //更新mLetterTopY
+            mLetterTopY = mLetterTopY + mLetterSpace + measureItemHeight(first);
+        }// end for
+
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (null == mLetters || mLetters.size() == 0) {
+            return false;
+        }
+        final int action = event.getAction() & MotionEvent.ACTION_MASK;
+        final float y = event.getY();
+
+        int newChoose = -1;
+        for (int i = 0; i < mItemTopY.length; i++) {
+            final float itemTopY = mItemTopY[i];
+            final float visiItemTopY = itemTopY - mLetterSpace / 2;
+            if (visiItemTopY > y) {//取它上一个item就是当前触摸到的item
+                int touchedItemPosition = i - 1;
+                if (touchedItemPosition >= 0) {
+                    newChoose = touchedItemPosition;
+                }
+            }
+        }
+
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                mInTouched = true;
+                invalidate();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mChoose != newChoose) {
+                    mChoose = newChoose;
+                    invalidate();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                mInTouched = false;
+                mChoose = -1;
+                invalidate();
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                mInTouched = false;
+                mChoose = -1;
+                invalidate();
+                break;
+        }
+
+        return true;
     }
 
     private void init(Context context) {
         //抗锯齿
         mLetterPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        //抗锯齿
-        mBackGroudPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mTextPaintTemp = new TextPaint(Paint.ANTI_ALIAS_FLAG);
 
-        if (-1 == mBgColor) {
-            mBgColor = BG_COLOR;
+        if (-1 == mTouchBgColor) {
+            mTouchBgColor = BG_COLOR;
         }
-        if (-1 == mLetterSize) {
+        if (-1 == mLetterFontSize) {
             DisplayMetrics dm = context.getResources().getDisplayMetrics();
-            mLetterSize = (int) (dm.density * LETTER_SIZE);
+            mLetterFontSize = (int) (dm.density * LETTER_FONT_SIZE);
         }
-        mBgDrawable = new BgDrawable(mBgColor, mBgRx, mBgRy);
+        mBgDrawable = new BgDrawable(mTouchBgColor, mBgRx, mBgRy);
+
+        if (null == mLetters) {
+            mLetters = new ArrayList<>();
+            mItemTopY = new float[0];
+        }
     }
 
     private void parseAttrs(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -102,15 +290,21 @@ public class LetterNavigation extends View {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.LetterNavigation,
                 defStyleAttr, defStyleRes);
         try {
-            mLetterSize = a.getDimensionPixelSize(R.styleable.LetterNavigation_letterSize, LETTER_SIZE);
-            mBgColor = a.getColor(R.styleable.LetterNavigation_bgColor, BG_COLOR);
+            mLetterFontSize = a.getDimensionPixelSize(R.styleable.LetterNavigation_letterSize, LETTER_FONT_SIZE);
+            mLetterSpace = a.getDimensionPixelSize(R.styleable.LetterNavigation_letterSpace, LETTER_SPACE);
+            mTouchBgColor = a.getColor(R.styleable.LetterNavigation_touchBgColor, BG_COLOR);
+            mNormalLetterColor = a.getColor(R.styleable.LetterNavigation_normalLetterColor, NORMAL_LETTER_COLOR);
+            mTouchedLetterColor = a.getColor(R.styleable.LetterNavigation_touchedLetterColor, TOUCHED_LETTER_COLOR);
+            mShowTouchBg = a.getBoolean(R.styleable.LetterNavigation_showTouchBg, SHOW_TOUCHED_BG_COLOR);
 
             final String letters = a.getString(R.styleable.LetterNavigation_letters);
             if (null != letters) {
                 String[] letterArray = letters.split(REGULAR);
-                mLetters = new HashMap<>(letterArray.length);
+                mLetters = new ArrayList<>(letterArray.length);
+                mItemTopY = new float[mLetters.size()];
                 for (String letter : letterArray) {
-                    mLetters.put(letter, null);
+                    Pair<Object, Object> pair = new Pair<Object, Object>(letter, null);
+                    mLetters.add(pair);
                 }
             }
         } finally {
@@ -118,13 +312,32 @@ public class LetterNavigation extends View {
         }
     }
 
-    //TODO 需要解决，当是宽和高都是 wrap_content 时，如何根据 text 来确定自身尺寸
-    private void measureSize(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int heighMode = MeasureSpec.getMode(heightMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heighSize = MeasureSpec.getSize(heightMeasureSpec);
+    private float measureTextWidth(String text, float textSize) {
+        mTextPaintTemp.setTextSize(textSize);
+        return mTextPaintTemp.measureText(text, 0, text.length());
+    }
 
+    private float measureTextHeight(float textSize) {
+        mTextPaintTemp.setTextSize(textSize);
+        Paint.FontMetrics fontMetrics = mTextPaintTemp.getFontMetrics();
+
+        float ascent = fontMetrics.ascent;
+        float descent = fontMetrics.descent;
+        return descent - ascent;
+    }
+
+    private float measureItemHeight(Object item) {
+        if (item instanceof String || item instanceof Character) {
+            return measureTextHeight(mLetterFontSize);
+        }
+        return 0f;
+    }
+
+    private float measureItemWidth(Object item) {
+        if (item instanceof String || item instanceof Character) {
+            return measureTextWidth(item.toString(), mLetterFontSize);
+        }
+        return 0f;
     }
 
     /** 背景Drawable */
@@ -135,8 +348,6 @@ public class LetterNavigation extends View {
         private RectF rectF;
         private float rx;
         private float ry;
-
-        private boolean show;
 
         /**
          * @param color 背景色值
@@ -150,14 +361,6 @@ public class LetterNavigation extends View {
             this.ry = ry;
         }
 
-        public void show(boolean show) {
-            if (this.show != show) {
-                this.show = show;
-                invalidateSelf();
-            }
-
-        }
-
         @Override
         public void draw(Canvas canvas) {
             if (-1 != color) {
@@ -165,6 +368,8 @@ public class LetterNavigation extends View {
                     rectF = new RectF(getBounds());
                 }
                 canvas.drawRoundRect(rectF, rx, ry, paint);
+            } else {
+                canvas.drawColor(Color.TRANSPARENT);
             }
         }
 
@@ -182,6 +387,6 @@ public class LetterNavigation extends View {
         public int getOpacity() {
             return PixelFormat.TRANSLUCENT;
         }
-    }
+    }// end class BgDrawable
 
 }
