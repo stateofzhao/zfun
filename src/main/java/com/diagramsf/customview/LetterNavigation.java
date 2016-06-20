@@ -61,6 +61,18 @@ public class LetterNavigation extends View {
     private boolean mShowTouchBg;//是否显示，触摸时的背景
     private boolean mInTouched;//手指是否touch了
 
+    private OnItemSelected mOnItemSelected;
+
+    /** 导航选中通知 */
+    public interface OnItemSelected {
+        /**
+         * @param position      item位置索引
+         * @param positionItem  item显示的值 对应于{@link #setLetters(List)}中Pair的第一个参数
+         * @param positionValue item携带的数据，对应于{@link #setLetters(List)}中Pair的第二个参数
+         */
+        void onSelected(int position, Object positionItem, Object positionValue);
+    }
+
     public LetterNavigation(Context context) {
         super(context);
         parseAttrs(context, null, 0, 0);
@@ -95,6 +107,10 @@ public class LetterNavigation extends View {
     public void showTouchBg(boolean show) {
         mShowTouchBg = show;
         invalidate();
+    }
+
+    public void setOnItemSelected(OnItemSelected listener) {
+        mOnItemSelected = listener;
     }
 
     @Override
@@ -240,11 +256,19 @@ public class LetterNavigation extends View {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mInTouched = true;
+                if (-1 != newChoose && null != mOnItemSelected) {
+                    final Pair pair = mLetters.get(newChoose);
+                    mOnItemSelected.onSelected(newChoose, pair.first, pair.second);
+                }
                 invalidate();
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mChoose != newChoose) {
                     mChoose = newChoose;
+                    if (null != mOnItemSelected) {
+                        final Pair pair = mLetters.get(newChoose);
+                        mOnItemSelected.onSelected(newChoose, pair.first, pair.second);
+                    }
                     invalidate();
                 }
                 break;
