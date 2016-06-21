@@ -3,7 +3,7 @@ apply plugin: 'com.android.model.library'
 model {
 
     android {
-        compileSdkVersion = 23
+        compileSdkVersion = 24
         buildToolsVersion = "23.0.3"
 
         defaultConfig.with {
@@ -69,9 +69,9 @@ model {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:support-v4:23.4.0'
-    compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:design:23.4.0'
+    compile 'com.android.support:support-v4:24.0.0'
+    compile 'com.android.support:appcompat-v7:24.0.0'
+    compile 'com.android.support:design:24.0.0'
     compile 'com.nineoldandroids:library:2.4.0'
     compile 'com.tonicartos:stickygridheaders:1.0.1'
     compile 'com.tonicartos:superslim:0.4.13'
@@ -95,11 +95,11 @@ buildscript {
         // in the individual module build.gradle files
         // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
 
-        //为了在Android Studio动态编译C文件，这里使用了google的实验性Gradle插件
-        classpath 'com.android.tools.build:gradle-experimental:0.7.0-alpha1'
-
         //这个是google的非实验性Gradle插件，可以和上面的实验性插件共存
-        //classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.android.tools.build:gradle:2.1.2'
+
+        //为了在Android Studio动态编译C文件，这里使用了google的实验性Gradle插件，注意build:gradle:2.1.2 必须对应这个 0.7.0-alpha4
+        classpath 'com.android.tools.build:gradle-experimental:0.7.0-alpha4'
 
         //Gradle版本不是指的上面两个 gradle插件版本，指的是编译依赖的Gradle版本，需要另外下载
 
