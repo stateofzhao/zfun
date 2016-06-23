@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,18 +21,22 @@ import java.util.List;
 
 /**
  * 字母导航条
- * <p>
+ * <p/>
  * Created by Diagrams on 2016/6/15 14:43
  */
 public class LetterNavigation extends View {
+    private final static String TAG = "LetterNavigation";
+    private final static boolean DEBUG = false;
 
-    private final static String REGULAR = "%$";
+    private final static String REGULAR = "[|]";//在Android中拆分字符串需要加上[]，java中则不需要
 
     private final static int LETTER_FONT_SIZE = 15;//dp
     private final static int LETTER_SPACE = 10;//dp
     private final static int BG_COLOR = Color.TRANSPARENT;
     private final static int NORMAL_LETTER_COLOR = Color.GRAY;
     private final static int TOUCHED_LETTER_COLOR = Color.BLUE;
+    private final static float BG_RX = 20f;
+    private final static float BG_RY = 20f;
     private final static boolean SHOW_TOUCHED_BG_COLOR = true;
 
     private List<Pair<Object, Object>> mLetters;//要显示的字母导航集合
@@ -48,7 +53,8 @@ public class LetterNavigation extends View {
     private float mLetterRightX;//绘制字符的结束X轴坐标
     private int mChoose;//当前选中的Item的position
 
-    private float[] mItemTopY;
+    private float[] mItemTopY;//每一项item绘制时的顶部Y坐标
+    private float mLastItemBomY;//最后一项item的底部Y坐标
 
     private int mXpading;
     private int mContentHeight;
@@ -229,6 +235,8 @@ public class LetterNavigation extends View {
             mItemTopY[i] = mLetterTopY;
             //更新mLetterTopY
             mLetterTopY = mLetterTopY + mLetterSpace + measureItemHeight(first);
+
+            mLastItemBomY = mLetterTopY;
         }// end for
 
     }
@@ -244,11 +252,21 @@ public class LetterNavigation extends View {
         int newChoose = -1;
         for (int i = 0; i < mItemTopY.length; i++) {
             final float itemTopY = mItemTopY[i];
-            final float visiItemTopY = itemTopY - mLetterSpace / 2;
+            float visiItemTopY = itemTopY - mLetterSpace / 2;
+            if (visiItemTopY < 0) {//当i==0并且topPadding<mLetterSpace/2 时小于0
+                visiItemTopY = 0;
+            }
             if (visiItemTopY > y) {//取它上一个item就是当前触摸到的item
                 int touchedItemPosition = i - 1;
                 if (touchedItemPosition >= 0) {
                     newChoose = touchedItemPosition;
+                }
+                break;
+            }
+
+            if (i == mItemTopY.length - 1) {//当是最后一项时
+                if (y < mLastItemBomY) {
+                    newChoose = i;
                 }
             }
         }
@@ -321,6 +339,9 @@ public class LetterNavigation extends View {
             mTouchedLetterColor = a.getColor(R.styleable.LetterNavigation_touchedLetterColor, TOUCHED_LETTER_COLOR);
             mShowTouchBg = a.getBoolean(R.styleable.LetterNavigation_showTouchBg, SHOW_TOUCHED_BG_COLOR);
 
+            mBgRx = a.getFloat(R.styleable.LetterNavigation_touchedBgRx, BG_RX);
+            mBgRy = a.getFloat(R.styleable.LetterNavigation_touchedBgRy, BG_RY);
+
             final String letters = a.getString(R.styleable.LetterNavigation_letters);
             if (null != letters) {
                 String[] letterArray = letters.split(REGULAR);
@@ -329,6 +350,9 @@ public class LetterNavigation extends View {
                 for (String letter : letterArray) {
                     Pair<Object, Object> pair = new Pair<Object, Object>(letter, null);
                     mLetters.add(pair);
+                    if (DEBUG) {
+                        Log.e(TAG, "导航字母：" + pair.first);
+                    }
                 }
             }
         } finally {

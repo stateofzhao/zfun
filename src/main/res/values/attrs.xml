@@ -23,7 +23,7 @@
             <enum name="horizontal" value="0" />
             <enum name="vertical" value="1" />
         </attr>
-        <!-- 导航字母 分割线是 %$，例如： A%$HELLO%$B-->
+        <!-- 导航字母 分割线是 |，例如： A|HELLO|B-->
         <attr name="letters" format="string" />
         <!-- 导航字母字体size-->
         <attr name="letterSize" format="dimension" />
@@ -37,6 +37,10 @@
         <attr name="touchBgColor" format="color" />
         <!-- 是否显示touch时的背景-->
         <attr name="showTouchBg" format="boolean" />
+        <!-- 触摸时，背景x方向上的圆角半径。-->
+        <attr name="touchedBgRx" format="float"/>
+        <!-- 触摸时，背景y方向上的圆角半径。-->
+        <attr name="touchedBgRy" format="float"/>
 
     </declare-styleable>
 
