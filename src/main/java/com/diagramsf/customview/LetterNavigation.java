@@ -325,7 +325,7 @@ public class LetterNavigation extends View {
             if (null != letters) {
                 String[] letterArray = letters.split(REGULAR);
                 mLetters = new ArrayList<>(letterArray.length);
-                mItemTopY = new float[mLetters.size()];
+                mItemTopY = new float[letterArray.length];
                 for (String letter : letterArray) {
                     Pair<Object, Object> pair = new Pair<Object, Object>(letter, null);
                     mLetters.add(pair);
