@@ -37,9 +37,9 @@
         <attr name="touchBgColor" format="color" />
         <!-- 是否显示touch时的背景-->
         <attr name="showTouchBg" format="boolean" />
-        <!-- 触摸时，背景x方向上的圆角半径。-->
+        <!-- 触摸时，背景x方向上的圆角半径 0-180 -->
         <attr name="touchedBgRx" format="float"/>
-        <!-- 触摸时，背景y方向上的圆角半径。-->
+        <!-- 触摸时，背景y方向上的圆角半径 0-180 -->
         <attr name="touchedBgRy" format="float"/>
 
     </declare-styleable>
