@@ -58,9 +58,6 @@ public class LetterNavigation extends View {
     private float[] mItemTopY;//每一项item绘制时的顶部Y坐标
     private float mLastItemBomY;//最后一项item的底部Y坐标
 
-    private int mXpading;
-    private int mContentHeight;
-
     private Paint mLetterPaint;
     private Paint mTextPaintTemp;
 
@@ -193,12 +190,12 @@ public class LetterNavigation extends View {
         mBgDrawable.setBounds(0, 0, w, h);
         mLetterPaint.setTextSize(mLetterFontSize);
 
-        mXpading = getPaddingLeft() + getPaddingRight();
-        mContentHeight = w - mXpading;
+        int xpading = getPaddingLeft() + getPaddingRight();
+        int contentHeight = w - xpading;
 
         mLetterLeftX = getPaddingLeft();
         mLetterTopY = getPaddingTop();
-        mLetterRightX = mLetterLeftX + mContentHeight;
+        mLetterRightX = mLetterLeftX + contentHeight;
     }
 
     @Override
