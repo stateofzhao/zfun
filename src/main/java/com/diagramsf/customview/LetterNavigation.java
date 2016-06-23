@@ -281,7 +281,7 @@ public class LetterNavigation extends View {
                 invalidate();
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (mChoose != newChoose) {
+                if (-1 != newChoose && mChoose != newChoose) {
                     mChoose = newChoose;
                     if (null != mOnItemSelected) {
                         final Pair pair = mLetters.get(newChoose);
