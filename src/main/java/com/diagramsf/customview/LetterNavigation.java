@@ -23,6 +23,8 @@ import java.util.List;
  * 字母导航条
  * <p/>
  * Created by Diagrams on 2016/6/15 14:43
+ *
+ * @version 1.0 只支持字符串作为item
  */
 public class LetterNavigation extends View {
     private final static String TAG = "LetterNavigation";
@@ -150,6 +152,7 @@ public class LetterNavigation extends View {
             //计算最小需求宽度
             final int iItemMaxWidth = (int) itemMaxWidth + 1;
             final int xpad = getPaddingLeft() + getPaddingRight();
+            final int ypad = getPaddingTop() + getPaddingBottom();
             final int minWidth = iItemMaxWidth + xpad;
             switch (widthMode) {
                 case MeasureSpec.AT_MOST://这个是 wrap_content
@@ -167,7 +170,7 @@ public class LetterNavigation extends View {
             final int letterSize = mLetters.size();//获取导航item个数
             final int allLetterSpace = (letterSize - 1) * mLetterSpace;
             final int iItemMaxHeight = (int) itemMaxHeight + 1;
-            final int minHeight = iItemMaxHeight + allLetterSpace;
+            final int minHeight = iItemMaxHeight + allLetterSpace + ypad;
             switch (heightMode) {
                 case MeasureSpec.AT_MOST://这个是 wrap_content
                     height = Math.min(minHeight, heightSize);
