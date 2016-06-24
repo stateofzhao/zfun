@@ -3,7 +3,7 @@ package com.diagramsf.netvolley.refresh;
 import android.support.annotation.NonNull;
 import com.diagramsf.net.NetRequest;
 import com.diagramsf.netvolley.NetResultFactory;
-import com.diagramsf.netvolley.Utils;
+import com.diagramsf.netvolley.RequestManager;
 import com.diagramsf.netvolley.netrepository.NetRequestImpl;
 
 /**
@@ -101,7 +101,7 @@ public class RefreshPresenter implements RefreshContract.Presenter {
 
     @Override
     public void cancelRequest(String cancelTag) {
-        Utils.getInstance().cancelRequest(cancelTag);
+        RequestManager.getInstance().cancelRequest(cancelTag);
     }
 
     @Override

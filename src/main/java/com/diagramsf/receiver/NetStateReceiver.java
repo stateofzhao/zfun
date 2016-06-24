@@ -50,7 +50,7 @@ public abstract class NetStateReceiver extends BroadcastReceiver {
                 if (AndroidHelper.isAirplaneModeOn(context)) {
                     onAirMode();
                 }
-                return; // No airplane state, ignore it. Should we query Utils.isAirplaneModeOn?
+                return; // No airplane state, ignore it. Should we query RequestManager.isAirplaneModeOn?
             }
             if (intent.getBooleanExtra(EXTRA_AIRPLANE_STATE, false)) {
                 onAirMode();

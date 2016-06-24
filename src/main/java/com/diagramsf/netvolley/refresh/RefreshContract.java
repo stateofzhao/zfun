@@ -5,6 +5,8 @@ import com.diagramsf.BaseView;
 import com.diagramsf.net.NetRequest;
 import com.diagramsf.netvolley.NetResultFactory;
 
+import java.util.Map;
+
 /**
  * Created by Diagrams on 2016/4/21 11:36
  */
@@ -57,7 +59,7 @@ public interface RefreshContract {
      * 能够执行下拉刷新的控制器。
      * <p/>
      * 下拉刷新只有两个步骤：
-     * 1.首次加载数据（可以是来自缓存也可以是来自网络，通过{@link #firstLoadData(boolean, String, String, String, NetResultFactory)}
+     * 1.首次加载数据（可以是来自缓存也可以是来自网络，通过{@link #firstLoadData(boolean, String, Map, String, NetResultFactory)}
      * 中的第一个参数控制）；
      * 2.执行下拉刷新请求数据{@link #doRefresh(String, String, String, NetResultFactory)}
      * <p/>
@@ -65,11 +67,11 @@ public interface RefreshContract {
     interface Presenter extends BasePresenter{
 
         /**
-         * 调用这个方法不会执行自动下拉刷新，它会首次去加载数据
+         * 不会触发自动下拉刷新
          *
          * @param readCache 是否读取缓存
          */
-        void firstLoadData(boolean readCache, String url, String postData, String cancelTag,
+        void firstLoadData(boolean readCache, String url, Map<String,String> postData, String cancelTag,
                            NetResultFactory factory);
 
         /** 执行刷新请求 */

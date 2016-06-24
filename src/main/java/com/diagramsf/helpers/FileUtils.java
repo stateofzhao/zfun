@@ -32,9 +32,6 @@ public class FileUtils {
     /** 内部缓存目录最大大小 */
     private static final int SIZE_INTERNAL_CACHE = 1024 * 1024;
 
-    /** 磁盘缓存最大大小 */
-    public static final int SIZE_EXTERNAL_CACHE = 500 * 1024 * 1025;
-
     // -----------------手机内部存储---start
 
     /**

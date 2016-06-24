@@ -12,7 +12,6 @@ public class OkHttpStack extends HurlStack {
 	private final OkUrlFactory okUrlFactory;
 
 	public OkHttpStack() {
-		
 		this(new OkUrlFactory(new OkHttpClient()));
 	}
 
@@ -21,7 +20,6 @@ public class OkHttpStack extends HurlStack {
 			throw new NullPointerException("Client must not be null.");
 		}
 		this.okUrlFactory = okUrlFactory;
-		
 	}
 
 	@Override

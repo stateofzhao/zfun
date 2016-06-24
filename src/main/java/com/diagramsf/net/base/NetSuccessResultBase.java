@@ -26,12 +26,12 @@ public abstract class NetSuccessResultBase implements NetRequest.NetSuccessResul
     }
 
     @Override
-    public void setRequestDeliveredTag(Object tag) {
+    public void setRequestTag(Object tag) {
         this.tag = tag;
     }
 
     @Override
-    public Object getRequestDeliveredTag() {
+    public Object getRequestTag() {
         return tag;
     }
 

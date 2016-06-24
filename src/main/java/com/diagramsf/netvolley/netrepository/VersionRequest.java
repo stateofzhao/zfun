@@ -3,7 +3,7 @@ package com.diagramsf.netvolley.netrepository;
 import com.android.volley.VolleyError;
 import com.diagramsf.helpers.StringUtils;
 import com.diagramsf.net.NetRequest;
-import com.diagramsf.net.comm.NetFailResultComm;
+import com.diagramsf.net.base.NetFailResultBase;
 import com.diagramsf.netvolley.NetResultFactory;
 import com.google.common.base.Preconditions;
 
@@ -114,7 +114,7 @@ public class VersionRequest implements NetRequest {
                         mVersionCallback.onSucceed(result);
                     } else {
                         if (mRecursionCounts >= Recursion_MAX) {
-                            NetFailResultComm failedResult = new NetFailResultComm(new VolleyError("请求递归次数超过限制！"));
+                            NetFailResultBase failedResult = new NetFailResultBase(new VolleyError("请求递归次数超过限制！"));
                             mVersionCallback.onFailed(failedResult);
                             return;
                         }
@@ -134,7 +134,7 @@ public class VersionRequest implements NetRequest {
                             mVersionCallback.onSucceed(mCacheLegitimacyResultData);
                         } else {
                             if (mRecursionCounts >= Recursion_MAX) {
-                                NetFailResultComm failedResult = new NetFailResultComm(new VolleyError("请求递归次数超过限制！"));
+                                NetFailResultBase failedResult = new NetFailResultBase(new VolleyError("请求递归次数超过限制！"));
                                 mVersionCallback.onFailed(failedResult);
                                 return;
                             }

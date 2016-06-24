@@ -7,9 +7,9 @@ import com.diagramsf.exceptions.AppException;
 import com.diagramsf.helpers.AppDebugLog;
 import com.diagramsf.helpers.StringUtils;
 import com.diagramsf.net.NetRequest;
-import com.diagramsf.net.comm.NetFailResultComm;
+import com.diagramsf.net.base.NetFailResultBase;
 import com.diagramsf.netvolley.NetResultFactory;
-import com.diagramsf.netvolley.Utils;
+import com.diagramsf.netvolley.RequestManager;
 import com.diagramsf.netvolley.VolleyErrorHelper;
 import com.diagramsf.netvolley.volleyrequest.VolleyNetRequest;
 
@@ -51,7 +51,7 @@ public class NetRequestImpl implements NetRequest {
             //在这里统一封装处理一下
             if (null != mCallback) {
                 AppException e = VolleyErrorHelper.formatVolleyError(error);
-                NetFailResultComm fr = new NetFailResultComm(e, error);
+                NetFailResultBase fr = new NetFailResultBase(e, error);
                 //将 setDeliverToResultTag()方法设置的值传递回去
                 if (null != mDeliverToResultTag) {
                     fr.setDeliverToResultTag(mDeliverToResultTag);
@@ -147,7 +147,7 @@ public class NetRequestImpl implements NetRequest {
         }
         mVolleyRequest.setTag(cancelTag);
         try {
-            Utils.getInstance().addRequest(mVolleyRequest);
+            RequestManager.getInstance().addRequest(mVolleyRequest);
         } catch (AppException e) {
             e.printStackTrace();
             String TAG = "NetRequestImpl";
@@ -173,11 +173,11 @@ public class NetRequestImpl implements NetRequest {
 
     @Override
     public void cancelRequest(Object cancelTag) {
-        Utils.getInstance().cancelRequest(cancelTag);
+        RequestManager.getInstance().cancelRequest(cancelTag);
     }
 
     public static void cancelAllRequest(Object cancelTag){
-        Utils.getInstance().cancelRequest(cancelTag);
+        RequestManager.getInstance().cancelRequest(cancelTag);
     }
 
     private VolleyNetRequest createByClass(int method, String url, String postData,

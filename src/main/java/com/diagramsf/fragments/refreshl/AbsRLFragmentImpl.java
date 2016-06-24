@@ -22,7 +22,7 @@ import com.diagramsf.netvolley.refresh.RefreshPresenter;
  * <p/>
  * 1.必须在onCreateView()方法中调用 {@link #initView(IPullRefreshView, IPullLoadMoreView)}方法
  * <p/>
- * 2.必须手动调用 {@link #doFirstLoadData()}方法才能开启数据加载
+ * 2.必须手动调用 {@link #firstLoadData()}方法才能开启数据加载
  * <p/>
  * 3. 继承此类，重写抽象方法，即可！
  * <p/>
@@ -135,6 +135,70 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
         void onRefreshComplete();
     }
 
+    /**
+     * 外部调用执行自动下拉刷新，如果首次加载缓存还没有执行完时，是不会执行自动下拉刷新的
+     *
+     * @return true调用成功；false调用失败
+     */
+    public boolean autoRefresh() {
+        if (null == mRefreshView) {//没有初始化 PullRefreshLayout或者已经调用了onDestroyView()
+            return false;
+        }
+        mRefreshView.autoRefresh();
+        return true;
+    }
+
+    /**
+     * 外部调用停止下拉刷新状态，同时也会取消刷新数据的请求
+     *
+     * @return true调用成功；false调用失败
+     */
+    public boolean stopRefresh() {
+        if (null == mRefreshView) {//没有初始化 PullRefreshLayout或者已经调用了onDestroyView()
+            return false;
+        }
+        mRefreshPresenter.cancelRequest(mCancelTag);
+        mRefreshView.stopRefresh();
+        return true;
+    }
+
+    /**
+     * 首次加载数据
+     */
+    public final void firstLoadData() {
+        final String url = onCreateFirstURL(mStartOffset, mLimit);
+        final String postData = onCreateFirstPostData(mStartOffset, mLimit);
+        final NetResultFactory factory = onCreateFirstJSONObjectResultFactory();
+
+        mRefreshPresenter.firstLoadData(true, url, postData, mCancelTag, factory);
+    }
+
+    /**
+     * 是否可以下拉刷新
+     *
+     * @param enablePullRefresh true可以下拉刷新，false 不可以
+     */
+    final public void setEnablePullRefresh(boolean enablePullRefresh) {
+        mEnableRefresh = enablePullRefresh;
+        if (null == mRefreshView) {
+            return;
+        }
+        mRefreshView.setEnableRefresh(enablePullRefresh);
+    }
+
+    /**
+     * 是否可以上拉加载更多
+     *
+     * @param enableLoadMore true可以上拉加载更多，false 不可以
+     */
+    final public void setEnableLoadMore(boolean enableLoadMore) {
+        mEnableLoadMore = enableLoadMore;
+        if (null == mLoadMoreView) {
+            return;
+        }
+        mLoadMoreView.setLoadMoreEnable(enableLoadMore);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         mRefreshPresenter = new RefreshPresenter(this);
@@ -187,44 +251,6 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
         }
     }
 
-    /**
-     * 外部调用执行自动下拉刷新，如果首次加载缓存还没有执行完时，是不会执行自动下拉刷新的
-     *
-     * @return true调用成功；false调用失败
-     */
-    public boolean autoRefresh() {
-        if (null == mRefreshView) {//没有初始化 PullRefreshLayout或者已经调用了onDestroyView()
-            return false;
-        }
-        mRefreshView.autoRefresh();
-        return true;
-    }
-
-    /**
-     * 外部调用停止下拉刷新状态，同时也会取消刷新数据的请求
-     *
-     * @return true调用成功；false调用失败
-     */
-    public boolean stopRefresh() {
-        if (null == mRefreshView) {//没有初始化 PullRefreshLayout或者已经调用了onDestroyView()
-            return false;
-        }
-        mRefreshPresenter.cancelRequest(mCancelTag);
-        mRefreshView.stopRefresh();
-        return true;
-    }
-
-    /**
-     * 首次加载数据
-     */
-    public final void doFirstLoadData() {
-        final String url = onCreateFirstURL(mStartOffset, mLimit);
-        final String postData = onCreateFirstPostData(mStartOffset, mLimit);
-        final NetResultFactory factory = onCreateFirstJSONObjectResultFactory();
-
-        mRefreshPresenter.firstLoadData(true, url, postData, mCancelTag, factory);
-    }
-
     /** 内部自动下拉刷新 */
     protected void doAutoRefresh() {
         if (null == mRefreshView) {
@@ -262,31 +288,6 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
         mHashInit = true;
     }
 
-    /**
-     * 是否可以下拉刷新
-     *
-     * @param enablePullRefresh true可以下拉刷新，false 不可以
-     */
-    final public void setEnablePullRefresh(boolean enablePullRefresh) {
-        mEnableRefresh = enablePullRefresh;
-        if (null == mRefreshView) {
-            return;
-        }
-        mRefreshView.setEnableRefresh(enablePullRefresh);
-    }
-
-    /**
-     * 是否可以上拉加载更多
-     *
-     * @param enableLoadMore true可以上拉加载更多，false 不可以
-     */
-    final public void setEnableLoadMore(boolean enableLoadMore) {
-        mEnableLoadMore = enableLoadMore;
-        if (null == mLoadMoreView) {
-            return;
-        }
-        mLoadMoreView.setLoadMoreEnable(enableLoadMore);
-    }
 
     private void initRefreshView(IPullRefreshView refreshView) {
         if (null != refreshView) {
@@ -310,7 +311,6 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     public final void onLoadMore() {
-
         doStopRefresh();
         mRefreshPresenter.cancelRequest(mCancelTag);
         mLoadMorePresenter.cancelRequest(mCancelTag);

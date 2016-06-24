@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * 执行网络请求，并传递结果 ，包含五中请求类型{@link Type}
- * <p/>
+ * <p>
  * Created by Diagrams on 2016/4/20 17:17
  */
 public interface NetRequest {
@@ -33,6 +33,26 @@ public interface NetRequest {
     @IntDef({ONLY_CACHE, ONLY_NET_NO_CACHE, ONLY_NET_THEN_CACHE, HTTP_HEADER_CACHE, PRIORITY_CACHE})
     @interface Type {}
 
+    /** 执行请求 */
+    void doRequest(@Type int type, Object cancelTag);
+
+    /**
+     * 此值会传递给结果 通过调用{@link NetSuccessResult#getRequestTag()}
+     * 或者{@link NetFailResult#getRequestTag()} 来获取
+     */
+    void setDeliverToResultTag(Object tag);
+
+    /** 设置请求完的回调接口 */
+    void setResultCallBack(NetResultCallback callback);
+
+    /** 设置请求的缓存key */
+    void setCacheKey(String cacheKey);
+
+    /** 取消请求 */
+    void cancelRequest(Object cancelTag);
+
+    //=================================================================================================
+
     /** 网络请求结果的回调接口 */
     interface NetResultCallback {
 
@@ -41,10 +61,10 @@ public interface NetRequest {
 
         /** 网络请求失败回调 */
         void onFailed(NetFailResult fail);
-    }// class end
+    }// class NetResultCallback end
 
     /** 网络请求成功的结果 */
-    interface NetSuccessResult {
+    interface NetSuccessResult<T> {
 
         enum ResultType {
             /** 来自网络 */
@@ -60,14 +80,14 @@ public interface NetRequest {
         /** 设置数据来源 */
         void setResultType(ResultType resultType);
 
-        /** 设置tag ,通过 {@link #getRequestDeliveredTag()}获取此值 */
-        void setRequestDeliveredTag(Object tag);
+        /** 设置{@link NetRequest#setResultCallBack(NetResultCallback)} 传递的tag */
+        void setRequestTag(Object tag);
 
         /** 获得数据来源类型 */
         ResultType getResultType();
 
         /** 获取相应的 {@link NetRequest#setDeliverToResultTag(Object tag)} 中设置的 tag */
-        Object getRequestDeliveredTag();
+        Object getRequestTag();
 
         /**
          * 检测结果数据的合法性
@@ -76,7 +96,9 @@ public interface NetRequest {
          */
         boolean checkResultLegitimacy();
 
-    }//class end
+        T getWrapperResult();
+
+    }//class NetSuccessResult end
 
     /** 网络请求失败的结果 */
     interface NetFailResult {
@@ -94,27 +116,8 @@ public interface NetRequest {
         String getInfoText(Context context);
 
         /** 获取通过 {@link NetRequest#setDeliverToResultTag(Object)} 设置的值 */
-        Object getRequestDeliveredTag();
+        Object getRequestTag();
 
-    }// class end
-
-
-    /** 执行请求 */
-    void doRequest(@Type int type, Object cancelTag);
-
-    /**
-     * 此值会传递给结果 通过调用{@link NetSuccessResult#getRequestDeliveredTag()}
-     * 或者{@link NetFailResult#getRequestDeliveredTag()} 来获取
-     */
-    void setDeliverToResultTag(Object tag);
-
-    /** 设置请求完的回调接口 */
-    void setResultCallBack(NetResultCallback callback);
-
-    /** 设置请求的缓存key */
-    void setCacheKey(String cacheKey);
-
-    /** 取消请求 */
-    void cancelRequest(Object cancelTag);
+    }// class NetFailResult end
 
 }

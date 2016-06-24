@@ -50,7 +50,7 @@ import java.util.Map;
  * 14.维护一个Boolean变量，标记是否缓存 Response</p>
  * 15.子类需要重写的方法有{@link #deliverResponse(Object)}和{@link #parseNetworkResponse(NetworkResponse)}，{@link #parseNetworkError(VolleyError)}
  * 这个方法根据需要重写，也可以不重写直接把 VolleyError返回处理，重写的话可以归类Exception。
- * <p/>
+ * <p>
  * Base class for all network requests.
  *
  * @param <T> The type of parsed response this request expects.
@@ -65,9 +65,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 支持的 request 方法。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Supported request methods.
      */
     public interface Method {
@@ -103,7 +103,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * TrafficStats.tagSocket(outputSocket);
      * // Transfer data using socket
      * TrafficStats.untagSocket(outputSocket);
-     * <p/>
+     * <p>
      * 对于Apache HttpClient and URLConnection 会自动打上tag，所以只要设置上tag名就可以了：
      * TrafficStats.setThreadStatsTag(0xF00D);
      * try {
@@ -111,23 +111,22 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * } finally {
      * TrafficStats.clearThreadStatsTag();
      * }
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Default tag for {@link TrafficStats}.
      */
     private final int mDefaultTrafficStatsTag;
 
     /**
      * 错误监听接口
-     * <p/>
+     * <p>
      * Listener interface for errors.
      */
     private final Response.ErrorListener mErrorListener;
 
     /**
      * 此请求的序列号,用于执行先进先出顺序。
-     * <p/>
-     * <p/>
+     * <p>
      * Sequence number of this request, used to enforce FIFO ordering.
      */
     private Integer mSequence;
@@ -150,8 +149,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * log请求的阀值(即使不启用调试日志记录)。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Threshold at which we should log the request (even when debug logging is
      * not enabled).
      */
@@ -190,8 +189,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * 使用给定的值，创建一个Request。
      * 注意：本类没有提供 normal response listener（传递 response用的），
      * 本类的子类提供了高效聪明的 response listener传递已经解析了的response。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Creates a new request with the given method (one of the values from
      * {@link Method}), URL, and error listener. Note that the normal response
      * listener is not provided here as delivery of responses is provided by
@@ -209,8 +208,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 获取 本request的 method(是{@link Method}的一个值)。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Return the method for this request. Can be one of the values in
      * {@link Method}.
      */
@@ -220,8 +219,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 给Request设置 tag，用来执行 取消 所有 requests 用的{@link RequestQueue#cancelAll(Object)}。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Set a tag on this request. Can be used to cancelRequest all requests with this
      * tag by {@link RequestQueue#cancelAll(Object)}.
      *
@@ -234,8 +233,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 获取request的tag。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns this request's tag.
      *
      * @see Request#setTag(Object)
@@ -246,7 +245,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 用在 {@link TrafficStats#setThreadStatsTag(int)}方法上,设置tag名。
-     * <p/>
+     * <p>
      *
      * @return A tag for use with {@link TrafficStats#setThreadStatsTag(int)}
      */
@@ -256,7 +255,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 获取 URL 中host 部分的哈希码，如果没有的话返回0。
-     * <p/>
+     * <p>
      *
      * @return The hashcode of the URL's host component, or 0 if there is none.
      */
@@ -275,9 +274,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 设置重试策略。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Sets the retry policy for this request.
      *
      * @return This Request object to allow for chaining.
@@ -289,8 +288,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 添加一个标记，打印本Request的运行信息。用来调试用的。如果调试信息不可用，就根据一个变量来检测 request的速度。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Adds an event to this request's event log; for debugging.
      */
     public void addMarker(String tag) {
@@ -345,9 +344,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 把request和给定的 request queue联系起来。当本request结束后，request queue会得到通知。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Associates this request with the given queue. The request queue will be
      * notified when this request has finished.
      *
@@ -360,8 +359,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 给request设置序号，让{@link RequestQueue}使用的。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Sets the sequence number of this request. Used by {@link RequestQueue}.
      *
      * @return This Request object to allow for chaining.
@@ -373,8 +372,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回 request的序号。如果 sequence为null，抛出运行异常，表明在设置 sequence之前调用了 本方法。
-     * <p/>
-     * <p/>
+     * <p>
      * Returns the sequence number of this request.
      */
     public final int getSequence() {
@@ -387,8 +385,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回 request的 URL。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns the URL of this request.
      */
     public String getUrl() {
@@ -397,8 +395,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回 request的 缓存用的key。默认是URL。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns the cache key for this request. By default, this is the URL.
      */
     public String getCacheKey() {
@@ -407,9 +405,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 使用 从缓存中检索出的条目注释 request。用于高速缓存的一致性。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Annotates this request with an entry retrieved for it from cache. Used
      * for cache coherency support.
      *
@@ -422,8 +420,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回带注释的缓存条目,如果没有就返回null。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns the annotated cache entry, or null if there isn't one.
      */
     public Cache.Entry getCacheEntry() {
@@ -432,8 +430,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 标记request 被 取消。没有回调将交付 。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Mark this request as canceled. No callback will be delivered.
      */
     public void cancel() {
@@ -442,8 +440,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * request是否被取消，如果取消返回true。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns true if this request has been canceled.
      */
     public boolean isCanceled() {
@@ -452,21 +450,24 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
 
     /**
-     * 其实 post parameters 就是post发送的数据 键值对数据，和 GET拼在URL后面的键值对参数一样。但是如果上传文件和数据一块发送的话，就不是
-     * 这种形式发送键值对数据了，而是需要复杂的 表格 拼写。</p> 在Volley中 本类中实现是 以键值对的形式（ key1 = value1 & key2 = value2）发送
-     * post parameters的，如果需要 文件上传和parameter同时提交就需要自己重新 继承 Request 重写  getPostBody()和getBody()这两个方法！<\n>
-     * 并且在本类中添加一种 请求方式 UPLOAD,再在{@link HurlStack}  和{@link HttpClientStack}  中 修改{@link HurlStack#setConnectionParametersForRequest()}方法
-     * <p/>
-     * 本基类中并没有 设置POST parameters的方法，也没有设置 PostBody的方法，所以需要在Request的子类中自己重写其中的一个方法使 不是返回null（
-     * 本基类默认 getPostParameters(),getParameters(),getPostBody()和getBody()方法都是返回null）。
-     * <p/>
+     * 其实 post parameters 就是post发送的数据 键值对数据，和 GET拼在URL后面的键值对参数一样。但是如果上传文件和数据一块发送的话，
+     * 就不是这种形式发送键值对数据了，而是需要复杂的 表格 拼写。
+     * <p>
+     * 在Volley中 本类中实现是 以键值对的形式（ key1 = value1 & key2 = value2）发送post parameters的，
+     * 如果需要 文件上传和parameter同时提交就需要自己重新 继承 Request 重写  getPostBody()和getBody()这两个方法！
+     * 再修改{@link com.android.volley.toolbox.HurlStack#setConnectionParametersForRequest()}方法，
+     * 添加一种 请求方式 UPLOAD。
+     * <p>
+     * 本基类中并没有 设置POST parameters的方法，也没有设置 PostBody的方法，所以需要在Request的子类中自己重写其中的一个方法使
+     * 不是返回null（本基类默认 getPostParameters(),getParameters(),getPostBody()和getBody()方法都是返回null）。
+     * <p>
      * 返回request的 Map类型的 POST paramsters，或者如果是简单的GET request返回null。
      * 可以抛出{@link AuthFailureError}作为验证可能被要求提供这些值。
-     * <p/>
+     * <p>
      * Returns a Map of POST parameters to be used for this request, or null if
      * a simple GET should be used. Can throw {@link AuthFailureError} as
      * authentication may be required to provide these values.
-     * <p/>
+     * <p>
      * Note that only one of getPostParams() and getPostBody() can return a
      * non-null value.
      *
@@ -481,17 +482,17 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * 返回POST paramsters的编码格式，对 {@link #getPostParams()}返回的原始POST body进行编码。
      * 返回值为格式为："UTF-8"等。
-     * <p/>
+     * <p>
      * 返回的编码格式，同时控制两个部分：
-     * <p/>
+     * <p>
      * <li>转换parameter names和values，当转换为字节之前使用URLEncode来编码 names和values</li>
      * <li>编码URL中的 parameters 到原始的raw byte 数组中</li>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns which encoding should be used when converting POST parameters
      * returned by {@link #getPostParams()} into a raw POST body.
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * This controls both encodings:
      * <ol>
      * <li>The string encoding used when converting parameter names and values
@@ -539,8 +540,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回本request的 额外的HTTP headers 集合，在验证失败的情况下能够抛出{@link AuthFailureError}，验证需要的提供的这些值 。
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * Returns a list of extra HTTP headers to go along with this request. Can
      * throw {@link AuthFailureError} as authentication may be required to
      * provide these values.
@@ -574,18 +575,18 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * 返回POST或者PUT的 paramsters的编码格式，对 {@link #getPostParams()}返回的原始POST或者PUT的 body进行编码。
      * 返回值为格式为："UTF-8"等。
-     * <p/>
+     * <p>
      * 返回的编码格式，同时控制两个部分：
-     * <p/>
+     * <p>
      * <li>转换parameter names和values，当转换为字节之前使用URLEncode来编码 names和values</li>
      * <li>转换URL中的 parameters 到原始的raw byte 数组中</li>
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Returns which encoding should be used when converting POST or PUT
      * parameters returned by {@link #getParams()} into a raw POST or PUT body.
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
      * This controls both encodings:
      * <ol>
      * <li>The string encoding used when converting parameter names and values
@@ -606,7 +607,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回发送的 POST或者PUT 的body 的原始数据（已经进行了转码）。
-     * <p/>
+     * <p>
      * Returns the raw POST or PUT body to be sent.
      *
      * @throws AuthFailureError in the event of auth failure
@@ -645,7 +646,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 设置是否需要缓存该 request的 responses。
-     * <p/>
+     * <p>
      * Set whether or not responses to this request should be cached.
      *
      * @return This Request object to allow for chaining.
@@ -657,7 +658,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 如果这个request对应的response需要缓存返回 true。
-     * <p/>
+     * <p>
      * Returns true if responses to this request should be cached.
      */
     public final boolean shouldCache() {
@@ -666,7 +667,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 优先级值。请求将按照先入先出的顺序从较高的优先级处理，以较低的优先级。
-     * <p/>
+     * <p>
      * Priority values. Requests will be processed from higher priorities to
      * lower priorities, in FIFO order.
      */
@@ -676,7 +677,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 返回 request的优先级{@link Priority} ，默认是{@link Priority#NORMAL}。
-     * <p/>
+     * <p>
      * Returns the {@link Priority} of this request; {@link Priority#NORMAL} by
      * default.
      */
@@ -703,7 +704,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 标记 request的 response 已经传递过了。
-     * <p/>
+     * <p>
      * Mark this request as having a response delivered on it. This can be used
      * later in the request's lifetime for suppressing identical responses.
      */
@@ -713,7 +714,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 如果 request 已经得到了 response 返回true。
-     * <p/>
+     * <p>
      * Returns true if this request has had a response delivered for it.
      */
     public boolean hasHadResponseDelivered() {
@@ -723,7 +724,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * 子类必须重写这个方法，来解析原始的 network response，并返回返回相应的response类型。
      * 这个方法在worker thread 中调用。如果返回null，response 不会不传递。
-     * <p/>
+     * <p>
      * Subclasses must implement this to parse the raw network response and
      * return an appropriate response type. This method will be called from a
      * worker thread. The response will not be delivered if you return null.
@@ -756,25 +757,25 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /**
      * 子类必须重写这个方法，将 已经解析过的 response 传递给 它们的 listeners 。给定的响应是保证非空；
      * 解析失败的 responses 是不会被传递的。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Subclasses must implement this to perform delivery of the parsed response
      * to their listeners. The given response is guaranteed to be non-null;
      * responses that fail to parse are not delivered.
      *
      * @param response The parsed response returned by
      *                 {@link #parseNetworkResponse(NetworkResponse)}.
-     *                 <p/>
+     *                 <p>
      *                 被{@link #parseNetworkResponse(NetworkResponse)}解析过的 response 。
      */
     abstract protected void deliverResponse(T response);
 
     /**
      * 传递 error 信息 给 ErrorListener（在 Request 初始化时设置的 ErrorListener）。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Delivers error message to the ErrorListener that the Request was
      * initialized with.
      *
@@ -788,9 +789,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
     /**
      * 比较排序，从高优先级到低优先级，如果优先级相同再 按照先入先出规则排序。
-     * <p/>
-     * <p/>
-     * <p/>
+     * <p>
+     * <p>
+     * <p>
      * Our comparator sorts from high to low priority, and secondarily by
      * sequence number to provide FIFO ordering.
      */
@@ -857,12 +858,5 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     public boolean isSkipCache() {
         return mShouldSkipCache;
     }
-
-
-    /** 后去传递错误的接口 */
-    public Response.ErrorListener getErrorListener() {
-        return mErrorListener;
-    }
-
 
 }

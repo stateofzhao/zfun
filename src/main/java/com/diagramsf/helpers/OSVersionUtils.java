@@ -26,19 +26,6 @@ public class OSVersionUtils {
 	private OSVersionUtils() {
 	}
 
-	public static void enableStrictMode() {
-	}
-
-
-	/** 获得操作系统版本 */
-	public static String getOs_Version() {
-		if (null != Build.VERSION.RELEASE) {
-			return Build.VERSION.RELEASE;
-		}
-		return "";
-	}
-
-
 	/**
 	 * 2.2 API 8
 	 * */

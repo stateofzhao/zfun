@@ -3,7 +3,7 @@ package com.diagramsf.netvolley.loadmore;
 import android.support.annotation.NonNull;
 import com.diagramsf.net.NetRequest;
 import com.diagramsf.netvolley.NetResultFactory;
-import com.diagramsf.netvolley.Utils;
+import com.diagramsf.netvolley.RequestManager;
 import com.diagramsf.netvolley.netrepository.NetRequestImpl;
 import com.google.common.base.Preconditions;
 
@@ -40,7 +40,7 @@ public class LoadmorePresenter implements LoadmoreContract.Presenter{
 
     @Override
     public void cancelRequest(String cancelTag) {
-        Utils.getInstance().cancelRequest(cancelTag);
+        RequestManager.getInstance().cancelRequest(cancelTag);
     }
 
     @Override

@@ -4,7 +4,7 @@ import android.content.Context;
 import com.android.volley.*;
 import com.diagramsf.exceptions.AppException;
 
-/** 转换VolleyError 成 本地 AppException */
+/** 转换 VolleyError 成本地 AppException */
 public class VolleyErrorHelper {
 
 	public static AppException formatVolleyError(VolleyError volleyError) {

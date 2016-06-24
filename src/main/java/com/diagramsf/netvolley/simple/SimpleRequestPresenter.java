@@ -2,7 +2,7 @@ package com.diagramsf.netvolley.simple;
 
 import com.diagramsf.net.NetRequest;
 import com.diagramsf.netvolley.NetResultFactory;
-import com.diagramsf.netvolley.Utils;
+import com.diagramsf.netvolley.RequestManager;
 import com.diagramsf.netvolley.netrepository.NetRequestImpl;
 
 import java.util.Map;
@@ -55,7 +55,7 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
 
     @Override
     public void cancelCacheRequest(String cancelTag) {
-        Utils.getInstance().cancelRequest(cancelTag);
+        RequestManager.getInstance().cancelRequest(cancelTag);
         if (null != mView) {
             mView.onHideCacheLoadProgress();
         }
@@ -63,7 +63,7 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
 
     @Override
     public void cancelNetRequest(String cancelTag) {
-        Utils.getInstance().cancelRequest(cancelTag);
+        RequestManager.getInstance().cancelRequest(cancelTag);
         if (null != mView) {
             mView.onHideNetProgress();
         }
