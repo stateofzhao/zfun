@@ -23,9 +23,6 @@ import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
-import com.diagramsf.helpers.FileUtils;
-import com.diagramsf.helpers.OSVersionUtils;
-import com.diagramsf.netvolley.OkHttpStack;
 
 import java.io.File;
 
@@ -35,7 +32,10 @@ import java.io.File;
 public class Volley {
 
     /** Default on-disk cache directory. */
-    // private static final String DEFAULT_CACHE_DIR = "volley";
+     private static final String DEFAULT_CACHE_DIR = "volley";
+
+    /** 磁盘缓存最大大小 */
+    public static final int SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
 
     public static String userAgent;
 
@@ -50,13 +50,7 @@ public class Volley {
      * @return A started {@link RequestQueue} instance.
      */
     public static RequestQueue newRequestQueue(Context context, HttpStack stack) {
-        File cacheDir = new File(context.getCacheDir(), "volley");
-        // 使用的内部缓存，可以根据需要自己修改缓存目录
-        //		File cacheDir = FileUtils.getAppExternalCacheDir(context,
-        //				FileUtils.DATA_FILE_SAVE_HEAD_PATH);
-        //		if (!cacheDir.exists()) {
-        //			cacheDir.mkdirs();
-        //		}
+        File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
 
         // 定义用户代理
         userAgent = "volley/0";
@@ -67,7 +61,7 @@ public class Volley {
             //            String appName = info.applicationInfo.loadLabel(
             //                    context.getPackageManager()).toString();
             String deviceName = Build.MANUFACTURER;
-            String os_version = OSVersionUtils.getOs_Version();
+            String os_version = Build.VERSION.RELEASE;//系统版本
             //            String app_version = info.versionName;
             String able = context.getResources().getConfiguration().locale
                     .getCountry();
@@ -81,8 +75,8 @@ public class Volley {
 
         // 定义默认HTTP client
         if (stack == null) {
-            if (OSVersionUtils.hasGingerbread()) {
-                stack = new OkHttpStack();// 使用自定义的网络客户端
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
+                stack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
             } else {
                 // Prior to Gingerbread, HttpUrlConnection was unreliable.
                 // See:
@@ -97,7 +91,7 @@ public class Volley {
         Network network = new BasicNetwork(stack);
 
         RequestQueue queue = new RequestQueue(new DiskBasedCache(cacheDir,
-                FileUtils.SIZE_EXTERNAL_CACHE), network);
+                SIZE_EXTERNAL_CACHE), network);
         queue.start();
 
         return queue;
