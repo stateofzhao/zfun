@@ -21,6 +21,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.http.AndroidHttpClient;
 import android.os.Build;
+import com.android.volley.Cache;
 import com.android.volley.Network;
 import com.android.volley.RequestQueue;
 
@@ -28,85 +29,113 @@ import java.io.File;
 
 /**
  * 负责获取请求队列{@link RequestQueue}
+ * <p>
+ * ===仿照Picasso的API方式（采用Build模式）来实现
  */
 public class Volley {
+    private static RequestQueue singleton;
 
-    /** Default on-disk cache directory. */
-     private static final String DEFAULT_CACHE_DIR = "volley";
-
-    /** 磁盘缓存最大大小 */
-    public static final int SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
-
-    public static String userAgent;
-
-    /**
-     * Creates a default instance of the worker pool and calls
-     * {@link RequestQueue#start()} on it.
-     *
-     * @param context A {@link Context} to use for creating the cache dir.
-     * @param stack   An {@link HttpStack} to use for the network, or null for
-     *                default.
-     *
-     * @return A started {@link RequestQueue} instance.
-     */
-    public static RequestQueue newRequestQueue(Context context, HttpStack stack) {
-        File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
-
-        // 定义用户代理
-        userAgent = "volley/0";
-        try {
-            String packageName = context.getPackageName();
-            PackageInfo info = context.getPackageManager().getPackageInfo(
-                    packageName, 0);
-            //            String appName = info.applicationInfo.loadLabel(
-            //                    context.getPackageManager()).toString();
-            String deviceName = Build.MANUFACTURER;
-            String os_version = Build.VERSION.RELEASE;//系统版本
-            //            String app_version = info.versionName;
-            String able = context.getResources().getConfiguration().locale
-                    .getCountry();
-            //将appName修改为packageName，防止出现中文无法解析
-            userAgent = packageName + " (" + deviceName
-                    + "; android " + os_version + "; " + able + ")";
-
-        } catch (NameNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        // 定义默认HTTP client
-        if (stack == null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
-                stack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
-            } else {
-                // Prior to Gingerbread, HttpUrlConnection was unreliable.
-                // See:
-                // http: //
-                // android-developers.blogspot.com/2011/09/androids-http-clients.html
-                stack = new HttpClientStack(
-                        AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient
-                // 客户端
+    public static RequestQueue with(Context context) {
+        if (singleton == null) {
+            synchronized (Volley.class) {
+                if (singleton == null) {
+                    singleton = new Builder(context).build();
+                }
             }
         }
-
-        Network network = new BasicNetwork(stack);
-
-        RequestQueue queue = new RequestQueue(new DiskBasedCache(cacheDir,
-                SIZE_EXTERNAL_CACHE), network);
-        queue.start();
-
-        return queue;
+        return singleton;
     }
 
-    /**
-     * Creates a default instance of the worker pool and calls
-     * {@link RequestQueue#start()} on it.
-     *
-     * @param context A {@link Context} to use for creating the cache dir.
-     *
-     * @return A started {@link RequestQueue} instance.
-     */
-    public static RequestQueue newRequestQueue(Context context) {
-        return newRequestQueue(context, null);
-    }
+    public static class Builder {
+        /** Default on-disk cache directory. */
+        private final String DEFAULT_CACHE_DIR = "volley";
+        /** 磁盘缓存最大大小 */
+        public final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
 
-}
+        private final Context context;
+        /** 用户代理，会写入到Http报头中 */
+        private String userAgent;
+        private Cache cache;
+        private HttpStack httpStack;
+
+        public Builder(Context context) {
+            if (context == null) {
+                throw new IllegalArgumentException("Context must not be null");
+            }
+            this.context = context;
+        }
+
+        public Builder userAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
+
+        public Builder cache(Cache cache) {
+            this.cache = cache;
+            return this;
+        }
+
+        public Builder httpStack(HttpStack httpStack) {
+            this.httpStack = httpStack;
+            return this;
+        }
+
+        public RequestQueue build() {
+            if (null == userAgent || "".equals(userAgent)) {
+                this.userAgent = Utils.createUserAgent(context);
+            }
+
+            if (null == cache) {
+                File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
+                cache = new DiskBasedCache(cacheDir,
+                        DEFAULT_SIZE_EXTERNAL_CACHE);
+            }
+
+            if (null == httpStack) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
+                    httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
+                } else {
+                    // Prior to Gingerbread, HttpUrlConnection was unreliable.
+                    // See:
+                    // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
+                    httpStack = new HttpClientStack(
+                            AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
+                }
+            }
+
+            Network network = new BasicNetwork(httpStack);
+            RequestQueue queue = new RequestQueue(cache, network);
+            queue.start();
+
+            return queue;
+        }
+    }// class Builder end
+
+    public static class Utils {
+
+        public static String createUserAgent(Context context) {
+            // 定义用户代理
+            String userAgent = "volley/0";
+            try {
+                String packageName = context.getPackageName();
+                PackageInfo info = context.getPackageManager().getPackageInfo(
+                        packageName, 0);
+                //            String appName = info.applicationInfo.loadLabel(
+                //                    context.getPackageManager()).toString();
+                String deviceName = Build.MANUFACTURER;
+                String os_version = Build.VERSION.RELEASE;//系统版本
+                //            String app_version = info.versionName;
+                String able = context.getResources().getConfiguration().locale
+                        .getCountry();
+                //将appName修改为packageName，防止出现中文无法解析
+                userAgent = packageName + " (" + deviceName
+                        + "; android " + os_version + "; " + able + ")";
+
+            } catch (NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            return userAgent;
+        }
+    }// class Utils end
+
+}// class Volley end
