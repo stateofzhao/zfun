@@ -23,19 +23,29 @@ import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import com.android.volley.Cache;
 import com.android.volley.Network;
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 
 import java.io.File;
 
 /**
- * 负责获取请求队列{@link RequestQueue}
+ * 调用{@link Volley#with(Context)}来获取Volley，调用{@link Volley#add(Request)}来执行请求
+ * <p>
+ * 如果只是默认配置，直接调用{@link Volley#with(Context)}来实例化即可；
+ * 如果需要自定义参数配置，那么需要自己调用{@link Builder#build()}来构建Volley，之后保存构建的Volley。
  * <p>
  * ===仿照Picasso的API方式（采用Build模式）来实现
  */
 public class Volley {
-    private static RequestQueue singleton;
+    private static volatile Volley singleton;
 
-    public static RequestQueue with(Context context) {
+    private RequestQueue requestQueue;
+
+    private Volley(RequestQueue requestQueue) {
+        this.requestQueue = requestQueue;
+    }
+
+    public static Volley with(Context context) {
         if (singleton == null) {
             synchronized (Volley.class) {
                 if (singleton == null) {
@@ -44,6 +54,10 @@ public class Volley {
             }
         }
         return singleton;
+    }
+
+    public <T> Request<T> add(Request<T> request) {
+        return requestQueue.add(request);
     }
 
     public static class Builder {
@@ -80,7 +94,7 @@ public class Volley {
             return this;
         }
 
-        public RequestQueue build() {
+        public Volley build() {
             if (null == userAgent || "".equals(userAgent)) {
                 this.userAgent = Utils.createUserAgent(context);
             }
@@ -107,7 +121,7 @@ public class Volley {
             RequestQueue queue = new RequestQueue(cache, network);
             queue.start();
 
-            return queue;
+            return new Volley(queue);
         }
     }// class Builder end
 
@@ -130,7 +144,6 @@ public class Volley {
                 //将appName修改为packageName，防止出现中文无法解析
                 userAgent = packageName + " (" + deviceName
                         + "; android " + os_version + "; " + able + ")";
-
             } catch (NameNotFoundException e) {
                 e.printStackTrace();
             }
