@@ -105,12 +105,6 @@ public class HttpHeaderParser {
         entry.serverDate = serverDate;
         entry.responseHeaders = headers;
         
-		// AppDebugLog.logSystemOut("Volley 请求结果参数---entry.serverEtag："+entry.etag);
-		// AppDebugLog.logSystemOut("Volley 请求结果参数---entry.softTtl："+entry.softTtl);
-		// AppDebugLog.logSystemOut("Volley 请求结果参数---entry.ttl："+entry.ttl);
-		// AppDebugLog.logSystemOut("Volley 请求结果参数---entry.serverDate："+entry.serverDate);
-		// AppDebugLog.logSystemOut("Volley 请求结果参数---entry.responseHeaders："+entry.responseHeaders);
-
         return entry;
     }
 

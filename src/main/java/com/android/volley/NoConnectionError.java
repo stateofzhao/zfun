@@ -17,7 +17,7 @@
 package com.android.volley;
 
 /**
- * Error indicating that no connection could be established when performing a Volley request.
+ * Error indicating that no connection could be established when performing a NetRequestManager request.
  */
 @SuppressWarnings("serial")
 public class NoConnectionError extends NetworkError {

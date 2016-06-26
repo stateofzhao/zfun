@@ -1,11 +1,11 @@
 package com.diagramsf.net.base;
 
-import com.diagramsf.net.NetRequest;
+import com.diagramsf.net.NetContract;
 
 /**
- * 实现{@link NetRequest.NetSuccessResult} ,对一些不必要的抽象方法进行屏蔽
+ * 实现{@link NetContract.NetSuccessResult} ,对一些不必要的抽象方法进行屏蔽
  */
-public abstract class NetSuccessResultBase implements NetRequest.NetSuccessResult {
+public abstract class NetSuccessResultBase implements NetContract.NetSuccessResult {
 
     ResultType resultType;
     private Object tag;

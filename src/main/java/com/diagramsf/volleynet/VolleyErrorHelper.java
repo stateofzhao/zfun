@@ -1,4 +1,4 @@
-package com.diagramsf.netvolley;
+package com.diagramsf.volleynet;
 
 import android.content.Context;
 import com.android.volley.*;

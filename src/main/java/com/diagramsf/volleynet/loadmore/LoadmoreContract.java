@@ -1,16 +1,18 @@
-package com.diagramsf.netvolley.loadmore;
+package com.diagramsf.volleynet.loadmore;
 
 import com.diagramsf.BasePresenter;
 import com.diagramsf.BaseView;
-import com.diagramsf.net.NetRequest;
-import com.diagramsf.netvolley.NetResultFactory;
+import com.diagramsf.net.NetContract;
+import com.diagramsf.volleynet.NetResultFactory;
+
+import java.util.Map;
 
 /**
  * Created by Diagrams on 2016/4/21 11:25
  */
 public interface LoadmoreContract {
 
-    interface View extends BaseView<BasePresenter>{
+    interface View extends BaseView<BasePresenter> {
         /** 显示正在进行加载更多的进度条 */
         void showLoadMoreProgress();
 
@@ -18,14 +20,14 @@ public interface LoadmoreContract {
         void hideLoadMoreProgress();
 
         /** 加载更多请求失败回调 */
-        void loadMoreFail(NetRequest.NetFailResult result);
+        void loadMoreFail(NetContract.NetFailResult result);
 
         /** 加载更多请求成功回调 */
-        void loadMoreFinish(NetRequest.NetSuccessResult result);
+        void loadMoreFinish(NetContract.NetSuccessResult result);
     }// class end
 
     interface Presenter extends BasePresenter {
-        void doLoadmore(String url, String postData, String cancelTag, NetResultFactory factory);
+        void doLoadmore(String url, Map<String, String> postData, String cancelTag, NetResultFactory factory);
 
         void cancelRequest(String cancelTag);
     }

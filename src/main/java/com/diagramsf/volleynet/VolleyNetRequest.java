@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package com.diagramsf.netvolley.volleyrequest;
+package com.diagramsf.volleynet;
 
 
 import com.android.volley.*;
 import com.android.volley.toolbox.HttpHeaderParser;
-import com.android.volley.toolbox.Volley;
 import com.diagramsf.helpers.AppDebugLog;
 import com.diagramsf.helpers.StringUtils;
-import com.diagramsf.net.NetRequest;
-import com.diagramsf.netvolley.NetResultFactory;
+import com.diagramsf.net.NetContract;
 
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A request for retrieving a {@link NetRequest.NetSuccessResult} response body at a given URL,
- * allowing for an optional {@link NetRequest.NetSuccessResult} to be passed in as part of the
+ * A request for retrieving a {@link NetContract.NetSuccessResult} response body at a given URL,
+ * allowing for an optional {@link NetContract.NetSuccessResult} to be passed in as part of the
  * request body.
  */
-public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
-
+public class VolleyNetRequest extends Request<NetContract.NetSuccessResult> implements NetContract.NetRequest {
     public static final String TAG = "VolleyNetRequest";
 
     /** 请求的编码格式. */
@@ -44,13 +40,11 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
     /**
      * 请求结果的内容类型，{@link com.android.volley.toolbox.JsonRequest}的请求类型是：
      * "application/json; charset=utf-8"
-     * <p/>
+     * <p>
      * Content type for request.
      */
     protected static final String PROTOCOL_CONTENT_TYPE =
             String.format("application/x-www-form-urlencoded; charset=%s", PROTOCOL_CHARSET);
-
-    private final Response.Listener<NetRequest.NetSuccessResult> mListener;
 
     private String mCacheKey;
 
@@ -59,25 +53,34 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
     private Map<String, String> mParams;
     private String mRequestBody;
 
+    private Map<String, String> mHeader;
+
+    private Priority mPriority;
+
+    NetContract.NetResultErrorListener mErrorListener;
+    NetContract.NetResultListener mListener;
 
     /**
      * Creates a new request.
      *
      * @param method        请求方式
      * @param url           请求的URL
-     * @param strRequest    post请求发送的数据
+     * @param strRequest    post数据
+     * @param header        包头信息
+     * @param priority      优先级
      * @param resultFactory 解析JSON数据，生成结果对象的工厂
-     * @param listener      传递正确结果的接口
      * @param errorListener 传递异常信息的接口
      */
     public VolleyNetRequest(int method, String url, String strRequest,
+                            Map<String, String> header,
+                            Request.Priority priority,
                             NetResultFactory resultFactory,
-                            Response.Listener<NetRequest.NetSuccessResult> listener,
                             Response.ErrorListener errorListener) {
         super(method, url, errorListener);
         mResultFactory = resultFactory;
         mRequestBody = strRequest;
-        mListener = listener;
+        mHeader = header;
+        mPriority = priority;
     }
 
     /**
@@ -86,23 +89,39 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
      * @param method        请求方式
      * @param url           请求的URL
      * @param params        post请求发送的数据
+     * @param header        包头信息
+     * @param priority      优先级
      * @param resultFactory 解析JSON数据，生成结果对象的工厂
-     * @param listener      传递正确结果的接口
      * @param errorListener 传递异常信息的接口
      */
     public VolleyNetRequest(int method, String url, Map<String, String> params,
+                            Map<String, String> header,
+                            Request.Priority priority,
                             NetResultFactory resultFactory,
-                            Response.Listener<NetRequest.NetSuccessResult> listener,
                             Response.ErrorListener errorListener) {
         super(method, url, errorListener);
         mResultFactory = resultFactory;
         mParams = params;
-        mListener = listener;
+        mHeader = header;
+        mPriority = priority;
     }
 
     @Override
-    protected void deliverResponse(NetRequest.NetSuccessResult response) {
-        mListener.onResponse(response);
+    protected void deliverResponse(NetContract.NetSuccessResult response) {
+        if (null != mListener) {
+            response.setRequestTag(mDeliverToResultTag);
+            mListener.onSucceed(response);
+        }
+    }
+
+    @Override
+    public void deliverError(VolleyError error) {
+        if (null != mErrorListener) {
+            CommNetFailResult fr = new CommNetFailResult();
+            fr.setDeliverToResultTag(mDeliverToResultTag);
+            fr.setException(error);
+            mErrorListener.onFailed(fr);
+        }
     }
 
     /**
@@ -150,9 +169,18 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
     //获取报头信息
     @Override
     public Map<String, String> getHeaders() throws AuthFailureError {
-        Map<String, String> head = new HashMap<>();
-        head.put("User-Agent", Volley.userAgent);
-        return head;
+        if (null != mHeader) {
+            return mHeader;
+        }
+        return super.getHeaders();
+    }
+
+    @Override
+    public Priority getPriority() {
+        if (null != mPriority) {
+            return mPriority;
+        }
+        return super.getPriority();
     }
 
     //获取Post参数
@@ -164,15 +192,14 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
     //注意：有一种情况会不走此方法直接回传结果的！
     //当只请求缓存，并且没有读取到缓存的时候，会在 CacheDispatch中直接返回结果给回调接口。
     @Override
-    protected Response<NetRequest.NetSuccessResult> parseNetworkResponse(NetworkResponse response) {
+    protected Response<NetContract.NetSuccessResult> parseNetworkResponse(NetworkResponse response) {
         try {
-
-            NetRequest.NetSuccessResult.ResultType type = createAppResultType(response);
+            NetContract.NetSuccessResult.ResultType type = createAppResultType(response);
 
             if (null == mResultFactory) {
                 return Response.success(null, null);
             }
-            NetRequest.NetSuccessResult resultBean = mResultFactory.analysisResult(response.data,
+            NetContract.NetSuccessResult resultBean = mResultFactory.analysisResult(response.data,
                     response.headers);
             if (null == resultBean) {//不需要转换成结果对象，表明此次请求不关注返回的结果，这里直接返回成功，并且结果回调null
                 return Response.success(null, null);
@@ -180,7 +207,7 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
 
             resultBean.setResultType(type);
 
-            Response<NetRequest.NetSuccessResult> resultResponse = Response.success(resultBean,
+            Response<NetContract.NetSuccessResult> resultResponse = Response.success(resultBean,
                     HttpHeaderParser.parseCacheHeaders(response));
             resultResponse.setResultDatLegitimacy(resultBean
                     .checkResultLegitimacy());
@@ -193,11 +220,9 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
         }
     }
 
-    /** 必须去掉 接口版本号字段，否则永远读取不到缓存，因为当接口请求成功后会更新本地保存的接口版本号，这样当再次请求时，CacheKey就变了 */
     @Override
     public String getCacheKey() {
         if (StringUtils.isEmpty(mCacheKey)) {//如果没有额外设置缓存key
-
             String postParam = mRequestBody;//首先取字符串形式的post参数
             if (StringUtils.isEmpty(postParam)) {//如果没有获取到字符串参数，就获取Map类型的Post参数
                 byte[] body = null;
@@ -224,21 +249,59 @@ public class VolleyNetRequest extends Request<NetRequest.NetSuccessResult> {
         }
     }
 
-    //获取结果缓存到本地的键名
-
-    final public void setCacheKey(String cacheKey) {
-        mCacheKey = cacheKey;
-    }
-
     /** 获取请求结果是来自网络还是来自缓存 */
-    private NetRequest.NetSuccessResult.ResultType createAppResultType(NetworkResponse response) {
+    private NetContract.NetSuccessResult.ResultType createAppResultType(NetworkResponse response) {
         boolean isFromCache = response.isFromCache();
         if (isFromCache) {
             AppDebugLog.i(TAG, "结果从缓存来：" + getCacheKey());
-            return NetRequest.NetSuccessResult.ResultType.CATCH;
+            return NetContract.NetSuccessResult.ResultType.CATCH;
         } else {
             AppDebugLog.i(TAG, "结果从网络来：" + getCacheKey());
-            return NetRequest.NetSuccessResult.ResultType.NET;
+            return NetContract.NetSuccessResult.ResultType.NET;
+        }
+    }
+
+    //========================NetContract.NetRequest 接口方法
+    private Object mDeliverToResultTag;
+
+    @Override
+    public void setDeliverToResultTag(Object tag) {
+        mDeliverToResultTag = tag;
+    }
+
+    @Override
+    public void setErrorListener(NetContract.NetResultErrorListener errorListener) {
+        mErrorListener = errorListener;
+    }
+
+    @Override
+    public void setListener(NetContract.NetResultListener listener) {
+        mListener = listener;
+    }
+
+    @Override
+    public void setCacheKey(String cacheKey) {
+        mCacheKey = cacheKey;
+    }
+
+    @Override
+    public void request(@NetContract.Type int type) {
+        switch (type) {
+            case NetContract.ONLY_CACHE:
+                setJustReadCache();
+                break;
+            case NetContract.ONLY_NET_NO_CACHE:
+                setShouldCache(false);
+                break;
+            case NetContract.ONLY_NET_THEN_CACHE:
+                skipCache();
+                break;
+            case NetContract.HTTP_HEADER_CACHE:
+                //Volley默认就是此种方式请求的网络数据
+                break;
+            case NetContract.PRIORITY_CACHE:
+                setReadCacheWithoutTimeLimit();
+                break;
         }
     }
 

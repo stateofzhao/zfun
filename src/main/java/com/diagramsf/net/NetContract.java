@@ -2,7 +2,6 @@ package com.diagramsf.net;
 
 import android.content.Context;
 import android.support.annotation.IntDef;
-import com.diagramsf.exceptions.AppException;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -12,10 +11,10 @@ import java.lang.annotation.RetentionPolicy;
  * <p>
  * Created by Diagrams on 2016/4/20 17:17
  */
-public interface NetRequest {
+public interface NetContract {
 
     /**
-     * 只读取缓存，不考虑缓存是否过期，如果读取不到缓存也会 回调{@link NetResultCallback#onSucceed(NetSuccessResult)}
+     * 只读取缓存，不考虑缓存是否过期，如果读取不到缓存也会 回调{@link NetResultListener#onSucceed(NetSuccessResult)}
      * ，只是结果传递的是null
      */
     int ONLY_CACHE = 1;
@@ -33,35 +32,37 @@ public interface NetRequest {
     @IntDef({ONLY_CACHE, ONLY_NET_NO_CACHE, ONLY_NET_THEN_CACHE, HTTP_HEADER_CACHE, PRIORITY_CACHE})
     @interface Type {}
 
-    /** 执行请求 */
-    void doRequest(@Type int type, Object cancelTag);
+    interface NetRequest {
+        /**
+         * 此值会传递给结果 通过调用{@link NetSuccessResult#getRequestTag()}
+         * 或者{@link NetFailResult#getRequestTag()} 来获取
+         */
+        void setDeliverToResultTag(Object tag);
 
-    /**
-     * 此值会传递给结果 通过调用{@link NetSuccessResult#getRequestTag()}
-     * 或者{@link NetFailResult#getRequestTag()} 来获取
-     */
-    void setDeliverToResultTag(Object tag);
+        /** 失败回调接口 */
+        void setErrorListener(NetResultErrorListener errorListener);
 
-    /** 设置请求完的回调接口 */
-    void setResultCallBack(NetResultCallback callback);
+        /** 成功回调接口 */
+        void setListener(NetResultListener listener);
 
-    /** 设置请求的缓存key */
-    void setCacheKey(String cacheKey);
+        /** 设置请求的缓存key */
+        void setCacheKey(String cacheKey);
 
-    /** 取消请求 */
-    void cancelRequest(Object cancelTag);
+        /** 执行请求 */
+        void request(@Type int type);
+    }//end class NetRequest
 
-    //=================================================================================================
-
-    /** 网络请求结果的回调接口 */
-    interface NetResultCallback {
-
-        /** 网络请求成功回调 */
-        void onSucceed(NetSuccessResult result);
-
+    /** 失败回调接口 */
+    interface NetResultErrorListener {
         /** 网络请求失败回调 */
         void onFailed(NetFailResult fail);
-    }// class NetResultCallback end
+    }//end class NetResultErrorListener
+
+    /** 成功回调接口 */
+    interface NetResultListener {
+        /** 网络请求成功回调 */
+        void onSucceed(NetSuccessResult result);
+    }//end class NetResultListener
 
     /** 网络请求成功的结果 */
     interface NetSuccessResult<T> {
@@ -80,7 +81,7 @@ public interface NetRequest {
         /** 设置数据来源 */
         void setResultType(ResultType resultType);
 
-        /** 设置{@link NetRequest#setResultCallBack(NetResultCallback)} 传递的tag */
+        /** 设置{@link NetRequest#setDeliverToResultTag(Object)} 传递的tag */
         void setRequestTag(Object tag);
 
         /** 获得数据来源类型 */
@@ -96,7 +97,7 @@ public interface NetRequest {
          */
         boolean checkResultLegitimacy();
 
-        T getWrapperResult();
+        T getWrapper();
 
     }//class NetSuccessResult end
 
@@ -104,7 +105,7 @@ public interface NetRequest {
     interface NetFailResult {
 
         /** 设置结果的异常 */
-        void setException(AppException e);
+        void setException(Exception e);
 
         /** 提示异常信息,这个是给用户看的 */
         void toastFailStr(Context context);

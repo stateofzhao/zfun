@@ -7,12 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import com.diagramsf.BasePresenter;
 import com.diagramsf.customview.pullrefresh.PullRefreshLayout;
-import com.diagramsf.net.NetRequest;
-import com.diagramsf.netvolley.NetResultFactory;
-import com.diagramsf.netvolley.loadmore.LoadmoreContract;
-import com.diagramsf.netvolley.loadmore.LoadmorePresenter;
-import com.diagramsf.netvolley.refresh.RefreshContract;
-import com.diagramsf.netvolley.refresh.RefreshPresenter;
+import com.diagramsf.net.NetContract;
+import com.diagramsf.volleynet.NetResultFactory;
+import com.diagramsf.volleynet.loadmore.LoadmoreContract;
+import com.diagramsf.volleynet.loadmore.LoadmorePresenter;
+import com.diagramsf.volleynet.refresh.RefreshContract;
+import com.diagramsf.volleynet.refresh.RefreshPresenter;
 
 /**
  * 下拉刷新和上拉加载更多的模板Fragment,下拉刷新控件是{@link IPullRefreshView} 上拉加载更多控件
@@ -360,7 +360,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     @Override
-    public void loadMoreFail(NetRequest.NetFailResult result) {
+    public void loadMoreFail(NetContract.NetFailResult result) {
         //设置 加载更多状态
         mLoadMoreView.loadMoreFailed();
         mLoadMoreView.loadMoreComplete();
@@ -369,7 +369,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     @Override
-    public void loadMoreFinish(NetRequest.NetSuccessResult result) {
+    public void loadMoreFinish(NetContract.NetSuccessResult result) {
         //更新页数
         mOffset += mLimit;
         mLoadMoreView.loadMoreComplete();
@@ -405,13 +405,13 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     @Override
-    public final void showFirstCacheResult(NetRequest.NetSuccessResult result) {
+    public final void showFirstCacheResult(NetContract.NetSuccessResult result) {
         onFirstCacheLoadResult(result);
         mOffset += mLimit;//更新页数
     }
 
     @Override
-    public final void showFirstCacheFail(NetRequest.NetFailResult failResult) {
+    public final void showFirstCacheFail(NetContract.NetFailResult failResult) {
         onFirstCacheLoadFail(failResult);
     }
 
@@ -421,18 +421,18 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     @Override
-    public void showFirstNetResult(NetRequest.NetSuccessResult result) {
+    public void showFirstNetResult(NetContract.NetSuccessResult result) {
         onFirstNetLoadResult(result);
     }
 
     @Override
-    public void showFirstNetFail(NetRequest.NetFailResult failResult) {
+    public void showFirstNetFail(NetContract.NetFailResult failResult) {
         onFirstNetLoadFail(failResult);
     }
 
 
     @Override
-    public void showRefreshResult(NetRequest.NetSuccessResult result) {
+    public void showRefreshResult(NetContract.NetSuccessResult result) {
         //回调结果
         boolean childIntercept = onRefreshResult(result);
         //设置页数
@@ -444,7 +444,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     @Override
-    public void showRefreshFail(NetRequest.NetFailResult failResult) {
+    public void showRefreshFail(NetContract.NetFailResult failResult) {
         //回调结果
         boolean childIntercept = onRefreshFail(failResult);
         //停止刷新状态
@@ -507,7 +507,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     }
 
     /** 首次加载缓存数据失败(证明请求到了本地缓存，并且也读取成功了，但是解析缓存数据的时候挂掉了) */
-    protected void onFirstCacheLoadFail(NetRequest.NetFailResult failResult) {
+    protected void onFirstCacheLoadFail(NetContract.NetFailResult failResult) {
         onFirstCacheLoadFail();
     }
 
@@ -557,7 +557,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     /**
      * 首次加载缓存数据成功
      */
-    public abstract void onFirstCacheLoadResult(NetRequest.NetSuccessResult result);
+    public abstract void onFirstCacheLoadResult(NetContract.NetSuccessResult result);
 
     /** 首次加载缓存数据失败 */
     public abstract void onFirstCacheLoadFail();
@@ -565,12 +565,12 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
     /**
      * 首次加载网络数据成功
      */
-    public abstract void onFirstNetLoadResult(NetRequest.NetSuccessResult result);
+    public abstract void onFirstNetLoadResult(NetContract.NetSuccessResult result);
 
     /**
      * 首次加载网络数据失败
      */
-    public abstract void onFirstNetLoadFail(NetRequest.NetFailResult failResult);
+    public abstract void onFirstNetLoadFail(NetContract.NetFailResult failResult);
 
     /**
      * 下拉刷新加载数据成功
@@ -579,7 +579,7 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
      * true 表示不调用{@link PullRefreshLayout#stopRefresh()}，需要自己在合适的时机调用 {@link PullRefreshLayout#stopRefresh()}
      * 来结束刷新状态
      */
-    public abstract boolean onRefreshResult(NetRequest.NetSuccessResult result);
+    public abstract boolean onRefreshResult(NetContract.NetSuccessResult result);
 
     /**
      * 下拉刷新加载数据失败
@@ -588,12 +588,12 @@ public abstract class AbsRLFragmentImpl implements AbsRLFragmentI, RefreshContra
      * true 表示不调用{@link PullRefreshLayout#stopRefresh()}，需要自己在合适的时机调用 {@link PullRefreshLayout#stopRefresh()}
      * 来结束刷新状态
      */
-    public abstract boolean onRefreshFail(NetRequest.NetFailResult failResult);
+    public abstract boolean onRefreshFail(NetContract.NetFailResult failResult);
 
     /** 上拉加载更多成功 */
-    public abstract void onLoadMoreResult(NetRequest.NetSuccessResult result);
+    public abstract void onLoadMoreResult(NetContract.NetSuccessResult result);
 
     /** 上拉加载更多失败 */
-    public abstract void onLoadMoreFail(NetRequest.NetFailResult failResult);
+    public abstract void onLoadMoreFail(NetContract.NetFailResult failResult);
 
 }

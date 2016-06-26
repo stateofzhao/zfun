@@ -67,7 +67,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      * 支持的 request 方法。
      * <p>
      * <p>
-     * <p>
      * Supported request methods.
      */
     public interface Method {

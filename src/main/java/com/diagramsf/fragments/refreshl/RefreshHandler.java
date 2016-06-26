@@ -1,7 +1,7 @@
 package com.diagramsf.fragments.refreshl;
 
 import android.support.annotation.NonNull;
-import com.diagramsf.netvolley.refresh.RefreshContract;
+import com.diagramsf.volleynet.refresh.RefreshContract;
 
 import java.util.Map;
 

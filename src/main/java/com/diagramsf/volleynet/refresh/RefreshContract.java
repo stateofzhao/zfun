@@ -1,9 +1,9 @@
-package com.diagramsf.netvolley.refresh;
+package com.diagramsf.volleynet.refresh;
 
 import com.diagramsf.BasePresenter;
 import com.diagramsf.BaseView;
-import com.diagramsf.net.NetRequest;
-import com.diagramsf.netvolley.NetResultFactory;
+import com.diagramsf.net.NetContract;
+import com.diagramsf.volleynet.NetResultFactory;
 
 import java.util.Map;
 
@@ -16,25 +16,25 @@ public interface RefreshContract {
     interface SimpleView extends BaseView<BasePresenter> {
 
         /** 显示缓存请求结果 */
-        void showFirstCacheResult(NetRequest.NetSuccessResult result);
+        void showFirstCacheResult(NetContract.NetSuccessResult result);
 
         /** 显示缓存请求失败 */
-        void showFirstCacheFail(NetRequest.NetFailResult failResult);
+        void showFirstCacheFail(NetContract.NetFailResult failResult);
 
         /** 显示首次请求缓存时没有读取到缓存 */
         void showFirstNoCache();
 
         /** 显示网络请求结果 */
-        void showFirstNetResult(NetRequest.NetSuccessResult result);
+        void showFirstNetResult(NetContract.NetSuccessResult result);
 
         /** 显示网络请求失败 */
-        void showFirstNetFail(NetRequest.NetFailResult failResult);
+        void showFirstNetFail(NetContract.NetFailResult failResult);
 
         /** 显示刷新结果 */
-        void showRefreshResult(NetRequest.NetSuccessResult result);
+        void showRefreshResult(NetContract.NetSuccessResult result);
 
         /** 显示刷新失败结果 */
-        void showRefreshFail(NetRequest.NetFailResult failResult);
+        void showRefreshFail(NetContract.NetFailResult failResult);
 
     }// class end
 
@@ -61,7 +61,7 @@ public interface RefreshContract {
      * 下拉刷新只有两个步骤：
      * 1.首次加载数据（可以是来自缓存也可以是来自网络，通过{@link #firstLoadData(boolean, String, Map, String, NetResultFactory)}
      * 中的第一个参数控制）；
-     * 2.执行下拉刷新请求数据{@link #doRefresh(String, String, String, NetResultFactory)}
+     * 2.执行下拉刷新请求数据{@link #doRefresh(String, Map, String, NetResultFactory)}
      * <p/>
      */
     interface Presenter extends BasePresenter{
@@ -75,7 +75,7 @@ public interface RefreshContract {
                            NetResultFactory factory);
 
         /** 执行刷新请求 */
-        void doRefresh(String url, String postData, String cancelTag,
+        void doRefresh(String url,Map<String,String> postData, String cancelTag,
                        NetResultFactory factory);
 
         void cancelRequest(String cancelTag);

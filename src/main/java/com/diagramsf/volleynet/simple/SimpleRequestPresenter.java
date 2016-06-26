@@ -1,9 +1,8 @@
-package com.diagramsf.netvolley.simple;
+package com.diagramsf.volleynet.simple;
 
-import com.diagramsf.net.NetRequest;
-import com.diagramsf.netvolley.NetResultFactory;
-import com.diagramsf.netvolley.RequestManager;
-import com.diagramsf.netvolley.netrepository.NetRequestImpl;
+import com.diagramsf.net.NetContract;
+import com.diagramsf.volleynet.NetResultFactory;
+import com.diagramsf.volleynet.NetRequestManager;
 
 import java.util.Map;
 
@@ -13,9 +12,11 @@ import java.util.Map;
 public class SimpleRequestPresenter implements SimpleContract.Presenter {
 
     private SimpleContract.View mView;
+    private NetRequestManager mNetRequestManager;
 
-    public SimpleRequestPresenter(SimpleContract.View view) {
+    public SimpleRequestPresenter(SimpleContract.View view, NetRequestManager requestManager) {
         mView = view;
+        mNetRequestManager = requestManager;
     }
 
     @Override
@@ -34,8 +35,7 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
         if (null != mView) {
             mView.onShowCacheLoadProgress();
         }
-        NetRequest request = createRequest(url, postData, cancelTag,factory, false);
-        request.doRequest(NetRequest.ONLY_CACHE, cancelTag);
+        requestData(url, postData, cancelTag, factory, false,NetContract.ONLY_CACHE);
     }
 
     @Override
@@ -45,17 +45,16 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
             mView.onShowNetProgress();
         }
 
-        NetRequest request = createRequest(url, postData,cancelTag, factory, true);
         if (saveCache) {
-            request.doRequest(NetRequest.ONLY_NET_THEN_CACHE, cancelTag);
+            requestData(url, postData, cancelTag, factory, true,NetContract.ONLY_NET_THEN_CACHE);
         } else {
-            request.doRequest(NetRequest.ONLY_NET_NO_CACHE, cancelTag);
+            requestData(url, postData, cancelTag, factory, true,NetContract.ONLY_NET_NO_CACHE);
         }
     }
 
     @Override
     public void cancelCacheRequest(String cancelTag) {
-        RequestManager.getInstance().cancelRequest(cancelTag);
+        mNetRequestManager.cancel(cancelTag);
         if (null != mView) {
             mView.onHideCacheLoadProgress();
         }
@@ -63,13 +62,13 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
 
     @Override
     public void cancelNetRequest(String cancelTag) {
-        RequestManager.getInstance().cancelRequest(cancelTag);
+        mNetRequestManager.cancel(cancelTag);
         if (null != mView) {
             mView.onHideNetProgress();
         }
     }
 
-    public void onResultFromCache(NetRequest.NetSuccessResult result) {
+    public void onResultFromCache(NetContract.NetSuccessResult result) {
         if (null != mView) {
             mView.onHideCacheLoadProgress();
             mView.onShowCacheResult(result);
@@ -83,33 +82,42 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
         }
     }
 
-    public void onFailFromCache(NetRequest.NetFailResult result) {
+    public void onFailFromCache(NetContract.NetFailResult result) {
         if (null != mView) {
             mView.onHideCacheLoadProgress();
             mView.onShowCacheFail(result);
         }
     }
 
-    public void onResultFromNet(NetRequest.NetSuccessResult result) {
+    public void onResultFromNet(NetContract.NetSuccessResult result) {
         if (null != mView) {
             mView.onHideNetProgress();
             mView.onShowNetResult(result);
         }
     }
 
-    public void onFailFromNet(NetRequest.NetFailResult result) {
+    public void onFailFromNet(NetContract.NetFailResult result) {
         if (null != mView) {
             mView.onHideNetProgress();
             mView.onShowNetFail(result);
         }
     }
 
-    private NetRequest createRequest(String url, Map<String, String> postData,String cancelTag,
-                                     NetResultFactory factory, final boolean fromNet) {
-        NetRequest request = new NetRequestImpl(url, postData, factory);
-        request.setResultCallBack(new NetRequest.NetResultCallback() {
+    private void requestData(String url, Map<String, String> postData, String cancelTag,
+                             NetResultFactory factory, final boolean fromNet, @NetContract.Type int type) {
+        mNetRequestManager.load(url).postData(postData).tag(cancelTag).type(type)
+                .errorListener(new NetContract.NetResultErrorListener() {
+                    @Override
+                    public void onFailed(NetContract.NetFailResult fail) {
+                        if (fromNet) {
+                            onFailFromNet(fail);
+                        } else {
+                            onFailFromCache(fail);
+                        }
+                    }
+                }).listener(new NetContract.NetResultListener() {
             @Override
-            public void onSucceed(NetRequest.NetSuccessResult result) {
+            public void onSucceed(NetContract.NetSuccessResult result) {
                 if (fromNet) {
                     onResultFromNet(result);
                 } else {
@@ -120,18 +128,7 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
                     }
                 }
             }
-
-            @Override
-            public void onFailed(NetRequest.NetFailResult failResult) {
-                if (fromNet) {
-                    onFailFromNet(failResult);
-                } else {
-                    onFailFromCache(failResult);
-                }
-            }
-        });//class end
-        request.setDeliverToResultTag(cancelTag);
-        return request;
+        }).into(factory);
     }
 
 }

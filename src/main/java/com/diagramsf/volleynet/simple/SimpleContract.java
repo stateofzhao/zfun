@@ -1,9 +1,9 @@
-package com.diagramsf.netvolley.simple;
+package com.diagramsf.volleynet.simple;
 
 import com.diagramsf.BasePresenter;
 import com.diagramsf.BaseView;
-import com.diagramsf.net.NetRequest;
-import com.diagramsf.netvolley.NetResultFactory;
+import com.diagramsf.net.NetContract;
+import com.diagramsf.volleynet.NetResultFactory;
 
 import java.util.Map;
 
@@ -21,13 +21,13 @@ public interface SimpleContract {
         void onHideCacheLoadProgress();
 
         /** 显示 缓存加载结果 */
-        void onShowCacheResult(NetRequest.NetSuccessResult result);
+        void onShowCacheResult(NetContract.NetSuccessResult result);
 
         /** 没有读取到缓存（没有缓存） */
         void onShowNoCache();
 
         /** 读取缓存失败 */
-        void onShowCacheFail(NetRequest.NetFailResult result);
+        void onShowCacheFail(NetContract.NetFailResult result);
 
         //----------------------------------------------
 
@@ -38,10 +38,10 @@ public interface SimpleContract {
         void onHideNetProgress();
 
         /** 显示 网络加载结果 */
-        void onShowNetResult(NetRequest.NetSuccessResult result);
+        void onShowNetResult(NetContract.NetSuccessResult result);
 
         /** 显示 网络加载失败结果 */
-        void onShowNetFail(NetRequest.NetFailResult result);
+        void onShowNetFail(NetContract.NetFailResult result);
     }//class end
 
 
@@ -58,7 +58,7 @@ public interface SimpleContract {
         }
 
         @Override
-        public void onShowCacheResult(NetRequest.NetSuccessResult result) {
+        public void onShowCacheResult(NetContract.NetSuccessResult result) {
 
         }
 
@@ -68,7 +68,7 @@ public interface SimpleContract {
         }
 
         @Override
-        public void onShowCacheFail(NetRequest.NetFailResult result) {
+        public void onShowCacheFail(NetContract.NetFailResult result) {
 
         }
 
