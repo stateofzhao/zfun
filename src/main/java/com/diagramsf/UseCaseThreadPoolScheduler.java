@@ -37,10 +37,10 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
     }
 
     @Override
-    public void execute(UseCase useCase, Object tag) {
+    public void execute(Runnable task, Object tag) {
         Message msg = Message.obtain(mMainHandler);
         msg.what = ADD;
-        msg.obj = new RunnableHolder(runnable, tag);
+        msg.obj = new RunnableHolder(task, tag);
         msg.sendToTarget();
     }
 
@@ -64,26 +64,24 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
     }
 
     private void performSubmit(Runnable runnable, Object tag) {
-        if (null == tag) {
-            throw new IllegalArgumentException("tag must not be null!");
-        }
         Future future = mExecutorService.submit(runnable);
-        List<Future> futures = mFutureMap.get(tag);
-        if (null == futures) {
-            futures = new ArrayList<>();
+        if(null != tag) {
+            List<Future> futures = mFutureMap.get(tag);
+            if (null == futures) {
+                futures = new ArrayList<>();
+            }
+            futures.add(future);
+            mFutureMap.put(tag, futures);
         }
-        futures.add(future);
-        mFutureMap.put(tag, futures);
     }
 
     private void performCancel(Object tag) {
-        if (null == tag) {
-            throw new IllegalArgumentException("tag must not be null!");
-        }
-        List<Future> futures = mFutureMap.remove(tag);
-        if (null != futures) {
-            for (Future future : futures) {
-                future.cancel(false);
+        if(null != tag){
+            List<Future> futures = mFutureMap.remove(tag);
+            if (null != futures) {
+                for (Future future : futures) {
+                    future.cancel(false);
+                }
             }
         }
     }
@@ -147,11 +145,11 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
         }
     }// end InternalHandler
 
-    private static class UseCaseRunnable implements Runnable {
-        public UseCase runnable;
+    private static class RunnableHolder implements Runnable {
+        public Runnable runnable;
         public Object tag;
 
-        public UseCaseRunnable(UseCase runnable, Object tag) {
+        public RunnableHolder(Runnable runnable, Object tag) {
             this.runnable = runnable;
             this.tag = tag;
         }
