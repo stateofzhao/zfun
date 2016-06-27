@@ -17,12 +17,11 @@ import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 
 /**
  * 执行异步任务的线程池，暂不支持取消任务.
- * <p/>
+ * <p>
  * 调用 {@link #submitTaskForMainThreadCallback(Priority, Callable, ResultCallback)} 添加任务
- * <p/>
+ * <p>
  */
 public class MyExecutor {
-
     private final static String TAG = "MyExecutor";
 
     /** 执行后台任务的优先级 */
@@ -42,16 +41,9 @@ public class MyExecutor {
 
     private static MyExecutor mSingleton;// 单例
     private static InternalHandler mInternalHandler;// 回调主线程的Handler
-
-    // 不能够被线程池处理时的 相应程序，例如
-    // 当队列容量达到了上线但是仍然
-    // 提交了任务，就会被它接受处理
-    private final RejectedExecutionHandler mDefaultHandler;
-    private final PriorityBlockingQueue<Runnable> mQueue; // 线程池的阻塞队列
     private final ExecutorService mExecutor;// 线程池
 
     private final ReferenceQueue<Object> mReferenceQueue;// 弱引用回收队列
-    private final ClearThread mClearThread;// 守护线程，用来清除 回调消失后对应的任务
 
     // 暂时没用，后期用来取消请求用的
     private Map<WeakReference<Callable>, MyFutureTask> mTasks;
@@ -60,7 +52,6 @@ public class MyExecutor {
      * 执行完结果回调接口，在主线程中执行
      */
     public interface ResultCallback<T> {
-
         /**
          * 取消任务回调
          *
@@ -74,7 +65,7 @@ public class MyExecutor {
          * @param result 任务执行结果
          */
         void onComplete(T result);
-    }
+    }//class ResultCallback end
 
     static {
         mInternalHandler = new InternalHandler();
@@ -83,42 +74,34 @@ public class MyExecutor {
     private MyExecutor() {
         mTasks = new HashMap<>();
 
-        mDefaultHandler = new Utils.AbortPolicy();
-        mQueue = new PriorityBlockingQueue<>();
+        // 不能够被线程池处理时的额外处理者，例如
+        // 当队列容量达到了上限但是仍然
+        // 提交了任务，就会被它接受处理
+        RejectedExecutionHandler defaultHandler = new Utils.AbortPolicy();
+        //线程池的阻塞队列
+        PriorityBlockingQueue<Runnable> queue = new PriorityBlockingQueue<>();
+        //实例化线程池
         mExecutor = new MyExecutorService(CORE_THREAD, MAX_THREAD, KEEP_TIME,
-                TimeUnit.MILLISECONDS, mQueue, new Utils.MyThreadFactory(),
-                mDefaultHandler);
+                TimeUnit.MILLISECONDS, queue, new Utils.MyThreadFactory(),
+                defaultHandler);
 
         mReferenceQueue = new ReferenceQueue<>();
-        mClearThread = new ClearThread(mReferenceQueue);
-        mClearThread.start();
+
+        // 守护线程，用来清除 回调消失后对应的任务
+        ClearThread clearThread = new ClearThread(mReferenceQueue);
+        clearThread.start();
     }
 
+    /** 单例 */
     public static MyExecutor newInstance() {
         if (null == mSingleton) {
-
             synchronized (MyExecutor.class) {
                 if (null == mSingleton) {
                     mSingleton = new MyExecutor();
                 }
             }
         }
-
         return mSingleton;
-    }
-
-    private static void postResult(MyCallable<?> myCallable) {
-        Message msg = Message.obtain(mInternalHandler);
-        msg.what = MESSAGE_POST_RESULT;
-        msg.obj = myCallable;
-        msg.sendToTarget();
-    }
-
-    private static void postCancel(MyCallable<?> myCallable) {
-        Message msg = Message.obtain(mInternalHandler);
-        msg.what = MESSAGE_POST_CANCEL;
-        msg.obj = myCallable;
-        msg.sendToTarget();
     }
 
     /**
@@ -140,11 +123,24 @@ public class MyExecutor {
         MyFutureTask<T> myTask = new MyFutureTask<>(myCallable);
         mTasks.put(new WeakReference<Callable>(task), myTask);
         mExecutor.execute(myTask);
-
     }
 
     public void cancelTask(Callable task) {
         Utils.checkMain();
+    }
+
+    private static void postResult(MyCallable<?> myCallable) {
+        Message msg = Message.obtain(mInternalHandler);
+        msg.what = MESSAGE_POST_RESULT;
+        msg.obj = myCallable;
+        msg.sendToTarget();
+    }
+
+    private static void postCancel(MyCallable<?> myCallable) {
+        Message msg = Message.obtain(mInternalHandler);
+        msg.what = MESSAGE_POST_CANCEL;
+        msg.obj = myCallable;
+        msg.sendToTarget();
     }
 
     /**
@@ -153,7 +149,7 @@ public class MyExecutor {
      * {@link MyExecutor} 中，所有内部类都是 静态类。比如在
      * 本handler类中，由于需要主线程来处理接收到的消息，那么在未处理完时，Message中所有的引用都不会释放，但是
      * {@link MyExecutor}没有被强引用，它可以在不需要时 释放掉内存。
-     * <p/>
+     * <p>
      * 加入了 对Callback的弱引用后，参照 PICASSO中的做法没有把 弱引用队列声明成
      * static，所以每个task在Handler中处理完后 才会不再引用 {@link MyExecutor}
      */
@@ -223,7 +219,6 @@ public class MyExecutor {
             execute(futureTask);
             return futureTask;
         }
-
     }
 
     /**
@@ -232,7 +227,6 @@ public class MyExecutor {
      */
     private static class MyFutureTask<T> extends FutureTask<T> implements
             Comparable<MyFutureTask<T>> {
-
         private MyCallable<T> myCallable;// 引用 MyCallable 是为了进行优先级比较
 
         public MyFutureTask(MyCallable<T> callable) {
@@ -240,14 +234,13 @@ public class MyExecutor {
 
             this.myCallable = callable;
             myCallable.myFutureTask = this;
-
         }
 
-        // 在这里需要注意下，当futureTask 标记为
-        // isDone状态时会调用这个方法，cancel(boolean)掉FutureTask也会把FutureTask标记为isDone状态，也就是也会回调这个方法
+        // 在这里需要注意下，当futureTask 标记为isDone状态时会调用这个方法，
+        // cancel(boolean)掉FutureTask也会把FutureTask标记为isDone状态，
+        // 也就是也会回调这个方法
         @Override
         protected void done() {
-
             CallbackWeakReference<ResultCallback<T>> callback_ref = myCallable.callback_ref;
             if (null == callback_ref) {// 没有回调接口，直接返回
                 return;
@@ -298,22 +291,23 @@ public class MyExecutor {
             Priority p1 = myCallable.getPriority();
             Priority p2 = another.myCallable.getPriority();
 
-            // 在这里说明一下， 相减的地方调换下位置，最终结果不变，这样写只是为了减少 排序需要的时间
+            // 当两个对象进行比较时，返回0代表它们相等；
+            // 返回值<0（如例子中返回-1）代表this排在被比较对象之前；
+            // 反之代表在被比较对象之后
             return (p1 == p2 ? myCallable.getSequence()
                     - another.myCallable.getSequence() : p2.ordinal()
                     - p1.ordinal());
         }
 
-    }
+    }//end MyFutureTask class
 
     /**
      * 具体执行任务的 Callable ,泛型 T 表示任务执行完生成的结果类型 <br>
-     * <p/>
+     * <p>
      * 把通过 {@link MyExecutor#submitTaskForMainThreadCallback(Priority, Callable, ResultCallback)}
      * 传递的任务，重新封装一下，方便内部处理.
      */
     private static class MyCallable<T> implements Callable<T> {
-
         private Priority priority;
         private int sequence;
 
@@ -339,7 +333,6 @@ public class MyExecutor {
                 this.callback_ref = new CallbackWeakReference<>(
                         this, callback, myExecutor.mReferenceQueue);
             }
-
         }
 
         public Priority getPriority() {
@@ -352,7 +345,6 @@ public class MyExecutor {
 
         @Override
         public T call() throws Exception {
-
             //如果原task已经被释放了，标记本Future为cancel状态。
             Callable<T> real = realTask_ref.get();
             if (null == real) {
@@ -378,7 +370,6 @@ public class MyExecutor {
      * {@link CallbackWeakReference#myCallable},cancel掉任务，达到自动检测 取消不需要的任务。
      */
     final static class CallbackWeakReference<M> extends WeakReference<M> {
-
         MyCallable myCallable; // 弱引用中 额外缓存的字段，当本弱引用类引用的对象被回收后，用来清理资源的。
 
         public CallbackWeakReference(MyCallable myCallable, M r,
@@ -386,12 +377,10 @@ public class MyExecutor {
             super(r, q);
             this.myCallable = myCallable;
         }
+    }//end CallbackWeakReference class
 
-    }
-
-    /** 守护线程,当主线程结束后 */
+    /** 守护线程,当主线程结束后自己会结束掉 */
     final static class ClearThread extends Thread {
-
         ReferenceQueue<Object> referenceQueue;
 
         public ClearThread(ReferenceQueue<Object> referenceQueue) {
@@ -403,9 +392,7 @@ public class MyExecutor {
         @Override
         public void run() {
             Process.setThreadPriority(THREAD_PRIORITY_BACKGROUND);
-
             while (true) {
-
                 try {
                     CallbackWeakReference<?> ref = (CallbackWeakReference<?>) referenceQueue
                             .remove();// 这个是阻塞方法，当没有值时，会让线程wait()
@@ -413,7 +400,6 @@ public class MyExecutor {
                     msg.what = MESSAGE_DO_CANCEL;
                     msg.obj = ref.myCallable;
                     msg.sendToTarget();
-
                 } catch (InterruptedException e) {// 线程被终止，应该是JVM完全退出了
                     e.printStackTrace();
                     break;
@@ -428,11 +414,10 @@ public class MyExecutor {
                     });
                     break;
                 }
-
             }
         }
 
-    }
+    }//end ClearThread class
 
     // Comparator 是一种策略模式（strategy design pattern），在外部定义比较方式，比较灵活
     // private class MyFutureTaskCompare implements
@@ -445,4 +430,4 @@ public class MyExecutor {
     //
     // }
 
-}
+}//class MyExecutor end
