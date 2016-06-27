@@ -34,7 +34,7 @@ import java.util.Map;
  * 如果只是默认配置，直接调用{@link NetRequestManager#with(Context)}来实例化即可；
  * 如果需要自定义参数配置，那么需要自己调用{@link Builder#build()}来构建Volley，之后保存构建的Volley。
  * <p>
- * ===仿照Picasso的API方式（采用Build模式）来实现
+ * 仿照Picasso的API方式（采用Build模式）来实现
  */
 public class NetRequestManager {
     private static volatile NetRequestManager singleton;

@@ -14,13 +14,11 @@ import android.text.style.ForegroundColorSpan;
 import java.io.*;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -28,9 +26,9 @@ import java.util.regex.Pattern;
  */
 @SuppressLint("SimpleDateFormat")
 public class StringUtils {
-
     public static final String SCHEME_HTTP = "http";
     public static final String SCHEME_HTTPS = "https";
+    public static final String PROTOCOL_CHARSET = "utf-8";
 
     private final static Pattern email = Pattern
             .compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
@@ -41,9 +39,9 @@ public class StringUtils {
      * @return true 是空字符串；false others
      */
     public static boolean isEmpty(String input) {
-        if (input == null || "".equals(input) || "null".equalsIgnoreCase(input))
+        if (input == null || "".equals(input) || "null".equalsIgnoreCase(input)) {
             return true;
-
+        }
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
             if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
@@ -198,7 +196,6 @@ public class StringUtils {
                         utfString.substring(i + 2, i + 6), 16));
             }
         }
-
         return sb.toString();
     }
 
@@ -218,7 +215,6 @@ public class StringUtils {
                 || lastName.equalsIgnoreCase(".jepg")
                 || lastName.equalsIgnoreCase(".png")
                 || lastName.equalsIgnoreCase(".webp");
-
     }
 
     /**
@@ -255,9 +251,7 @@ public class StringUtils {
         if (str.trim().length() < subLength) {
             return str;
         }
-
         String tmp = str.substring(0, subLength);
-
         return tmp + "...";
     }
 
@@ -266,7 +260,6 @@ public class StringUtils {
         html = html.replace("&nbsp;&nbsp;", "\t");// 替换跳格
         html = html.replace("&nbsp;", " ");// 替换空格
         html = html.replace("&lt;", "<");
-
         html = html.replaceAll("&gt;", ">");
         return html;
     }
@@ -275,11 +268,9 @@ public class StringUtils {
     @SuppressLint("DefaultLocale")
     public static SpannableString getHighlightShow(String[] keywords,
                                                    String sourceStr) {
-
         if (keywords == null || keywords.length == 0) {
             return new SpannableString(sourceStr);
         }
-
         String copySourceStrLower = sourceStr.toLowerCase();
         List<StringChangeColorHolder> groupChangeList = new ArrayList<StringChangeColorHolder>(
                 keywords.length);
@@ -295,7 +286,6 @@ public class StringUtils {
             groupChangeList.add(oneHolder);
 
         }
-
         return changeStrPositionColor(sourceStr,
                 groupChangeList);
     }
@@ -308,7 +298,6 @@ public class StringUtils {
      */
     private static Integer[] checkPointStrPosition(String sourceStr,
                                                    String pointStr) {
-
         List<Integer> result_list = new ArrayList<>();
         String copyStr = sourceStr;
 
@@ -334,7 +323,6 @@ public class StringUtils {
      */
     private static SpannableString changeStrPositionColor(String sourceStr,
                                                           List<StringChangeColorHolder> groupChangeList) {
-
         SpannableString sp = new SpannableString(sourceStr);
 
         for (StringChangeColorHolder one : groupChangeList) {
@@ -391,7 +379,6 @@ public class StringUtils {
      * @param wei 要保留的位数
      */
     public static String baoliuwei(double d, int wei) {
-
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < wei; i++) {
             sb.append("0");
@@ -448,6 +435,59 @@ public class StringUtils {
         if (null == appInfo || null == appInfo.metaData)
             return -1;
         return appInfo.metaData.getInt(metaKey);
+    }
+
+    /** 将 Map 转换成字符串 ，会使用{@link URLEncoder}来编码Map中的key和value */
+    public static String changeMapParamToStr(Map<String, String> params,
+                                             String paramsEncoding) {
+        StringBuilder encodedParams = new StringBuilder();
+        try {
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                encodedParams.append(URLEncoder.encode(entry.getKey(),
+                        paramsEncoding));
+                encodedParams.append('=');
+                encodedParams.append(URLEncoder.encode(entry.getValue(),
+                        paramsEncoding));
+                encodedParams.append('&');
+            }
+            return encodedParams.toString();
+        } catch (UnsupportedEncodingException uee) {
+            throw new RuntimeException("Encoding not supported: "
+                    + paramsEncoding, uee);
+        }
+    }
+
+
+    /** 将PostData 转换成Map */
+    public static Map<String, String> changePostDataToMap(String postData) {
+        if (StringUtils.isEmpty(postData)) {
+            return null;
+        }
+        Map<String, String> result = new HashMap<>();
+        String[] params = postData.split("\\&");
+        for (String str : params) {
+            // 这里要明白一点： ss="" ,这个形式返回的oneParam的length也是1
+            String[] oneParam = str.split("\\=");
+            result.put(oneParam[0], oneParam[1]);
+        }
+        return result;
+    }
+
+    /**
+     * 去掉PostData中的版本控制号
+     *
+     * @param orangePostData 原始postData
+     * @param versionName    中的版本对应的名称
+     *
+     * @return 去除版本号后的postData
+     */
+    public static String deletVersionParam(String orangePostData, String versionName) {
+        Map<String, String> postMap = changePostDataToMap(orangePostData);
+        if (null == postMap) {
+            return null;
+        }
+        postMap.remove(versionName);
+        return changeMapParamToStr(postMap, PROTOCOL_CHARSET);
     }
 
 }
