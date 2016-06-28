@@ -6,7 +6,7 @@ package com.diagramsf;
 public class UseCaseTestTask extends UseCase<UseCaseTestTask.Request, UseCaseTestTask.Response, UseCaseTestTask.ErrorResponse> {
 
     @Override
-    void execute(Request requestValue) {
+    public void execute(Request requestValue) {
         try {
             //模拟耗时任务
             Thread.sleep(2000);
@@ -23,7 +23,7 @@ public class UseCaseTestTask extends UseCase<UseCaseTestTask.Request, UseCaseTes
 
     public static class ErrorResponse implements UseCase.ErrorValue {}
 
-    public static void get(){
+    public static void get() {
         UseCaseHandler.instance().request(new Request()).error(new ErrorListener() {
             @Override
             public void onError(ErrorValue error) {

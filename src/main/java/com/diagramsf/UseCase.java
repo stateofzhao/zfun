@@ -81,7 +81,7 @@ public abstract class UseCase<T extends UseCase.RequestValue
         execute(requestValue);
     }
 
-    abstract void execute(T requestValue);
+    public abstract void execute(T requestValue);
 
     /** 执行请求的参数 */
     public interface RequestValue {
