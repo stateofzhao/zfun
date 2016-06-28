@@ -3,9 +3,11 @@ package com.diagramsf;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.annotation.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -36,7 +38,7 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
 
     @Override
     public void execute(UseCase useCase) {
-        PriorityRunnable runnable = new PriorityRunnable(useCase,this);
+        PriorityRunnable runnable = new PriorityRunnable(useCase, this);
         Message msg = Message.obtain(mMainHandler);
         msg.what = ADD;
         msg.obj = runnable;
@@ -61,7 +63,6 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
                 if (null != listener) {
                     listener.onSucceed(response);
                 }
-
             }
         };
         msg.sendToTarget();
@@ -98,6 +99,7 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
             List<UseCaseFuture> futures = mFutureMap.remove(tag);
             if (null != futures) {
                 for (UseCaseFuture future : futures) {
+                    //一旦cancel(boolean)可以被取消（返回true），那么会在返回 true之前回调 FutureTask的 done()方法！
                     if (!future.cancel(false)) {
                         UseCase useCase = future.useCase;
                         useCase.cancel();
@@ -107,35 +109,21 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
         }
     }
 
-    private static class PriorityRunnable implements Runnable, Comparable<PriorityRunnable> {
-        public int priority;
+    private void performPostResult(Runnable runnable){
+        runnable.run();
+    }
+
+    private void performPostError(Runnable runnable){
+        runnable.run();
+    }
+
+    private static class PriorityRunnable implements Runnable {
         public UseCase useCase;
         public UseCaseThreadPoolScheduler scheduler;
 
-        public PriorityRunnable(UseCase useCase,UseCaseThreadPoolScheduler scheduler) {
+        public PriorityRunnable(UseCase useCase, UseCaseThreadPoolScheduler scheduler) {
             this.useCase = useCase;
-            this.priority = useCase.getPriority();
             this.scheduler = scheduler;
-        }
-
-        public int getPriority() {
-            return priority;
-        }
-
-        // 当两个对象进行比较时，返回0代表它们相等；
-        // 返回值<0（如例子中返回-1）代表this排在被比较对象之前；
-        // 反之代表在被比较对象之后
-        @Override
-        public int compareTo(@NonNull PriorityRunnable priorityRunnable) {
-            int priorityMe = priority;
-            int priorityOther = priorityRunnable.getPriority();
-            if (priorityMe == priorityOther) {
-                return 0;
-            } else if (priorityMe > priorityOther) {
-                return -1;
-            } else {
-                return 1;
-            }
         }
 
         @Override
@@ -145,7 +133,17 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
 
     }// end PriorityRunnable class
 
-    private static class UseCaseFuture extends FutureTask<Object> {
+    //一个FutureTask 有七中状态，分别为：
+    // NEW(0)、COMPLETING(1)、NORMAL(2)、EXCEPTIONAL(3)、CANCELLED(4)、INTERRUPTING(5)、INTERRUPTED(6)；
+    //当调用FutureTask的cancel(boolean)方法时，会根据 FutureTask当前状态的不同而触发不同的行为：
+    //1.如果当前state不是NEW（当任务正在正常执行时，状态是NEW） 那么就退出方法，返回false，
+    // 这时的任务任务坑是已经完成了 或是被取消了 或是被中断了。
+    //2.如果cancel(boolean)中传递的是true（任务可中断），那么就会把状态置为INTERRUPTING,调用了Thread.interrupt()
+    // 方法后，把状态置为INTERRUPTED(NEW->INTERRUPTING->INTERRUPTED)；
+    // 传递的是false，那么直接将状态置为CANCELLED（NEW->CANCELLED）。
+    //上述第一种情况是不会回调 FutureTask的 done()方法的，第二种情况一定会立即回调 FutureTask的 done()方法的（无论
+    // 任务是否仍然正在执行！一个 FutureTask只会回调一次done()方法，所以执行完后不会再回调done()方法了）。
+    private static class UseCaseFuture extends FutureTask<Object> implements Comparable<UseCaseFuture> {
         UseCase useCase;
         UseCaseThreadPoolScheduler scheduler;
 
@@ -155,13 +153,36 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
             this.scheduler = scheduler;
         }
 
+        public int getPriority() {
+            return useCase.getPriority();
+        }
+
         @Override
         protected void done() {
-            //当任务执行完毕后，需要把任务从mFutureMap中移除，防止内存泄露
-            if (!useCase.isCacnel()) {
-                if (null != useCase.getTag()) {
-                    scheduler.mFutureMap.remove(useCase.getTag());
+            if(isCancelled()){//如果被取消掉了
+                useCase.cancel();//取消掉UseCase的回调
+            }else{//正常执行完任务后，需要把任务从mFutureMap中移除，防止内存泄露
+                if (!useCase.isCacnel()) {
+                    if (null != useCase.getTag()) {
+                        scheduler.mFutureMap.remove(useCase.getTag());
+                    }
                 }
+            }
+        }
+
+        // 当两个对象进行比较时，返回0代表它们相等；
+        // 返回值<0（如例子中返回-1）代表this排在被比较对象之前；
+        // 反之代表在被比较对象之后
+        @Override
+        public int compareTo(UseCaseFuture another) {
+            int priorityMe = getPriority();
+            int priorityOther = another.useCase.getPriority();
+            if (priorityMe == priorityOther) {
+                return 0;
+            } else if (priorityMe > priorityOther) {
+                return -1;
+            } else {
+                return 1;
             }
         }
     }// end UseCaseFuture class
@@ -200,10 +221,10 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
                 scheduler.performCancel(msg.obj);
             } else if (what == POST_RESULT) {
                 Runnable runnable = (Runnable) msg.obj;
-                runnable.run();
+                scheduler.performPostResult(runnable);
             } else if (what == POST_ERROR) {
                 Runnable runnable = (Runnable) msg.obj;
-                runnable.run();
+                scheduler.performPostError(runnable);
             }
         }
     }// end InternalHandler
