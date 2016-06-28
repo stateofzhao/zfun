@@ -1,9 +1,9 @@
-package com.diagramsf.volleynet.loadmore;
+package com.diagramsf.netvolley.loadmore;
 
 import com.diagramsf.BasePresenter;
 import com.diagramsf.BaseView;
 import com.diagramsf.net.NetContract;
-import com.diagramsf.volleynet.NetResultFactory;
+import com.diagramsf.netvolley.NetResultFactory;
 
 import java.util.Map;
 

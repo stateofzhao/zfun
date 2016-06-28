@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.diagramsf.volleynet;
+package com.diagramsf.netvolley;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;

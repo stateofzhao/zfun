@@ -1,8 +1,8 @@
-package com.diagramsf.volleynet.simple;
+package com.diagramsf.netvolley.simple;
 
 import com.diagramsf.net.NetContract;
-import com.diagramsf.volleynet.NetResultFactory;
-import com.diagramsf.volleynet.NetRequestManager;
+import com.diagramsf.netvolley.NetResultFactory;
+import com.diagramsf.netvolley.NetRequestManager;
 
 import java.util.Map;
 

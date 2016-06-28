@@ -1,9 +1,9 @@
-package com.diagramsf.volleynet.loadmore;
+package com.diagramsf.netvolley.loadmore;
 
 import android.support.annotation.NonNull;
 import com.diagramsf.net.NetContract;
-import com.diagramsf.volleynet.NetRequestManager;
-import com.diagramsf.volleynet.NetResultFactory;
+import com.diagramsf.netvolley.NetRequestManager;
+import com.diagramsf.netvolley.NetResultFactory;
 import com.google.common.base.Preconditions;
 
 import java.util.Map;

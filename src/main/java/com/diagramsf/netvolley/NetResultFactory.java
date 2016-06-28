@@ -1,4 +1,4 @@
-package com.diagramsf.volleynet;
+package com.diagramsf.netvolley;
 
 
 import com.diagramsf.net.NetContract;
