@@ -213,7 +213,6 @@ public class MyExecutor {
         @NonNull
         @Override
         public <T> Future<T> submit(Callable<T> task) {
-
             MyFutureTask<T> futureTask = new MyFutureTask<>(
                     (MyCallable<T>) task);
             execute(futureTask);
