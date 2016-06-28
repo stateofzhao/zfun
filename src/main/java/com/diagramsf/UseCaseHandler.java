@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 /**
  * 处理{@link com.diagramsf.UseCase}
- * <p>
+ * <p/>
  * Created by Diagrams on 2016/6/27 11:52
  */
 public class UseCaseHandler {
@@ -13,7 +13,10 @@ public class UseCaseHandler {
 
     private UseCaseScheduler scheduler;
 
-    private UseCaseHandler(UseCaseScheduler scheduler) {
+    private UseCaseHandler() {
+    }
+
+    private void setUseCaseScheduler(UseCaseScheduler scheduler) {
         this.scheduler = scheduler;
     }
 
@@ -21,24 +24,31 @@ public class UseCaseHandler {
         if (null == singleton) {
             synchronized (UseCaseHandler.class) {
                 if (null == singleton) {
-                    singleton = new UseCaseHandler(new UseCaseThreadPoolScheduler());
+                    singleton = new UseCaseHandler();
+                    singleton.setUseCaseScheduler(new UseCaseThreadPoolScheduler());
                 }
             }
         }
         return singleton;
     }
 
-    private void execute(UseCase useCase) {
-
+    public <T extends UseCase.RequestValue> UseCaseDecorator request(T requestValue) {
+        return new UseCaseDecorator(requestValue, this);
     }
 
-    private <T extends UseCase.ResponseValue>
-    void notifyResponse(T responseValue, final UseCase.Listener<T> listener) {
+    public void cancel(Object tag) {
+        scheduler.cancel(tag);
+    }
+
+    private void execute(UseCase useCase) {
+        scheduler.execute(useCase);
+    }
+
+    private <T extends UseCase.ResponseValue> void notifyResponse(T responseValue, @NonNull UseCase.Listener<T> listener) {
         scheduler.notifyResult(responseValue, listener);
     }
 
-    private <E extends UseCase.ErrorValue>
-    void error(E errorValue, final UseCase.ErrorListener<E> listener) {
+    private <E extends UseCase.ErrorValue> void error(E errorValue, @NonNull UseCase.ErrorListener<E> listener) {
         scheduler.error(errorValue, listener);
     }
 
@@ -46,15 +56,19 @@ public class UseCaseHandler {
             implements UseCase.Listener<V> {
         UseCaseHandler handler;
         UseCase.Listener<V> listener;
+        UseCase useCase;
 
-        public ResultListenerWrapper(UseCaseHandler handler, UseCase.Listener<V> listener) {
+        public ResultListenerWrapper(UseCase useCase, UseCaseHandler handler, UseCase.Listener<V> listener) {
             this.handler = handler;
             this.listener = listener;
+            this.useCase = useCase;
         }
 
         @Override
         public void onSucceed(V response) {
-            handler.notifyResponse(response, listener);
+            if (!useCase.isCacnel()) {
+                handler.notifyResponse(response, listener);
+            }
         }
     }//class ResultListenerWrapper end
 
@@ -62,54 +76,63 @@ public class UseCaseHandler {
             UseCase.ErrorListener<E> {
         UseCaseHandler handler;
         UseCase.ErrorListener<E> errorListener;
+        UseCase useCase;
 
-        public ErrorListenerWrapper(UseCaseHandler handler, UseCase.ErrorListener<E> errorListener){
+        public ErrorListenerWrapper(UseCase useCase, UseCaseHandler handler, UseCase.ErrorListener<E> errorListener) {
             this.handler = handler;
             this.errorListener = errorListener;
+            this.useCase = useCase;
         }
 
         @Override
         public void onError(E error) {
-            handler.error(error,errorListener);
+            if (!useCase.isCacnel()) {
+                handler.error(error, errorListener);
+            }
         }
     }// class ErrorListenerWrapper end
 
-    private static class UseCaseCreator<E extends UseCase.ErrorValue, V extends UseCase.ResponseValue,
-            R extends UseCase.RequestValue> {
-        private UseCase.ErrorListener<E> errorListener;
-        private UseCase.Listener<V> listener;
-        private R requestValue;
+    public static class UseCaseDecorator {
+        private UseCase.ErrorListener errorListener;
+        private UseCase.Listener listener;
+        private UseCase.RequestValue requestValue;
         private Object tag;
+        private int priority = UseCase.NORMAL;
 
         private UseCaseHandler handler;
 
-        public UseCaseCreator(R requestValue,UseCaseHandler handler) {
+        public UseCaseDecorator(UseCase.RequestValue requestValue, UseCaseHandler handler) {
             this.requestValue = requestValue;
             this.handler = handler;
         }
 
-        public UseCaseCreator error(UseCase.ErrorListener<E> listener) {
+        public UseCaseDecorator error(UseCase.ErrorListener listener) {
             errorListener = listener;
             return this;
         }
 
-        public UseCaseCreator listener(UseCase.Listener<V> listener) {
+        public UseCaseDecorator listener(UseCase.Listener listener) {
             this.listener = listener;
             return this;
         }
 
-        public UseCaseCreator tag(Object tag) {
+        public UseCaseDecorator tag(Object tag) {
             this.tag = tag;
             return this;
         }
 
-        public void execute(@NonNull UseCase<R, V, E> useCase) {
-            useCase.setRequestValue(requestValue);
-            useCase.setTag(tag);
-            useCase.setListener(new ResultListenerWrapper<>(handler,listener));
-            useCase.setErrorListener(new ErrorListenerWrapper<>(handler,errorListener));
-            handler.execute(useCase);
+        public UseCaseDecorator priority(@UseCase.Type int priority) {
+            this.priority = priority;
+            return this;
         }
 
-    }
+        public void execute(@NonNull UseCase useCase) {
+            useCase.setRequestValue(requestValue);
+            useCase.setTag(tag);
+            useCase.setListener(new ResultListenerWrapper<>(useCase, handler, listener));
+            useCase.setErrorListener(new ErrorListenerWrapper<>(useCase, handler, errorListener));
+            useCase.setPriority(priority);
+            handler.execute(useCase);
+        }
+    } // class UseCaseDecorator end
 }

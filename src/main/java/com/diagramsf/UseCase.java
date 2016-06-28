@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * domain layer 入口，所有对数据层进行操作的行为都需要通过这个来进入
- * <p>
+ * <p/>
  * Created by Diagrams on 2016/6/27 11:31
  */
 public abstract class UseCase<T extends UseCase.RequestValue
@@ -25,6 +25,7 @@ public abstract class UseCase<T extends UseCase.RequestValue
     private Listener<R> listener;
     private ErrorListener<E> errorListener;
     private int priority = 1;
+    private boolean isCancel;
 
     private Object tag;//取消请求用的
 
@@ -66,6 +67,14 @@ public abstract class UseCase<T extends UseCase.RequestValue
 
     public Object getTag() {
         return tag;
+    }
+
+    public void cancel() {
+        isCancel = true;
+    }
+
+    public boolean isCacnel() {
+        return isCancel;
     }
 
     public void run() {

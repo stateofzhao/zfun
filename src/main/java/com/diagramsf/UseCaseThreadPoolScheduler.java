@@ -5,10 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -22,25 +19,27 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
     private static final int ADD = 0X1;
     private static final int CANCEL = 0X2;
     private static final int POST_RESULT = 0X3;
+    private static final int POST_ERROR = 0X4;
 
     private InternalHandler mMainHandler;//主线程Handler
 
     private ExecutorService mExecutorService;
 
-    private Map<Object, List<Future>> mFutureMap;
+    private Map<Object, List<UseCaseFuture>> mFutureMap;
 
     public UseCaseThreadPoolScheduler() {
         mFutureMap = new HashMap<>();
         PriorityBlockingQueue<Runnable> queue = new PriorityBlockingQueue<>();
-        mExecutorService = new ThreadPoolExecutor(CORE_SIZE, MAX_SIZE, TIMEOUT, TimeUnit.SECONDS, queue);
+        mExecutorService = new MyThreadPoolExecutor(CORE_SIZE, MAX_SIZE, TIMEOUT, TimeUnit.SECONDS, queue);
         mMainHandler = new InternalHandler(this);
     }
 
     @Override
-    public void execute(Runnable task, Object tag) {
+    public void execute(UseCase useCase) {
+        PriorityRunnable runnable = new PriorityRunnable(useCase,this);
         Message msg = Message.obtain(mMainHandler);
         msg.what = ADD;
-        msg.obj = new RunnableHolder(task, tag);
+        msg.obj = runnable;
         msg.sendToTarget();
     }
 
@@ -53,20 +52,39 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
     }
 
     @Override
-    public <T extends UseCase.ResponseValue> void notifyResult(T response, UseCase.Listener<T> listener) {
+    public <T extends UseCase.ResponseValue> void notifyResult(final T response, final UseCase.Listener<T> listener) {
         Message msg = Message.obtain(mMainHandler);
         msg.what = POST_RESULT;
+        msg.obj = new Runnable() {
+            @Override
+            public void run() {
+                if (null != listener) {
+                    listener.onSucceed(response);
+                }
+
+            }
+        };
+        msg.sendToTarget();
+
     }
 
     @Override
-    public <E extends UseCase.ErrorValue> void error(E error, UseCase.ErrorListener<E> errorListener) {
-
+    public <E extends UseCase.ErrorValue> void error(final E error, final UseCase.ErrorListener<E> errorListener) {
+        Message msg = Message.obtain(mMainHandler);
+        msg.what = POST_ERROR;
+        msg.obj = new Runnable() {
+            @Override
+            public void run() {
+                errorListener.onError(error);
+            }
+        };
+        msg.sendToTarget();
     }
 
-    private void performSubmit(Runnable runnable, Object tag) {
-        Future future = mExecutorService.submit(runnable);
-        if(null != tag) {
-            List<Future> futures = mFutureMap.get(tag);
+    private void performSubmit(PriorityRunnable runnable, Object tag) {
+        UseCaseFuture future = (UseCaseFuture) mExecutorService.submit(runnable);
+        if (null != tag) {
+            List<UseCaseFuture> futures = mFutureMap.get(tag);
             if (null == futures) {
                 futures = new ArrayList<>();
             }
@@ -76,24 +94,28 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
     }
 
     private void performCancel(Object tag) {
-        if(null != tag){
-            List<Future> futures = mFutureMap.remove(tag);
+        if (null != tag) {
+            List<UseCaseFuture> futures = mFutureMap.remove(tag);
             if (null != futures) {
-                for (Future future : futures) {
-                    future.cancel(false);
+                for (UseCaseFuture future : futures) {
+                    if (!future.cancel(false)) {
+                        UseCase useCase = future.useCase;
+                        useCase.cancel();
+                    }
                 }
             }
         }
     }
 
-    private static class PriorityRunnable<T extends UseCase.RequestValue, V extends UseCase.ResponseValue, E extends UseCase.ErrorValue>
-            implements Runnable, Comparable<PriorityRunnable> {
-        private int priority;
-        private UseCase<T, V, E> useCase;
+    private static class PriorityRunnable implements Runnable, Comparable<PriorityRunnable> {
+        public int priority;
+        public UseCase useCase;
+        public UseCaseThreadPoolScheduler scheduler;
 
-        public PriorityRunnable(UseCase<T, V, E> useCase) {
+        public PriorityRunnable(UseCase useCase,UseCaseThreadPoolScheduler scheduler) {
             this.useCase = useCase;
             this.priority = useCase.getPriority();
+            this.scheduler = scheduler;
         }
 
         public int getPriority() {
@@ -118,10 +140,47 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
 
         @Override
         public void run() {
-            useCase.execute(useCase.getRequestValue());
+            useCase.run();
         }
 
-    }// end PriorityRunnable
+    }// end PriorityRunnable class
+
+    private static class UseCaseFuture extends FutureTask<Object> {
+        UseCase useCase;
+        UseCaseThreadPoolScheduler scheduler;
+
+        public UseCaseFuture(Runnable runnable, UseCase useCase, UseCaseThreadPoolScheduler scheduler) {
+            super(runnable, null);
+            this.useCase = useCase;
+            this.scheduler = scheduler;
+        }
+
+        @Override
+        protected void done() {
+            //当任务执行完毕后，需要把任务从mFutureMap中移除，防止内存泄露
+            if (!useCase.isCacnel()) {
+                if (null != useCase.getTag()) {
+                    scheduler.mFutureMap.remove(useCase.getTag());
+                }
+            }
+        }
+    }// end UseCaseFuture class
+
+    private static class MyThreadPoolExecutor extends ThreadPoolExecutor {
+
+        public MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+                                    BlockingQueue<Runnable> workQueue) {
+            super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
+        }
+
+        @Override
+        public Future<?> submit(Runnable task) {
+            PriorityRunnable priorityRunnable = (PriorityRunnable) task;
+            UseCaseFuture ftask = new UseCaseFuture(task, priorityRunnable.useCase, priorityRunnable.scheduler);
+            execute(ftask);
+            return ftask;
+        }
+    }// end MyThreadPoolExecutor class
 
     private static class InternalHandler extends Handler {
         private UseCaseThreadPoolScheduler scheduler;
@@ -135,28 +194,18 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
         public void handleMessage(Message msg) {
             int what = msg.what;
             if (what == ADD) {
-                RunnableHolder holder = (RunnableHolder) msg.obj;
-                scheduler.performSubmit(holder.runnable, holder.tag);
+                PriorityRunnable runnable = (PriorityRunnable) msg.obj;
+                scheduler.performSubmit(runnable, runnable.useCase.getTag());
             } else if (what == CANCEL) {
-
+                scheduler.performCancel(msg.obj);
             } else if (what == POST_RESULT) {
-
+                Runnable runnable = (Runnable) msg.obj;
+                runnable.run();
+            } else if (what == POST_ERROR) {
+                Runnable runnable = (Runnable) msg.obj;
+                runnable.run();
             }
         }
     }// end InternalHandler
 
-    private static class RunnableHolder implements Runnable {
-        public Runnable runnable;
-        public Object tag;
-
-        public RunnableHolder(Runnable runnable, Object tag) {
-            this.runnable = runnable;
-            this.tag = tag;
-        }
-
-        @Override
-        public void run() {
-
-        }
-    }
 }
