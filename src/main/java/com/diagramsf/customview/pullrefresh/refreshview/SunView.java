@@ -6,10 +6,10 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 import com.diagramsf.customview.pullrefresh.PullRefreshLayout;
-import com.diagramsf.customview.pullrefresh.RefreshViewCallback;
+import com.diagramsf.customview.pullrefresh.RefreshHeader;
 import com.diagramsf.helpers.UIHelper;
 
-public class SunRefreshView extends View implements RefreshViewCallback {
+public class SunView extends View implements RefreshHeader {
 
     private final static float REFRESH_HEIGHT = 120;// dp
 
@@ -17,17 +17,17 @@ public class SunRefreshView extends View implements RefreshViewCallback {
 
     private boolean mHasDoRefresh = false;
 
-    public SunRefreshView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SunView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
 
-    public SunRefreshView(Context context) {
+    public SunView(Context context) {
         super(context);
         init();
     }
 
-    public SunRefreshView(Context context, AttributeSet attrs) {
+    public SunView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
@@ -71,46 +71,47 @@ public class SunRefreshView extends View implements RefreshViewCallback {
     }
 
     @Override
-    public int getRefreshHeight() {
+    public int onCreateTrigRefreshHeight() {
         // Log.v(VIEW_LOG_TAG, "刷新高度：" + getMeasuredHeight());
         return getMeasuredHeight();
     }
 
-
     @Override
-    public void doRefresh() {
+    public void onBeginRefresh() {
         mDrawable.start();
         mHasDoRefresh = true;
     }
 
     @Override
-    public void refreshStop() {
+    public void onStopRefresh() {
         mDrawable.stop();
         invalidate();
     }
 
     @Override
-    public void contentViewScrollDistance(int distance,PullRefreshLayout.State state) {
-
-        if (!mHasDoRefresh) {
-            float percent = (float) distance / getRefreshHeight();
-            mDrawable.setPercent(percent);
-            invalidate();
-        }
+    public void onStopRefreshComplete() {
 
     }
 
     @Override
-    public void contentViewBeginScroll() {
+    public void onContentViewScrollDistance(int distance, PullRefreshLayout.State state) {
+        if (!mHasDoRefresh) {
+            float percent = (float) distance / onCreateTrigRefreshHeight();
+            mDrawable.setPercent(percent);
+            invalidate();
+        }
+    }
+
+    @Override
+    public void onContentViewBeginScroll() {
         mDrawable.resetOriginals();
         invalidate();
         mHasDoRefresh = false;
     }
 
     @Override
-    public void contentViewEndScroll() {
+    public void onContentViewEndScroll() {
         mDrawable.stop();
         invalidate();
     }
-
 }

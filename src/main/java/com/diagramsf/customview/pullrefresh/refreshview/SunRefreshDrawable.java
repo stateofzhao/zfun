@@ -9,16 +9,14 @@ import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
-import com.diagramsf.customview.pullrefresh.PullRefreshLayout;
-import com.diagramsf.customview.pullrefresh.RefreshViewCallback;
-import com.diagramsf.helpers.UIHelper;
 import com.diagramsf.R;
+import com.diagramsf.helpers.UIHelper;
 
 /**
  * Created by Oleksii Shliama on 22/12/2014.
  * https://dribbble.com/shots/1650317-Pull-to-Refresh-Rentals
  */
-public class SunRefreshDrawable extends Drawable implements Animatable,RefreshViewCallback {
+public class SunRefreshDrawable extends Drawable implements Animatable {
 
 	private static final float SCALE_START_PERCENT = 0.5f;
 	private static final int ANIMATION_DURATION = 1000;
@@ -344,31 +342,4 @@ public class SunRefreshDrawable extends Drawable implements Animatable,RefreshVi
 		return mTotalDragDistance;
 	}
 
-	@Override
-	public int getRefreshHeight() {
-		return 0;
-	}
-
-	@Override
-	public void contentViewScrollDistance(int distance,PullRefreshLayout.State state) {
-
-	}
-
-	@Override
-	public void doRefresh() {
-
-	}
-
-	@Override
-	public void refreshStop() {
-
-	}
-
-	@Override
-	public void contentViewBeginScroll() {
-	}
-
-	@Override
-	public void contentViewEndScroll() {
-	}
 }

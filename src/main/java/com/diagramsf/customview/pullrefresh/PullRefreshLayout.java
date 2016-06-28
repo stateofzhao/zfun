@@ -23,13 +23,15 @@ import com.diagramsf.helpers.OSVersionUtils;
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.view.ViewHelper;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
 /**
  * 能够实现下拉刷新的控件<P>
- * <p/>
+ * <p>
  * 注意：
  * 1.它的第一个子View 是下拉时露出提示刷新的View。
  * 2.它的第二个View是 默认的内容View（默认的能够下拉刷新的View）
@@ -40,11 +42,8 @@ import java.util.Set;
  */
 @SuppressLint("ClickableViewAccessibility")
 public class PullRefreshLayout extends ViewGroup {
-
     protected static final int REGISTERED_VIEW_TRANSLATION_Y = "PullRefreshLayout_registered_view_ty".hashCode();
-
     private final static String TAG = "PullRefreshLayout";
-
     private final static boolean DEBUG = false;
 
     /** 最小子View个数 */
@@ -67,6 +66,7 @@ public class PullRefreshLayout extends ViewGroup {
     protected State mState = State.NORMAL;
     /** 下拉后顶部露出的 提示刷新的View */
     protected View mRefreshHeaderView;
+    protected RefreshHeader mRefreshRefreshHeader;
     /** 显示的具体View，能够触发下拉刷新 */
     protected View mContentView;
     /** 滚动实现方式 */
@@ -101,9 +101,9 @@ public class PullRefreshLayout extends ViewGroup {
     private int mAnimationScroll_xDistance = 0;
     private int mActivePointerId = INVALID_POINTER;// 能够执行手势的 手指id
     /** 能够触发下拉刷新的 ContentView向下滚动的距离 */
-    private int mRefreshingHeight = 0;
+    private int mCanTrigRefreshHeight = 0;
     /** 顶部刷新header的高度 */
-    private int mRefreshHeaderHeight = -1;
+    private int mRefreshHeaderViewHeight = -1;
     /** 顶部刷新header 的布局缩放 */
     private float mRefreshHeaderViewLayoutScale;
     /** 手指拖动距离的阻尼系数 */
@@ -118,7 +118,7 @@ public class PullRefreshLayout extends ViewGroup {
     /** 能否下拉刷新 */
     private boolean mCanDoRefresh = true;
     /** 如果不能够下拉刷新---能否出现下拉 回弹效果 */
-    private boolean mCanPulldownShowRefreshView = true;
+    private boolean mCanPullDownShowRefreshView = true;
     /** 在一次Touch事件中，是否检测过了 TouchSlop，true 是检测过了，false 没有检测过 */
     private boolean mHasCheckedTouchSlop = false;
     /** ACTION_DOWN时，是否停止了Scroller */
@@ -140,7 +140,7 @@ public class PullRefreshLayout extends ViewGroup {
     private boolean mUserSuperRefreshHeaderView = false;
     /** 添加的额外的需要显示的 具体View，也能够触发下拉刷新 */
     private Set<View> mOtherContentViews;
-    private RefreshViewCallback mRefreshViewCallback;
+    private List<OnContentViewScrollListener> mContentViewScrollListeners;
     private OnRefreshListener mListener;
     private boolean mJustAutoRefreshState = false;
     /** ---------- 执行动画滚动到指定位置的 任务 */
@@ -161,7 +161,6 @@ public class PullRefreshLayout extends ViewGroup {
             scrollingCallback();
         }
     };
-
 
     /**
      * 简单构造函数
@@ -203,6 +202,7 @@ public class PullRefreshLayout extends ViewGroup {
         mTouchScrollSlop = configuration.getScaledTouchSlop();
         mScroller = new Scroller(getContext(), sInterpolator);
         mOtherContentViews = new HashSet<>();
+        mContentViewScrollListeners = new ArrayList<>();
 
         if (OSVersionUtils.hasHoneycomb()) {
             mScrollMode = TranslationMode.SET_TRANSLATION;
@@ -213,10 +213,8 @@ public class PullRefreshLayout extends ViewGroup {
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
 
         mRefreshHeaderViewLayoutScale = 0;//首先让刷新HeaderView不可见
-
         setUseScroller(false);
         setUserSuperHeaderView(false);
-
     }
 
     /**
@@ -252,12 +250,12 @@ public class PullRefreshLayout extends ViewGroup {
             mContentView = getChildAt(1);
         }
 
-        if (null == mRefreshViewCallback) {
-            if (mRefreshHeaderView instanceof RefreshViewCallback) {
-                mRefreshViewCallback = (RefreshViewCallback) mRefreshHeaderView;
+        if (mRefreshHeaderView instanceof RefreshHeader) {
+            mRefreshRefreshHeader = (RefreshHeader) mRefreshHeaderView;
+            mCanTrigRefreshHeight = mRefreshRefreshHeader.onCreateTrigRefreshHeight();
 
-                mRefreshingHeight = mRefreshViewCallback.getRefreshHeight();
-            }
+            //由于RefreshHeader也是OnRefreshContentViewScrollListener的子类，所以需要添加到监听集合中
+            mContentViewScrollListeners.add(mRefreshRefreshHeader);
         }
 
         if (useSuperHeaderViewMode()) {
@@ -265,7 +263,6 @@ public class PullRefreshLayout extends ViewGroup {
             removeView(mRefreshHeaderView);
             addView(mRefreshHeaderView, getChildCount() - 1);
         }
-
 
         onInitContentView(mContentView);
     }
@@ -315,15 +312,14 @@ public class PullRefreshLayout extends ViewGroup {
                 // measureChildWithMargins(child, widthMeasureSpec, 0,
                 // heightMeasureSpec, 0);
             }
-
         }
 
-        if (null != mRefreshViewCallback) {
-            mRefreshingHeight = mRefreshViewCallback.getRefreshHeight();
+        //防止在onFinishInflate()方法中获取到的mCanTrigRefreshHeight为0
+        if (null != mRefreshRefreshHeader) {
+            mCanTrigRefreshHeight = mRefreshRefreshHeader.onCreateTrigRefreshHeight();
         }
 
-        mRefreshHeaderHeight = mRefreshHeaderView.getMeasuredHeight();//获取顶部headerView的高度
-
+        mRefreshHeaderViewHeight = mRefreshHeaderView.getMeasuredHeight();//获取顶部headerView的高度
     }
 
     @Override
@@ -411,7 +407,6 @@ public class PullRefreshLayout extends ViewGroup {
     // 返回 true，事件直接分发给本View的 onTouchEvent()，不再向下分发，返回false 表示本View不需要事件继续向下分发
     @Override
     public boolean dispatchTouchEvent(@NonNull MotionEvent ev) {
-
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
 
         //当正在执行自动刷新 或者 正在执行 刷新完成后滚动回正常状态 时，阻止touch事件
@@ -422,8 +417,9 @@ public class PullRefreshLayout extends ViewGroup {
 
         switch (action) {
             case MotionEvent.ACTION_CANCEL:
-                if (DEBUG)
+                if (DEBUG) {
                     Log.v(TAG, "ACTION_CANCEL");
+                }
                 if (!mIsBeingDragged && !mTouchAbortScroller) {
                     break;
                 }
@@ -434,15 +430,15 @@ public class PullRefreshLayout extends ViewGroup {
                     } else {
                         setSmoothScrollTo(0, 0, 0);
                     }
-
                 }
                 mIsBeingDragged = false;
                 mActivePointerId = INVALID_POINTER;
                 break;
 
             case MotionEvent.ACTION_UP:
-                if (DEBUG)
+                if (DEBUG) {
                     Log.v(TAG, "ACTION_UP");
+                }
 
                 final int scrollY = getContentViewOffsetFromTop();// 正数表示 向上滚动了，负数表示向下滚动了
                 final int scrolledDistance_up = Math.abs(scrollY);// 滚动的距离
@@ -451,13 +447,13 @@ public class PullRefreshLayout extends ViewGroup {
                 if (scrollY < 0) {// 处于下拉的状态
                     if (checkEnableRefresh()) {
                         if (DEBUG) {
-                            Log.e(TAG, "刷新高度：" + mRefreshingHeight);
+                            Log.e(TAG, "刷新高度：" + mCanTrigRefreshHeight);
                             Log.e(TAG, "已经滚动的高度：" + scrolledDistance_up);
                         }
 
-                        if (scrolledDistance_up > mRefreshingHeight) {
-                            setSmoothScrollTo(0, -mRefreshingHeight, 0);
-                        } else if (scrolledDistance_up == mRefreshingHeight
+                        if (scrolledDistance_up > mCanTrigRefreshHeight) {
+                            setSmoothScrollTo(0, -mCanTrigRefreshHeight, 0);
+                        } else if (scrolledDistance_up == mCanTrigRefreshHeight
                                 && mState == State.NORMAL) {
                             doRefresh();
                         } else {// 不能触发刷新
@@ -471,7 +467,6 @@ public class PullRefreshLayout extends ViewGroup {
                                 }
                             } else if (mState == State.REFRESHING) {// 此时正在刷新状态，需要惯性
                                 //TODO 暂时不知道怎么平滑的添加惯性
-
                             }
                         }
                     } else {
@@ -484,7 +479,6 @@ public class PullRefreshLayout extends ViewGroup {
                     }
                 }
                 mActivePointerId = INVALID_POINTER;
-
                 break;
 
             // 这个事件只有首次手指down下才执行，如果第二根手指再DOWN的话不执行这个分支
@@ -502,10 +496,8 @@ public class PullRefreshLayout extends ViewGroup {
                     mStartRefreshOperation = false;
                     mEndRefreshOperation = false;
                 }
-
                 break;
             case MotionEvent.ACTION_MOVE:
-
                 final int activePointerId = mActivePointerId;
 
                 if (activePointerId == INVALID_POINTER) {
@@ -566,11 +558,11 @@ public class PullRefreshLayout extends ViewGroup {
                     requestParentDisallowInterceptTouchEvent(true);
                     // 执行跟随手指滚动
                     scrollToYByFinger(y);
-
                     return true;
                 } else {
-                    if (DEBUG)
+                    if (DEBUG) {
                         Log.v(TAG, "子View执行滚动");
+                    }
                     mLastMotionY = y;
                     mLastMotionX = x;
                 }
@@ -578,37 +570,29 @@ public class PullRefreshLayout extends ViewGroup {
             case MotionEventCompat.ACTION_POINTER_DOWN:// 最后一根手指按下
                 if (mIsBeingDragged) {
                     // 转而根据最后一根手指来执行滑动事件
-                    final int actionIndex = MotionEventCompat.getActionIndex(ev);// 获取触发本次事件的手指
-                    // id
-
+                    final int actionIndex = MotionEventCompat.getActionIndex(ev);// 获取触发本次事件的手指id
                     // 也可以这么写，其实 actionIndex就是 触发此次事件的pointerIndex
                     // final float y = MotionEventCompat.getX(event, actionIndex);
                     // mLastMotionY = y;
 
                     mActivePointerId = MotionEventCompat.getPointerId(ev,
-                            actionIndex);// 根据手指id
-                    // 返回关联的事件id
+                            actionIndex);// 根据手指id 返回关联的事件id
 
                     final int pointerIndex_ = MotionEventCompat.findPointerIndex(
                             ev, mActivePointerId);
-
                     // 也可以像上面注释掉的那样写
                     mLastMotionY = MotionEventCompat.getY(ev, pointerIndex_);
-
                     return true;
                 }
                 break;
-            case MotionEventCompat.ACTION_POINTER_UP:// 最后按下的手指 up
+            case MotionEventCompat.ACTION_POINTER_UP:// 最后按下的手指up
                 if (mIsBeingDragged) {
-
                     onSecondaryPointerUp(ev);
                     mLastMotionY = MotionEventCompat.getY(ev, MotionEventCompat
                             .findPointerIndex(ev, mActivePointerId));
-
                     return true;
                 }
                 break;
-
             default:
                 break;
         }
@@ -731,7 +715,6 @@ public class PullRefreshLayout extends ViewGroup {
         // 在这里可能， mScroller.isFinished() 返回false，但是接着调用了mScroller.computeScrollOffset()，
         // 那么mScroller.isFinished()就返回true了
         if (!mScroller.isFinished() && mScroller.computeScrollOffset()) {
-
             int oldX = getContentViewOffsetFromLeft();
             int oldY = getContentViewOffsetFromTop();
 
@@ -748,9 +731,7 @@ public class PullRefreshLayout extends ViewGroup {
                         mState == State.REFRESH_FINISH_SCROLL_TO_NORMAL,
                         yDirection, currentX, currentY);
             }
-
             scrollingCallback();
-
         } else {//这个当子View中有滚动时，也会回调 父类的这个方法，因为子View滚动时会导致重绘从而导致本父类这个方法也会调用
             super.computeScroll();
         }
@@ -771,8 +752,9 @@ public class PullRefreshLayout extends ViewGroup {
                 event.getEventTime(), MotionEvent.ACTION_DOWN, event.getX(),
                 event.getY() - mTouchScrollSlop * 2, event.getMetaState());
         super.dispatchTouchEvent(e);
-        if (DEBUG)
+        if (DEBUG) {
             Log.v(TAG, "子View接收到ACTION_DOWN");
+        }
         e.recycle();
     }
 
@@ -815,7 +797,6 @@ public class PullRefreshLayout extends ViewGroup {
      * @return 总共已经滚动的距离
      */
     private int scrollToYByFinger(float y) {
-
         float yDistance = (mLastMotionY - y);
         boolean pullUp;
 
@@ -838,12 +819,12 @@ public class PullRefreshLayout extends ViewGroup {
 
         // 这样做能够保证,肯定会正好滚动到刷新位置
         if (!pullUp) {// pull down
-            if (oldScrollY > -mRefreshingHeight && scrollY < -mRefreshingHeight) {
-                scrollY = -mRefreshingHeight;
+            if (oldScrollY > -mCanTrigRefreshHeight && scrollY < -mCanTrigRefreshHeight) {
+                scrollY = -mCanTrigRefreshHeight;
             }
         } else {// pull up
-            if (oldScrollY < -mRefreshingHeight && scrollY > -mRefreshingHeight) {
-                scrollY = -mRefreshingHeight;
+            if (oldScrollY < -mCanTrigRefreshHeight && scrollY > -mCanTrigRefreshHeight) {
+                scrollY = -mCanTrigRefreshHeight;
             }
         }
 
@@ -948,7 +929,7 @@ public class PullRefreshLayout extends ViewGroup {
         final int scrollY = getContentViewOffsetFromTop();
         final int scrolledDistance = Math.abs(scrollY);
         if (isScrollAnimationFinish()) {// 滚动完成
-            if (scrolledDistance == mRefreshingHeight) {
+            if (scrolledDistance == mCanTrigRefreshHeight) {
                 if (mState == State.NORMAL || mState == State.AUTO_REFRESH) {
                     doRefresh();
                 }
@@ -1013,9 +994,7 @@ public class PullRefreshLayout extends ViewGroup {
      * @return true 表示没有，false表示停用
      */
     private boolean checkEnableRefresh() {
-
         return mCanDoRefresh;
-
     }
 
     /**
@@ -1024,7 +1003,7 @@ public class PullRefreshLayout extends ViewGroup {
      * @return true 表示能，false 表示不能
      */
     private boolean checkEnablePull() {
-        return mCanPulldownShowRefreshView;
+        return mCanPullDownShowRefreshView;
     }
 
     /**
@@ -1038,7 +1017,6 @@ public class PullRefreshLayout extends ViewGroup {
 
     // 执行刷新
     private void doRefresh() {
-
         final boolean just = mJustAutoRefreshState;
         mJustAutoRefreshState = false;
 
@@ -1047,15 +1025,15 @@ public class PullRefreshLayout extends ViewGroup {
         }
         mState = State.REFRESHING;
 
-        if (null != mRefreshViewCallback) {
-            mRefreshViewCallback.doRefresh();
+        if (null != mRefreshRefreshHeader) {
+            mRefreshRefreshHeader.onBeginRefresh();
         }
 
-        if (!just)
+        if (!just) {
             if (null != mListener) {
                 mListener.onRefresh();
             }
-
+        }
     }
 
     // 刷新执行完后，自动滚动到了 正常位置
@@ -1067,40 +1045,46 @@ public class PullRefreshLayout extends ViewGroup {
         }
     }
 
-    // 回调 RefreshViewCallback 中的方法
+    // 回调 OnContentViewScrollListener 中的方法
     private void callbackContentViewBeginScroll() {
-        if (null != mRefreshViewCallback && !mStartRefreshOperation) {
-            if (DEBUG)
+        if (!mStartRefreshOperation) {
+            if (DEBUG) {
                 Log.e(TAG, "调用了callbackContentViewBeginScroll()");
-            mRefreshViewCallback.contentViewBeginScroll();
+            }
+            for(OnContentViewScrollListener listener:mContentViewScrollListeners){
+                listener.onContentViewBeginScroll();
+            }
             mStartRefreshOperation = true;
         }
     }
 
-    // 回调 RefreshViewCallback 中的方法
+    // 回调 OnContentViewScrollListener 中的方法
     private void callbackContentViewScrollDistance(int scrolledDistance) {
-        if (null != mRefreshViewCallback) {
-            if (DEBUG)
-                Log.e(TAG, "调用了 callbackContentViewScrollDistance()");
-            mRefreshViewCallback.contentViewScrollDistance(scrolledDistance, mState);
+        if (DEBUG) {
+            Log.e(TAG, "调用了 callbackContentViewScrollDistance()");
+        }
+        for(OnContentViewScrollListener listener:mContentViewScrollListeners){
+            listener.onContentViewScrollDistance(scrolledDistance, mState);
         }
     }
 
-    // 回调 RefreshViewCallback 中的方法
+    // 回调 OnContentViewScrollListener 中的方法
     private void callbackContentViewEndScroll() {
-        if (null != mRefreshViewCallback && !mEndRefreshOperation) {
-            if (DEBUG)
+        if (!mEndRefreshOperation) {
+            if (DEBUG) {
                 Log.e(TAG, "调用了callbackContentViewEndScroll()");
-            mRefreshViewCallback.contentViewEndScroll();
+            }
+            for(OnContentViewScrollListener listener:mContentViewScrollListeners){
+                listener.onContentViewEndScroll();
+            }
             mEndRefreshOperation = true;
         }
     }
 
-    /** 设置ContentView下拉监听接口 */
-    public void setOnContentViewPullListener(RefreshViewCallback callback) {
-        mRefreshViewCallback = callback;
-        if (null != mRefreshViewCallback) {
-            mRefreshingHeight = mRefreshViewCallback.getRefreshHeight();
+    /** 设置ContentView下拉滚动的监听接口 */
+    public void addOnContentViewScrollListener(OnContentViewScrollListener listener) {
+        if (null != listener) {
+            mContentViewScrollListeners.add(listener);
         }
     }
 
@@ -1110,7 +1094,7 @@ public class PullRefreshLayout extends ViewGroup {
     }
 
     public int getRefreshHeight() {
-        return mRefreshingHeight;
+        return mCanTrigRefreshHeight;
     }
 
     /**
@@ -1118,7 +1102,7 @@ public class PullRefreshLayout extends ViewGroup {
      */
     public void enableRefresh() {
         mCanDoRefresh = true;
-        mCanPulldownShowRefreshView = true;
+        mCanPullDownShowRefreshView = true;
     }
 
     /**
@@ -1128,7 +1112,7 @@ public class PullRefreshLayout extends ViewGroup {
      */
     public void disEnableRefresh(boolean canPullDown) {
         mCanDoRefresh = false;
-        mCanPulldownShowRefreshView = canPullDown;
+        mCanPullDownShowRefreshView = canPullDown;
     }
 
     /** 是否正在刷新 */
@@ -1460,7 +1444,7 @@ public class PullRefreshLayout extends ViewGroup {
             super(c, attrs);
         }
 
-    }
+    }//class LayoutParams end
 
     //执行自动刷新的task
     private class AutoRefreshTask implements Runnable {
@@ -1471,18 +1455,18 @@ public class PullRefreshLayout extends ViewGroup {
             mEndRefreshOperation = false;
             callbackContentViewBeginScroll();
             if (DEBUG)
-                Log.e(TAG, "开始自动刷新操作：" + -mRefreshingHeight);
-            setSmoothScrollTo(0, -mRefreshingHeight, AUTO_REFRESH_SCROLL_SPEED);
+                Log.e(TAG, "开始自动刷新操作：" + -mCanTrigRefreshHeight);
+            setSmoothScrollTo(0, -mCanTrigRefreshHeight, AUTO_REFRESH_SCROLL_SPEED);
         }
-    }
+    }//class AutoRefreshTask end
 
     //执行停止刷新的task
     private class StopRefreshTask implements Runnable {
         @Override
         public void run() {
             mState = State.REFRESH_FINISH_SCROLL_TO_NORMAL;
-            if (null != mRefreshViewCallback) {
-                mRefreshViewCallback.refreshStop();
+            if (null != mRefreshRefreshHeader) {
+                mRefreshRefreshHeader.onStopRefresh();
             }
             final int sy = getContentViewOffsetFromTop();
             if (sy == 0) {// 不需要滚动
@@ -1492,7 +1476,7 @@ public class PullRefreshLayout extends ViewGroup {
                 setSmoothScrollTo(0, 0, 0);
             }
         }
-    }
+    }//class StopRefreshTask end
 
 
     private class UpdateScrollToPositionTask implements Runnable {
@@ -1509,15 +1493,14 @@ public class PullRefreshLayout extends ViewGroup {
 
             //更新顶部刷新HeaderView的布局，使之露出来
             if (useSuperHeaderViewMode()) {
-                mRefreshHeaderViewLayoutScale = -y / (float) mRefreshHeaderHeight;
+                mRefreshHeaderViewLayoutScale = -y / (float) mRefreshHeaderViewHeight;
                 if (mRefreshHeaderViewLayoutScale <= 1) {
                     mRefreshHeaderView.requestLayout();
                 }
             }
-
             // 执行回调
             callbackContentViewScrollDistance(Math.abs(y));
         }
-    }
+    }//class UpdateScrollToPositionTask end
 
 }
