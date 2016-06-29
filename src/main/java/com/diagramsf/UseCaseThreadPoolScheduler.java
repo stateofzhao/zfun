@@ -22,6 +22,7 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
     private static final int CANCEL = 0X2;
     private static final int POST_RESULT = 0X3;
     private static final int POST_ERROR = 0X4;
+    private static final int POST_FINISHED = 0X5;
 
     private InternalHandler mMainHandler;//主线程Handler
 
@@ -109,11 +110,28 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
         }
     }
 
-    private void performPostResult(Runnable runnable){
+    private void performFinishTask(UseCase useCase) {
+        final Object tag = useCase.getTag();
+        if (null != tag) {
+            List<UseCaseFuture> futures = mFutureMap.get(tag);
+            for (int i = futures.size() - 1; i >= 0; i--) {
+                UseCaseFuture f = futures.get(i);
+                if (f.useCase == useCase) {
+                    futures.remove(f);
+                    break;
+                }
+            }
+            if (futures.size() == 0) {
+                mFutureMap.remove(tag);
+            }
+        }
+    }
+
+    private void performPostResult(Runnable runnable) {
         runnable.run();
     }
 
-    private void performPostError(Runnable runnable){
+    private void performPostError(Runnable runnable) {
         runnable.run();
     }
 
@@ -157,15 +175,19 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
             return useCase.getPriority();
         }
 
+        //这个方法，不是在固定线程中执行的，如果是在主线程调用了cancel()方法，如果任务被取消掉，
+        // 那么执行任务的此方法就是在主线程中执行；
+        //如果任务正常执行完毕，那么这个方法就是在执行任务的那个线程中调用。
         @Override
         protected void done() {
-            if(isCancelled()){//如果被取消掉了
+            if (isCancelled()) {//如果被取消掉了，（会在调用cancel()方法的同一个线程中执行）
                 useCase.cancel();//取消掉UseCase的回调
-            }else{//正常执行完任务后，需要把任务从mFutureMap中移除，防止内存泄露
+            } else {//正常执行完任务后，需要把任务从mFutureMap中移除，防止内存泄露
                 if (!useCase.isCacnel()) {
-                    if (null != useCase.getTag()) {
-                        scheduler.mFutureMap.remove(useCase.getTag());
-                    }
+                    Message msg = Message.obtain(scheduler.mMainHandler);
+                    msg.what = POST_FINISHED;
+                    msg.obj = useCase;
+                    msg.sendToTarget();
                 }
             }
         }
@@ -225,6 +247,8 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
             } else if (what == POST_ERROR) {
                 Runnable runnable = (Runnable) msg.obj;
                 scheduler.performPostError(runnable);
+            } else if (what == POST_FINISHED) {
+                scheduler.performFinishTask((UseCase) msg.obj);
             }
         }
     }// end InternalHandler
