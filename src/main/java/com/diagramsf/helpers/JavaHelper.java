@@ -8,7 +8,7 @@ import java.util.Collection;
  * <p/>
  * Created by Diagrams on 2015/10/10 14:51
  */
-public class Helper {
+public class JavaHelper {
 
     /**
      * 合并两个数组；
