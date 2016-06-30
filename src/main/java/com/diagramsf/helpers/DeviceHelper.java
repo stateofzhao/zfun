@@ -26,7 +26,6 @@ import java.util.UUID;
  * Created by Diagrams on 2015/12/15 10:39
  */
 public class DeviceHelper {
-
     private final static String TAG = "DeviceHelper";
 
     /**
@@ -56,7 +55,6 @@ public class DeviceHelper {
      */
     public static String getIPStrAddress(Context context) {
         InetAddress inetAddress = getInetAddress(true);
-
         if (null != inetAddress) {
             return inetAddress.getHostAddress();
         }
@@ -70,7 +68,6 @@ public class DeviceHelper {
      * @return {@link NetType}
      */
     public static NetType getNetType(Context context) {
-
         if (isWifi(context))
             return NetType.WIFI;
 
@@ -486,8 +483,7 @@ public class DeviceHelper {
         NO_DEAL,
         /** 断网了 */
         NO_NET
-    }
-
+    }//class end
 
     /**
      * 运营商类型
@@ -501,6 +497,6 @@ public class DeviceHelper {
         CUCC,
         /** 中国电信 */
         CTCC
-    }
+    }//class end
 
 }

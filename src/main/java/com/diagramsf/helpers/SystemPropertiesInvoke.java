@@ -10,7 +10,6 @@ import java.lang.reflect.Method;
  * Created by Diagrams on 2015/12/15 16:00
  */
 public class SystemPropertiesInvoke {
-
     private static final String TAG = "SystemPropertiesInvoke";
     private static Method getLongMethod = null;
     private static Method getBooleanMethod = null;
@@ -35,10 +34,8 @@ public class SystemPropertiesInvoke {
                 getBooleanMethod = Class.forName("android.os.SystemProperties")
                         .getMethod("getBoolean", String.class, boolean.class);
             }
-
             //Log.i(TAG,"getBoolean:"+"key:"+key+" def:"+def);
             //Log.i(TAG,"getBoolean:"+getBooleanMethod.invoke(null, key, def));
-
             return (Boolean) getBooleanMethod.invoke(null, key, def);
         } catch (Exception e) {
             Log.e(TAG, "Platform error: " + e.toString());
@@ -52,7 +49,6 @@ public class SystemPropertiesInvoke {
                 getMethod = Class.forName("android.os.SystemProperties")
                         .getDeclaredMethod("get", String.class);
             }
-
             return  (String)getMethod.invoke(null, key);
         } catch (Exception e) {
             Log.e(TAG, "Platform error: " + e.toString());

@@ -27,7 +27,6 @@ public class Helper {
      * @param position 如果是2 那么结果数组中 第二项就是 要插入数组的起始位置
      */
     public static <T> T[] insertToArray(T[] desInserted, T[] data, int position, Class<T> type) {
-
         if (position >= desInserted.length) {
             throw new IllegalArgumentException("position must < forInserted.length !!!!");
         }
@@ -58,6 +57,20 @@ public class Helper {
      */
     public static <T> T[] toArray(Collection<T> c, Class<T> type) {
         return c.toArray(newArray(type, c.size()));
+    }
+
+    /**
+     * 计算缩放尺寸的 高度，
+     *
+     * @param orangeWith   原始 宽度
+     * @param orangeHeight 原始 高度
+     * @param desWith      目标宽度
+     *
+     * @return 目标高度
+     */
+    public static int calculationWithAndHeight(int orangeWith,
+        int orangeHeight, int desWith) {
+        return (orangeHeight * desWith) / orangeWith;
     }
 
 }

@@ -133,7 +133,6 @@ public class FileUtils {
      * @return dir 或者null
      */
     public static File getAppExternalCacheDir(Context context, String uniqueName, boolean maybeInternal) {
-
         final boolean isExternalStorageWritable = isExternalStorageWritable();
         File desFile = null;
         if (isExternalStorageWritable) {
@@ -178,7 +177,6 @@ public class FileUtils {
      * @return dir 如果外部存储不可用，内部存储路径
      */
     public static File getExternalCacheDir(Context context, String dirName) {
-
         File cacheFile;
         if (isExternalStorageWritable()) {
             cacheFile = Environment.getExternalStorageDirectory();
@@ -203,7 +201,6 @@ public class FileUtils {
         if (!isExternalStorageWritable()) {
             return null;
         }
-
         File path = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES);
 
@@ -281,9 +278,9 @@ public class FileUtils {
      * @return
      */
     public static String getFileFormat(String fileName) {
-        if (StringUtils.isEmpty(fileName))
+        if (StringUtils.isEmpty(fileName)) {
             return "";
-
+        }
         int point = fileName.lastIndexOf('.');
         return fileName.substring(point + 1);
     }
@@ -332,7 +329,6 @@ public class FileUtils {
         Uri contentUri = Uri.fromFile(f);
         mediaScanIntent.setData(contentUri);
         context.sendBroadcast(mediaScanIntent);
-
     }
 
 
@@ -375,7 +371,6 @@ public class FileUtils {
      */
     public static String postUploadFile(String httpURL, String postData,
                                         String uploadFilePath, String imageKeyName) throws AppException {
-
         HttpURLConnection httpConnection = getHttpURLConnection(httpURL);
         if (null == httpConnection) {
             return null;
@@ -500,9 +495,7 @@ public class FileUtils {
             throw AppException.http(e);
         } catch (IOException e) {// connect()和从网络上读数据的时候 可能报这个异常
             e.printStackTrace();
-            if (null != httpConnection) {
-                httpConnection.disconnect();
-            }
+            httpConnection.disconnect();
             throw AppException.io(e);
         }
 
@@ -511,10 +504,9 @@ public class FileUtils {
     // 取得HttpURLConnection
     private static HttpURLConnection getHttpURLConnection(String url)
             throws AppException {
-
-        URL httpURL = null;
-        URLConnection connection = null;
-        HttpURLConnection httpConnection = null;
+        URL httpURL;
+        URLConnection connection;
+        HttpURLConnection httpConnection;
         try {
             httpURL = new URL(url);
             connection = httpURL.openConnection();
@@ -529,7 +521,6 @@ public class FileUtils {
             httpConnection.setRequestProperty("User-Agent",
                     getInterfaceUserAgent());
             httpConnection.setUseCaches(false);
-
         } catch (MalformedURLException e) { // String 转换成URL时可能会报这个错误
             e.printStackTrace();
             throw AppException.run(e);
@@ -551,7 +542,6 @@ public class FileUtils {
      * @return boolean
      */
     public static void copyFolder(String oldPath, String newPath) {
-
         try {
             (new File(newPath)).mkdirs(); //如果文件夹不存在 则建立新文件夹
             File a = new File(oldPath);
@@ -620,7 +610,6 @@ public class FileUtils {
             isok = false;
         }
         return isok;
-
     }
 
 }

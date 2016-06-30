@@ -383,13 +383,11 @@ public class StringUtils {
         for (int i = 0; i < wei; i++) {
             sb.append("0");
         }
-
         if (d == 0) {
             return "0." + sb.toString();
         }
 
         DecimalFormat df = new DecimalFormat("#." + sb.toString());
-
         String result_ = df.format(d);
         String[] result_strs = result_.split("[.]");
         if (result_strs.length == 1 || result_strs[0].equals("")) {
