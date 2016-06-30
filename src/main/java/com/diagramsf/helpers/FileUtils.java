@@ -13,12 +13,7 @@ import java.net.*;
 import java.util.UUID;
 
 public class FileUtils {
-
     private final static String TAG = "FileUtils";
-    //    public final static String ROOT_FILE_PATH = StaticBuildConfig.ROOT_FILE_PATH;
-    //    public final static String IMAGE_FILE_SAVE_HEAD_PATH = StaticBuildConfig.IMAGE_FILE_SAVE_HEAD_PATH; // 图片缓存
-    //    public final static String DATA_FILE_SAVE_HEAD_PATH = StaticBuildConfig.DATA_FILE_SAVE_HEAD_PATH;// 数据存储
-
 
     public static final String UTF_8 = "UTF-8";
 
@@ -110,7 +105,7 @@ public class FileUtils {
     /** 判断存储卡是否可以被手动移除 */
     @TargetApi(9)
     public static boolean isExternalStorageRemovable() {
-        if (OSVersionUtils.hasGingerbread()) {
+        if (OSVersion.hasGingerbread()) {
             return Environment.isExternalStorageRemovable();
         }
         return true;
@@ -163,7 +158,7 @@ public class FileUtils {
      */
     @TargetApi(8)
     public static File getAppExternalCacheDir(Context context) {
-        if (OSVersionUtils.hasFroyo()) {
+        if (OSVersion.hasFroyo()) {
             return context.getExternalCacheDir();
         }
 
@@ -253,7 +248,7 @@ public class FileUtils {
      */
     @TargetApi(9)
     public static long getUsableSpace(File path) {
-        if (OSVersionUtils.hasGingerbread()) {
+        if (OSVersion.hasGingerbread()) {
             return path.getUsableSpace();
         }
         final StatFs stats = new StatFs(path.getPath());

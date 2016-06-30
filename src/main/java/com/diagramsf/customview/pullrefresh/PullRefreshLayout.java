@@ -12,17 +12,19 @@ import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.*;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.Transformation;
 import android.widget.AbsListView;
 import android.widget.Scroller;
-import com.diagramsf.helpers.OSVersionUtils;
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.view.ViewHelper;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -204,7 +206,7 @@ public class PullRefreshLayout extends ViewGroup {
         mOtherContentViews = new HashSet<>();
         mContentViewScrollListeners = new ArrayList<>();
 
-        if (OSVersionUtils.hasHoneycomb()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             mScrollMode = TranslationMode.SET_TRANSLATION;
         } else {
             mScrollMode = TranslationMode.SCROLL_TO;

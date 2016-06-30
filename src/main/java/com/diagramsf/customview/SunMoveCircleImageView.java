@@ -2,15 +2,23 @@ package com.diagramsf.customview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.*;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.widget.ImageView;
-import com.diagramsf.helpers.OSVersionUtils;
 import com.diagramsf.R;
 
 /** 能够显示月食动画 */
@@ -76,7 +84,7 @@ public class SunMoveCircleImageView extends ImageView {
     }
 
     private void initCirclePath() {
-        if (!OSVersionUtils.hasL()) {
+        if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)) {
             //由于使用了Canvas.clipPath() 在硬件加速的情况下 再重新显示时会出现闪烁的情况，所以这里使用软件加速
             ViewCompat.setLayerType(this, ViewCompat.LAYER_TYPE_SOFTWARE, null);
         }

@@ -793,7 +793,7 @@ public class UIHelper {
             @Override
             public void onGlobalLayout() {
                 if (textView.getViewTreeObserver().isAlive()) {
-                    if (OSVersionUtils.hasJellyBean()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                         textView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     } else {
                         textView.getViewTreeObserver().removeGlobalOnLayoutListener(this);

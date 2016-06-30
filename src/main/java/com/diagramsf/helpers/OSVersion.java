@@ -21,9 +21,9 @@ import android.os.Build;
 /**
  * Class containing some static utility methods.
  */
-public class OSVersionUtils {
+public class OSVersion {
 
-	private OSVersionUtils() {
+	private OSVersion() {
 	}
 
 	/**
