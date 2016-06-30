@@ -2,13 +2,17 @@ package com.diagramsf.helpers;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.FeatureInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -20,6 +24,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.os.UserManager;
 import android.provider.Settings;
@@ -38,7 +43,13 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
+import com.diagramsf.R;
+import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Date;
 
 import static android.provider.Settings.System.AIRPLANE_MODE_ON;
 
@@ -689,6 +700,124 @@ public class AndroidHelper {
     } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
       activityForLocked.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
+  }
+
+  /**
+   * 保存异常日志
+   *
+   * @param excp 异常信息
+   */
+  public static void saveErrorLog(Exception excp, String sdDirName) {
+    String errorlog = "errorlog.txt";
+    String savePath;
+    String logFilePath = "";
+    FileWriter fw = null;
+    PrintWriter pw = null;
+    try {
+      // 判断是否挂载了SD卡
+      String storageState = Environment.getExternalStorageState();
+      if (storageState.equals(Environment.MEDIA_MOUNTED)) {
+        savePath = Environment.getExternalStorageDirectory().getAbsolutePath() + sdDirName;
+        File file = new File(savePath);
+        if (!file.exists()) {
+          file.mkdirs();
+        }
+        logFilePath = savePath + errorlog;
+      }
+      // 没有挂载SD卡，无法写文件
+      if (logFilePath.equals("")) {
+        return;
+      }
+      File logFile = new File(logFilePath);
+      if (!logFile.exists()) {
+        logFile.createNewFile();
+      }
+      fw = new FileWriter(logFile, true);
+      pw = new PrintWriter(fw);
+      pw.println("--------------------" + (new Date().toLocaleString()) + "---------------------");
+      excp.printStackTrace(pw);
+      pw.close();
+      fw.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (pw != null) {
+        pw.close();
+      }
+      if (fw != null) {
+        try {
+          fw.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
+  /**
+   * 获取APP崩溃异常报告
+   */
+  public static String createCrashReport(Context context, Throwable ex) {
+    PackageInfo info = null;
+    try {
+      info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+    } catch (PackageManager.NameNotFoundException e) {
+      e.printStackTrace(System.err);
+    }
+    if (info == null) info = new PackageInfo();
+
+    StringBuilder exceptionStr = new StringBuilder();
+    exceptionStr.append("Version: ")
+        .append(info.versionName)
+        .append("(")
+        .append(info.versionCode)
+        .append(")\n");
+    exceptionStr.append("Android: ")
+        .append(android.os.Build.VERSION.RELEASE)
+        .append("(")
+        .append(android.os.Build.MODEL)
+        .append(")\n");
+    exceptionStr.append("Exception: ").append(ex.getMessage()).append("\n");
+    StackTraceElement[] elements = ex.getStackTrace();
+    for (StackTraceElement element : elements) {
+      exceptionStr.append(element.toString()).append("\n");
+    }
+    return exceptionStr.toString();
+  }
+
+  /**
+   * 发送App异常崩溃报告
+   */
+  public static void sendAppCrashReport(final Context cont, final String crashReport,
+      final String email, final String subject, final String title) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(cont);
+    builder.setIcon(android.R.drawable.ic_dialog_info);
+    builder.setTitle(R.string.com_diagramsf_app_error);
+    builder.setMessage(R.string.com_diagramsf_app_error_message);
+    builder.setPositiveButton(R.string.com_diagramsf_submit_report,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            dialog.dismiss();
+            // 发送异常报告
+            Intent i = new Intent(Intent.ACTION_SEND);
+            // i.setType("text/plain"); //模拟器
+            i.setType("message/rfc822"); // 真机
+            i.putExtra(Intent.EXTRA_EMAIL, new String[] { email });// 输入邮箱地址，格式是：用户名@xxx.com
+            i.putExtra(Intent.EXTRA_SUBJECT, subject);
+            i.putExtra(Intent.EXTRA_TEXT, crashReport);
+            cont.startActivity(Intent.createChooser(i, title));
+            // 退出
+            AppManager.getAppManager().AppExit(cont);
+          }
+        });
+    builder.setNegativeButton(R.string.com_diagramsf_sure, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.dismiss();
+        // 退出
+        AppManager.getAppManager().AppExit(cont);
+      }
+    });
+    builder.show();
   }
 
 }

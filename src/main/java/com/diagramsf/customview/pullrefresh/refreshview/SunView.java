@@ -7,7 +7,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import com.diagramsf.customview.pullrefresh.PullRefreshLayout;
 import com.diagramsf.customview.pullrefresh.RefreshHeader;
-import com.diagramsf.helpers.UIHelper;
+import com.diagramsf.helpers.AndroidHelper;
 
 public class SunView extends View implements RefreshHeader {
 
@@ -33,7 +33,7 @@ public class SunView extends View implements RefreshHeader {
     }
 
     private void init() {
-        final int refreshHeight = (int) UIHelper.convertDpToPixel(getContext(),
+        final int refreshHeight = (int) AndroidHelper.convertDpToPixel(getContext(),
                 REFRESH_HEIGHT);
         mDrawable = new SunRefreshDrawable(getContext(), this, refreshHeight);
 

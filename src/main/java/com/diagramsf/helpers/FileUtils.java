@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.StatFs;
-import com.diagramsf.exceptions.AppException;
+import com.diagramsf.net.ExceptionWrapper;
 
 import java.io.*;
 import java.net.*;
@@ -51,7 +51,6 @@ public class FileUtils {
      * @return dir
      */
     public static File getAppInternalDir(Context context) {
-
         return context.getFilesDir();
     }
 
@@ -370,7 +369,8 @@ public class FileUtils {
      * @param uploadFilePath 上传文件的路径
      */
     public static String postUploadFile(String httpURL, String postData,
-                                        String uploadFilePath, String imageKeyName) throws AppException {
+                                        String uploadFilePath, String imageKeyName) throws
+        ExceptionWrapper {
         HttpURLConnection httpConnection = getHttpURLConnection(httpURL);
         if (null == httpConnection) {
             return null;
@@ -385,10 +385,10 @@ public class FileUtils {
             result = new String(readInputStream(is), UTF_8);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            throw AppException.run(e);
+            throw ExceptionWrapper.run(e);
         } catch (IOException e) {
             e.printStackTrace();
-            throw AppException.io(e);
+            throw ExceptionWrapper.io(e);
         }
 
         return result;
@@ -402,7 +402,7 @@ public class FileUtils {
     // 以post的形式请求服务器，上传文件
     private static InputStream http_post_upload(
             HttpURLConnection httpConnection, String postData, String filePath,
-            String imageKeyName) throws AppException {
+            String imageKeyName) throws ExceptionWrapper {
 
         if (null == httpConnection) {
             return null;
@@ -492,18 +492,18 @@ public class FileUtils {
 
         } catch (ProtocolException e) {// 配置 HttpURLConnection时可能报这个异常
             e.printStackTrace();
-            throw AppException.http(e);
+            throw ExceptionWrapper.http(e);
         } catch (IOException e) {// connect()和从网络上读数据的时候 可能报这个异常
             e.printStackTrace();
             httpConnection.disconnect();
-            throw AppException.io(e);
+            throw ExceptionWrapper.io(e);
         }
 
     }
 
     // 取得HttpURLConnection
     private static HttpURLConnection getHttpURLConnection(String url)
-            throws AppException {
+            throws ExceptionWrapper {
         URL httpURL;
         URLConnection connection;
         HttpURLConnection httpConnection;
@@ -523,10 +523,10 @@ public class FileUtils {
             httpConnection.setUseCaches(false);
         } catch (MalformedURLException e) { // String 转换成URL时可能会报这个错误
             e.printStackTrace();
-            throw AppException.run(e);
+            throw ExceptionWrapper.run(e);
         } catch (IOException e) { // 当 openConnection()时可能会报这个异常
             e.printStackTrace();
-            throw AppException.io(e);
+            throw ExceptionWrapper.io(e);
         }
 
         return httpConnection;

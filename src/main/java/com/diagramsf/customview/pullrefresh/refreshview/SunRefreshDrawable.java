@@ -10,7 +10,7 @@ import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import com.diagramsf.R;
-import com.diagramsf.helpers.UIHelper;
+import com.diagramsf.helpers.AndroidHelper;
 
 /**
  * Created by Oleksii Shliama on 22/12/2014.
@@ -86,7 +86,7 @@ public class SunRefreshDrawable extends Drawable implements Animatable {
 		mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
 		mSkyHeight = (int) (SKY_RATIO * mScreenWidth);
 		mSkyTopOffset = -(mSkyHeight * 0.28f);
-		mSkyMoveOffset = UIHelper.convertDpToPixel(mParent.getContext(), 15);
+		mSkyMoveOffset = AndroidHelper.convertDpToPixel(mParent.getContext(), 15);
 
 		mTownHeight = (int) (TOWN_RATIO * mScreenWidth);
 		mTownInitialTopOffset = (mTotalDragDistance - mTownHeight
@@ -95,7 +95,7 @@ public class SunRefreshDrawable extends Drawable implements Animatable {
 		mTownFinalTopOffset = (mTotalDragDistance - mTownHeight
 				* TOWN_FINAL_SCALE)
 				+ mTotalDragDistance * .42f;
-		mTownMoveOffset = UIHelper.convertDpToPixel(mParent.getContext(),10);
+		mTownMoveOffset = AndroidHelper.convertDpToPixel(mParent.getContext(),10);
 
 		mSunLeftOffset = 0.3f * (float) mScreenWidth;
 		mSunTopOffset = (mTotalDragDistance * 0.5f);

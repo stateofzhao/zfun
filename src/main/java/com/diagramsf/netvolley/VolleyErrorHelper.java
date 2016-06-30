@@ -1,36 +1,37 @@
 package com.diagramsf.netvolley;
 
-import android.content.Context;
-import com.android.volley.*;
-import com.diagramsf.exceptions.AppException;
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.diagramsf.net.ExceptionWrapper;
 
-/** 转换 VolleyError 成本地 AppException */
+/** 转换 VolleyError 成本地 ExceptionWrapper */
 public class VolleyErrorHelper {
 
-	public static AppException formatVolleyError(VolleyError volleyError) {
+	public static ExceptionWrapper formatVolleyError(VolleyError volleyError) {
 		if(volleyError instanceof AuthFailureError){//请求身份验证失败
-			return AppException.auth(volleyError);
+			return ExceptionWrapper.auth(volleyError);
 		}else if(volleyError instanceof NoConnectionError){//无网络连接 或者 有可能URL拼写错误
-			return AppException.noNet(volleyError);
+			return ExceptionWrapper.noNet(volleyError);
 		}else if(volleyError instanceof TimeoutError){//请求超时
-			return AppException.http(volleyError);
+			return ExceptionWrapper.http(volleyError);
 		}else if(volleyError instanceof NetworkError){ // 执行网络请求时发生错误
-			return AppException.http(volleyError);
+			return ExceptionWrapper.http(volleyError);
 		}else if(volleyError instanceof ParseError){//解析结果发生错误
-			return AppException.json(volleyError);
+			return ExceptionWrapper.json(volleyError);
 		}else if(volleyError instanceof ServerError){ // 服务器应答，但是是错误应答
 			if(null != volleyError.networkResponse){
-				return AppException.http(volleyError.networkResponse.statusCode);
+				return ExceptionWrapper.server(volleyError.networkResponse.statusCode);
 			}else{
-				return AppException.server(volleyError);
+				return ExceptionWrapper.http(volleyError);
 			}
 		}else{
-			return AppException.run(volleyError);
+			return ExceptionWrapper.run(volleyError);
 		}
 	}
 
-	/** 将Volley的失败结果信息，转换成app的友好提示展示给用户 */
-	public static void showVolleyFailedMessage(Context context, VolleyError error) {
-		VolleyErrorHelper.formatVolleyError(error).makeToast(context);
-	}
-}
+}//class end

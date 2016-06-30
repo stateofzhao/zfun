@@ -21,7 +21,7 @@ import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
  * 调用 {@link #submitTaskForMainThreadCallback(Priority, Callable, ResultCallback)} 添加任务
  * <p>
  *
- * @deprecated 使用{@link UseCaseThreadPoolScheduler}代替
+ * @deprecated 使用{@link UseCaseThreadPoolScheduler}代替，此类存在的用途就是用来学习线程池的~
  */
 public class MyExecutor {
   private final static String TAG = "MyExecutor";

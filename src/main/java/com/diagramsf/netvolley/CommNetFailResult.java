@@ -16,6 +16,10 @@ public class CommNetFailResult extends NetFailResultBase {
         this.e = e;
     }
 
+    @Override public Exception getException() {
+        return e;
+    }
+
     @Override
     public void toastFailStr(Context context) {
         Toast.makeText(context, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
