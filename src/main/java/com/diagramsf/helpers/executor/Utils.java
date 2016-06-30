@@ -8,7 +8,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class Utils {
-
     public final static String THREAD_NAME = "MyExecutor-Task";
 
 	/**
@@ -45,8 +44,7 @@ public class Utils {
 		public Thread newThread(Runnable r) {
 			return new MyThread(r);
 		}
-
-	}
+	}//class end
 
 	private static class MyThread extends Thread {
 
@@ -60,7 +58,7 @@ public class Utils {
 			super.run();
 		}
 
-	}
+	}//class end
 
     public static void checkMain() {
         if (!isMain()) {
@@ -73,4 +71,4 @@ public class Utils {
         return Looper.getMainLooper().getThread() == Thread.currentThread();
     }
 
-}
+}//class end
