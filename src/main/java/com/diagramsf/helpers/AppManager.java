@@ -89,20 +89,17 @@ public class AppManager {
         }
 
         return null;
-
     }
 
     /**
      * 添加Activity到堆栈
      */
     public void addActivity(Activity activity) {
-
         activityStack.add(new ActivityRef(activity, q));
     }
 
     /** 把Activity从堆栈中弹出 */
     public void popActivity(Activity activity) {
-
         if (null != activity) {
 
             ActivityRef ref = getRefFromActivityStack(activity);
@@ -131,7 +128,6 @@ public class AppManager {
      * 结束当前Activity（堆栈中最后一个压入的）
      */
     public void finishActivity() {
-
         ActivityRef ref = activityStack.lastElement();
         Activity activity = ref.get();
 
@@ -145,17 +141,15 @@ public class AppManager {
      */
     public void finishActivity(Activity activity) {
         if (activity != null) {
-
             ActivityRef ref = getRefFromActivityStack(activity);
-            if (null == ref)
+            if (null == ref) {
                 return;
-
+            }
             activityStack.remove(ref);
             Activity act = ref.get();
             if (null != act) {
                 act.finish();
             }
-
         }
     }
 
@@ -163,7 +157,6 @@ public class AppManager {
      * 结束指定类名的Activity
      */
     public void finishActivity(Class<?> cls) {
-
         for (int i = activityStack.size() - 1; i >= 0; i--) {
             ActivityRef ref = activityStack.get(i);
 
@@ -182,9 +175,7 @@ public class AppManager {
      */
     public void finishAllActivity() {
         for (int i = 0, size = activityStack.size(); i < size; i++) {
-
             ActivityRef ref = activityStack.get(i);
-
             if (null != ref) {
                 Activity act = ref.get();
                 if (null != act) {
@@ -199,7 +190,6 @@ public class AppManager {
      * 获取当前有多少activity处于打开状态
      */
     public int getActivityCountInShow() {
-
         int total = activityStack.size();
         for (ActivityRef ref : activityStack) {
             Activity act = ref.get();
@@ -209,7 +199,6 @@ public class AppManager {
         }
 
         return total;
-
     }
 
     /**
@@ -218,7 +207,6 @@ public class AppManager {
      * 目前觉着这个方法有问题，慎重使用!如果同一个Activity类，被打开多次的话，这里只是会返回最初那个Activity
      */
     public Activity getPointActivityByClass(Class<? extends Activity> cls) {
-
         for (ActivityRef ref : activityStack) {
             Activity act = ref.get();
             if (null != act && act.getClass().equals(cls)) {
@@ -251,7 +239,6 @@ public class AppManager {
      * 执行Activity中的相关方法来释放一些可能导致Activity泄露的资源。
      */
     private static class ActivityRef extends WeakReference<Activity> {
-
         //这里虽然是强引用了 activity，但是由于此处引用是处于 WeakReference中，所以不会阻碍JVM回收activity的
         public Activity activity;
 
@@ -261,6 +248,6 @@ public class AppManager {
             super(r, q);
             activity = r;
         }
-
     }//class end
-}
+
+}//class end
