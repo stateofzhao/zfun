@@ -19,7 +19,6 @@ import android.view.*;
  * @author Diagrams
  */
 public class LoopViewPager extends ViewPager {
-
     private int mAutoScrollTimeInterval = 5000;
     private LoopThread mLoopThread;
 
@@ -42,11 +41,9 @@ public class LoopViewPager extends ViewPager {
      * @param position 循环pager的索引
      */
     public int setRealCurrentItem(int position) {
-
         if (null == mAdapterWrapper) {
             throw new RuntimeException("需要首先设置适配器！");
         }
-
         return mAdapterWrapper.setRealCurrentItem(position);
     }
 
@@ -97,13 +94,11 @@ public class LoopViewPager extends ViewPager {
             return !mLoopThread.isScrollViewPager;
         }
         return true;
-
     }
 
     /** 销毁 循环线程 */
     public void destroyThread() {
         if (null != mLoopThread) {
-
             if (null != mLoopThread.topLoopTask) {
                 removeCallbacks(mLoopThread.topLoopTask);
             }
@@ -123,25 +118,21 @@ public class LoopViewPager extends ViewPager {
 
     @Override
     public void setAdapter(PagerAdapter arg0) {
-
         mAdapterWrapper = new LoopPageAdapterWrapper(arg0);
-
         super.setAdapter(mAdapterWrapper);
     }
 
     @Override
     public void setOnPageChangeListener(OnPageChangeListener listener) {
-
         this.mOutOnPagerChangeListener = listener;
     }
 
     @Override
     public void setCurrentItem(int item, boolean smoothScroll) {
-
         final int count = getLoopViewPagerCount();
         final int reallyCount = getRealCount();
 
-        if (smoothScroll == true) {// 这个会触发滚动所以，不用在这里监听
+        if (smoothScroll) {// 这个会触发滚动所以，不用在这里监听
             int looperCurrent = item;
 
             if (item >= reallyCount) {// 证明要设置的项已经是 在 附加的多余项里了，不需要进行操作
@@ -169,7 +160,6 @@ public class LoopViewPager extends ViewPager {
 
     @Override
     public void setCurrentItem(int item) {
-
         final int count = getLoopViewPagerCount();
         final int reallyCount = getRealCount();
 
@@ -186,7 +176,6 @@ public class LoopViewPager extends ViewPager {
 
     private void init() {
         super.setOnPageChangeListener(new OnPageChangeListener() {
-
             private int focusedPage = 0;
 
             @Override
@@ -241,7 +230,6 @@ public class LoopViewPager extends ViewPager {
             @Override
             public void onPageScrolled(int position, float positionOffset,
                                        int positionOffsetPixels) {
-
                 if (null != mOutOnPagerChangeListener) {
                     mOutOnPagerChangeListener.onPageScrolled(position,
                             positionOffset, positionOffsetPixels);
@@ -250,13 +238,10 @@ public class LoopViewPager extends ViewPager {
 
             @Override
             public void onPageSelected(int position) {
-
                 focusedPage = position;
-
                 if (null != mOutOnPagerChangeListener) {
                     mOutOnPagerChangeListener.onPageSelected(position);
                 }
-
             }
         });
     }
@@ -264,7 +249,6 @@ public class LoopViewPager extends ViewPager {
     /** 返回当前item的position，需要用{@link #setRealCurrentItem(int)} 来转换成真正的position */
     @Override
     public int getCurrentItem() {
-
         return super.getCurrentItem();
     }
 
@@ -281,7 +265,6 @@ public class LoopViewPager extends ViewPager {
     // 当它的父View拦截掉事件时，不会立即执行父View的onTuchEvent()方法而是会在此View中分发一个ACTION_CANCEL事件(会执行这个方法)传递给此View的子View
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-
         if (0 == mTouchSlop) {
             ViewConfiguration configration = ViewConfiguration
                     .get(getContext());
@@ -293,13 +276,11 @@ public class LoopViewPager extends ViewPager {
 
         switch (action) {
             case MotionEvent.ACTION_UP:// 如果ViewPager拦截事件成功的话，就不再执行onInterceptTouchEvent()方法了，所以这个状态就不执行了
-
                 isTouched = false;
                 isSwipeRight = false;
                 break;
             case MotionEvent.ACTION_CANCEL:// 这个方法只有上层view拦截了手势事件后才会调用,所以仍然需要在
                 // onTouchEvent()方法中处理
-
                 isTouched = false;
                 isSwipeRight = false;
                 break;
@@ -310,7 +291,6 @@ public class LoopViewPager extends ViewPager {
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
                 break;
             case MotionEvent.ACTION_MOVE:
-
                 final int activePointerId = mActivePointerId;
                 if (activePointerId == -1) {
                     break;
@@ -344,7 +324,6 @@ public class LoopViewPager extends ViewPager {
                 mLastPointX = x;
                 mLastPointY = y;
                 break;
-
         }
 
         return super.onInterceptTouchEvent(ev);
@@ -352,7 +331,6 @@ public class LoopViewPager extends ViewPager {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-
         // ACTION_DOWN的是 屏幕的边缘，不做处理
         if (ev.getAction() == MotionEvent.ACTION_DOWN && ev.getEdgeFlags() != 0) {
             // Don't handle edge touches immediately -- they may actually belong
@@ -367,7 +345,6 @@ public class LoopViewPager extends ViewPager {
         }
 
         int action = ev.getAction() & MotionEvent.ACTION_MASK;
-
         switch (action) {
             case MotionEvent.ACTION_UP:
                 isTouched = false;
@@ -384,7 +361,6 @@ public class LoopViewPager extends ViewPager {
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
                 break;
             case MotionEvent.ACTION_MOVE:
-
                 final int activePointerId = mActivePointerId;
                 if (activePointerId == -1) {
                     break;
@@ -411,7 +387,6 @@ public class LoopViewPager extends ViewPager {
                 mLastPointX = x;
                 mLastPointY = y;
                 break;
-
         }
 
         return super.onTouchEvent(ev);
@@ -419,7 +394,6 @@ public class LoopViewPager extends ViewPager {
 
     /** LoopViewPager的适配器改造器 */
     private class LoopPageAdapterWrapper extends PagerAdapter {
-
         private PagerAdapter mReallyAdapter;
         private final boolean mIsReallyAdapterWell;
         private final int mReallyAdapterCount;
@@ -451,14 +425,11 @@ public class LoopViewPager extends ViewPager {
         }
 
         public int getRealCount() {
-
             return mReallyAdapterCount;
         }
 
         public int setRealCurrentItem(int position) {
-
             return position % mReallyAdapterCount;
-
         }
 
         // 这里有一个问题就是 参数不能够是 List<Object> orangeData,具体为什么解释如下：
@@ -470,27 +441,22 @@ public class LoopViewPager extends ViewPager {
 
         @Override
         public int getCount() {
-
             return mMyAdapterCount;
         }
 
         @Override
         public boolean isViewFromObject(View arg0, Object arg1) {
-
             return mReallyAdapter.isViewFromObject(arg0, arg1);
         }
 
         @Override
         public void destroyItem(View container, int position, Object object) {
-
             mReallyAdapter.destroyItem(container, position, object);
         }
 
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
-
             mReallyAdapter.destroyItem(container, position, object);
-
         }
 
         @Override
@@ -520,7 +486,6 @@ public class LoopViewPager extends ViewPager {
 
         @Override
         public Object instantiateItem(View container, int position) {
-
             // final int reallyPosition = setRealCurrentItem(position);
             // //不能在这里转换，必须让使用者在 自己的adapter中手动转换来取数据
 
@@ -529,9 +494,7 @@ public class LoopViewPager extends ViewPager {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-
             // final int reallyPosition = setRealCurrentItem(position);
-
             return mReallyAdapter.instantiateItem(container, position);
 
         }
@@ -578,11 +541,10 @@ public class LoopViewPager extends ViewPager {
      * 自动更改pager position的线程
      */
     class LoopThread extends Thread {
-
         private boolean isScrollViewPager = false;
         public boolean isRun = true;
 
-        private Object pauseWorkLock = new Object();
+        private final Object pauseWorkLock = new Object();
 
         private ChangeTopPagerPositionRunnable topLoopTask;
 
@@ -592,7 +554,6 @@ public class LoopViewPager extends ViewPager {
                 while (isRun) {
                     sleep(mAutoScrollTimeInterval);
                     synchronized (pauseWorkLock) {
-
                         if (!isScrollViewPager) {
                             pauseWorkLock.wait();
                         }
@@ -610,12 +571,9 @@ public class LoopViewPager extends ViewPager {
      * 更改顶部Pager position的任务
      */
     class ChangeTopPagerPositionRunnable implements Runnable {
-
         @Override
         public void run() {
-            setCurrentItem(getCurrentItem() + 1,
-                    true);
+            setCurrentItem(getCurrentItem() + 1, true);
         }
-
     }// class end
 }
