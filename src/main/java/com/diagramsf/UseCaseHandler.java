@@ -126,13 +126,29 @@ public class UseCaseHandler {
             return this;
         }
 
+        public void execute(@NonNull final Runnable runnable){
+          UseCase useCase = new UseCase() {
+              @Override public void execute(RequestValue requestValue) {
+                runnable.run();
+              }
+            };
+          decoratorUseCase(useCase);
+          useCase.state = UseCase.NEW;
+          handler.execute(useCase);
+        }
+
         public void execute(@NonNull UseCase useCase) {
-            useCase.setRequestValue(requestValue);
-            useCase.setTag(tag);
-            useCase.setListener(new ResultListenerWrapper<>(useCase, handler, listener));
-            useCase.setErrorListener(new ErrorListenerWrapper<>(useCase, handler, errorListener));
-            useCase.setPriority(priority);
+            decoratorUseCase(useCase);
+          useCase.state = UseCase.NEW;
             handler.execute(useCase);
+        }
+
+        private void decoratorUseCase(UseCase useCase){
+          useCase.setRequestValue(requestValue);
+          useCase.setTag(tag);
+          useCase.setListener(new ResultListenerWrapper<>(useCase, handler, listener));
+          useCase.setErrorListener(new ErrorListenerWrapper<>(useCase, handler, errorListener));
+          useCase.setPriority(priority);
         }
     } // class UseCaseDecorator end
 }

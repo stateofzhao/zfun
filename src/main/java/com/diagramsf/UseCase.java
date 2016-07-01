@@ -2,6 +2,7 @@ package com.diagramsf;
 
 import android.support.annotation.IntDef;
 
+import android.support.annotation.Nullable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -18,6 +19,11 @@ public abstract class UseCase<T extends UseCase.RequestValue
     public static final int NORMAL = 2;
     public static final int LOW = 1;
 
+    public static final int NEW = 0;
+    public static final int RUNNING = 1;
+    public static final int POSTING_RESULT = 2;
+    public static final int FINISHED = 3;
+
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({HIGH, NORMAL, LOW})
     @interface Type {}
@@ -30,6 +36,9 @@ public abstract class UseCase<T extends UseCase.RequestValue
 
     private Object tag;//取消请求用的
 
+    /** 这个千万不要自己来修改，这个是系统托管的 */
+    protected int state;
+
     public void setPriority(@Type int priority) {
         this.priority = priority;
     }
@@ -38,7 +47,7 @@ public abstract class UseCase<T extends UseCase.RequestValue
         return priority;
     }
 
-    public void setRequestValue(T value) {
+    public void setRequestValue(@Nullable T value) {
         this.requestValue = value;
     }
 
