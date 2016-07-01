@@ -19,11 +19,6 @@ public abstract class UseCase<T extends UseCase.RequestValue
     public static final int NORMAL = 2;
     public static final int LOW = 1;
 
-    public static final int NEW = 0;
-    public static final int RUNNING = 1;
-    public static final int POSTING_RESULT = 2;
-    public static final int FINISHED = 3;
-
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({HIGH, NORMAL, LOW})
     @interface Type {}
@@ -33,11 +28,9 @@ public abstract class UseCase<T extends UseCase.RequestValue
     private ErrorListener<E> errorListener;
     private int priority = 1;
     private boolean isCancel;
+    private boolean justRun;//是否只是用来修饰Runnable
 
     private Object tag;//取消请求用的
-
-    /** 这个千万不要自己来修改，这个是系统托管的 */
-    protected int state;
 
     public void setPriority(@Type int priority) {
         this.priority = priority;
@@ -59,7 +52,7 @@ public abstract class UseCase<T extends UseCase.RequestValue
         this.listener = listener;
     }
 
-    public Listener<R> getCallback() {
+    public Listener<R> getListener() {
         return listener;
     }
 
@@ -83,8 +76,16 @@ public abstract class UseCase<T extends UseCase.RequestValue
         isCancel = true;
     }
 
-    public boolean isCacnel() {
+    public boolean isCancel() {
         return isCancel;
+    }
+
+    public void justRun(){
+        justRun = true;
+    }
+
+    public boolean isJustRun(){
+        return justRun;
     }
 
     public void run() {
@@ -105,7 +106,7 @@ public abstract class UseCase<T extends UseCase.RequestValue
 
     /** 错误结果 */
     public interface ErrorValue {
-
+        void setException(Exception e);
     }
 
     /** 结果回调接口 */

@@ -183,11 +183,16 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
             if (isCancelled()) {//如果被取消掉了，（会在调用cancel()方法的同一个线程中执行）
                 useCase.cancel();//取消掉UseCase的回调
             } else {//正常执行完任务后，需要把任务从mFutureMap中移除，防止内存泄露
-                if (!useCase.isCacnel()) {
+                if (!useCase.isCancel()) {
                     Message msg = Message.obtain(scheduler.mMainHandler);
                     msg.what = POST_FINISHED;
                     msg.obj = useCase;
                     msg.sendToTarget();
+                }
+
+                //如果只是运行的Runnable，那么这里需要给一个运行完了的通知
+                if(useCase.isJustRun()){
+                    useCase.getListener().onSucceed(null);
                 }
             }
         }

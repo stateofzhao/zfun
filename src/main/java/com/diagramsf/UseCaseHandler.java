@@ -2,9 +2,11 @@ package com.diagramsf;
 
 import android.support.annotation.NonNull;
 
+import java.util.concurrent.Callable;
+
 /**
  * 处理{@link com.diagramsf.UseCase}
- * <p/>
+ * <p>
  * Created by Diagrams on 2016/6/27 11:52
  */
 public class UseCaseHandler {
@@ -66,7 +68,7 @@ public class UseCaseHandler {
 
         @Override
         public void onSucceed(V response) {
-            if (!useCase.isCacnel()) {
+            if (!useCase.isCancel()) {
                 handler.notifyResponse(response, listener);
             }
         }
@@ -86,7 +88,7 @@ public class UseCaseHandler {
 
         @Override
         public void onError(E error) {
-            if (!useCase.isCacnel()) {
+            if (!useCase.isCancel()) {
                 handler.error(error, errorListener);
             }
         }
@@ -126,29 +128,54 @@ public class UseCaseHandler {
             return this;
         }
 
-        public void execute(@NonNull final Runnable runnable){
-          UseCase useCase = new UseCase() {
-              @Override public void execute(RequestValue requestValue) {
-                runnable.run();
-              }
+        public void execute(@NonNull final Runnable runnable) {
+            UseCase useCase = new UseCase() {
+                @Override
+                public void execute(RequestValue requestValue) {
+                    runnable.run();
+                }
             };
-          decoratorUseCase(useCase);
-          useCase.state = UseCase.NEW;
-          handler.execute(useCase);
+            useCase.justRun();
+            decoratorUseCase(useCase);
+            handler.execute(useCase);
+        }
+
+        public <V extends UseCase.ResponseValue> void execute(@NonNull final Callable<V> runnable) {
+            UseCase useCase = new UseCase() {
+                @Override
+                public void execute(RequestValue requestValue) {
+                    try {
+                        V result =  runnable.call();
+                        getListener().onSucceed(result);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        ErrorValue errorValue = new ErrorValue() {
+                            public Exception e;
+                            @Override
+                            public void setException(Exception e) {
+                                this.e = e;
+                            }
+                        };
+                        getErrorListener().onError(errorValue);
+                    }
+                }
+            };
+            useCase.justRun();
+            decoratorUseCase(useCase);
+            handler.execute(useCase);
         }
 
         public void execute(@NonNull UseCase useCase) {
             decoratorUseCase(useCase);
-          useCase.state = UseCase.NEW;
             handler.execute(useCase);
         }
 
-        private void decoratorUseCase(UseCase useCase){
-          useCase.setRequestValue(requestValue);
-          useCase.setTag(tag);
-          useCase.setListener(new ResultListenerWrapper<>(useCase, handler, listener));
-          useCase.setErrorListener(new ErrorListenerWrapper<>(useCase, handler, errorListener));
-          useCase.setPriority(priority);
+        private void decoratorUseCase(UseCase useCase) {
+            useCase.setRequestValue(requestValue);
+            useCase.setTag(tag);
+            useCase.setListener(new ResultListenerWrapper<>(useCase, handler, listener));
+            useCase.setErrorListener(new ErrorListenerWrapper<>(useCase, handler, errorListener));
+            useCase.setPriority(priority);
         }
     } // class UseCaseDecorator end
 }
