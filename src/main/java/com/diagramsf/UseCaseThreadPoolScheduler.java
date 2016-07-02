@@ -125,6 +125,11 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
                 mFutureMap.remove(tag);
             }
         }
+
+        //如果只是运行的Runnable，那么这里需要给一个运行完了的通知
+        if(useCase.isJustRun()){
+            useCase.getListener().onSucceed(null);
+        }
     }
 
     private void performPostResult(Runnable runnable) {
@@ -188,11 +193,6 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
                     msg.what = POST_FINISHED;
                     msg.obj = useCase;
                     msg.sendToTarget();
-                }
-
-                //如果只是运行的Runnable，那么这里需要给一个运行完了的通知
-                if(useCase.isJustRun()){
-                    useCase.getListener().onSucceed(null);
                 }
             }
         }
