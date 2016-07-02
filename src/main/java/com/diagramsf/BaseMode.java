@@ -9,6 +9,12 @@ package com.diagramsf;
  * 而不是仅仅像 Bean（POJO数据对象） 那样用来传递数据（getter、setter）。<br/>
  * Model 处理完逻辑获得数据后通常把数据包装成 Bean对象，然后传递给Presenter,Presenter在把Bean交给View。
  * <p/>
+ *
+ *
+ * -=---====================2016.07.02 更新
+ * M是一个相当泛类的指代，它并不是指具体的一个类，比如在基本MVP中它指数据层；
+ * 而在MVP-Clean中指UseCase层的各种useCase。
+ *
  * Created by Diagrams on 2016/4/20 11:16
  */
 public interface BaseMode {

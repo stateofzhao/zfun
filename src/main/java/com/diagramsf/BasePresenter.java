@@ -26,6 +26,9 @@ package com.diagramsf;
  * <-            <-          Local data source
  * <br/>
  * 需要注意：Presenter不直接操作数据（更新数据状态），需要调用Model操作数据（更新数据状态）<br/>
+ * <p/>
+ * 如果结合Architecture思想使用的话，这里的Model都是一个个不同功能的UseCase，Presenter通过组合
+ * 各个UseCase来获取需要的数据，然后通知给View。
  */
 public interface BasePresenter {
     void start();
