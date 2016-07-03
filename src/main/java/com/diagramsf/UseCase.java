@@ -1,15 +1,19 @@
 package com.diagramsf;
 
+import android.content.Context;
 import android.support.annotation.IntDef;
-
 import android.support.annotation.Nullable;
+import com.diagramsf.net.NetContract;
+import com.diagramsf.netvolley.NetResultFactory;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Map;
 
 /**
  * domain layer 入口，所有对数据层进行操作的行为都需要通过这个来进入。
  * domainLayer起到把数据处理逻辑和app需求逻辑隔离开来，在这里 衔接数据处理逻辑和app需求业务逻辑。
- * <p/>
+ * <p>
  * 这层是一个纯Java的模块，不包含任何Android依赖。
  * Created by Diagrams on 2016/6/27 11:31
  */
@@ -81,11 +85,11 @@ public abstract class UseCase<T extends UseCase.RequestValue
         return isCancel;
     }
 
-    public void justRun(){
+    public void justRun() {
         justRun = true;
     }
 
-    public boolean isJustRun(){
+    public boolean isJustRun() {
         return justRun;
     }
 
@@ -118,6 +122,102 @@ public abstract class UseCase<T extends UseCase.RequestValue
     /** 错误结果回调 */
     public interface ErrorListener<E extends ErrorValue> {
         void onError(E error);
+    }
+
+
+    //===================================下面是一个执行远端请求的domain层实现
+    public static class RemoteUseCaseTest extends UseCase<UrlRequestValue, NetResultValue, NetError> {
+
+        private Context context;
+
+        public RemoteUseCaseTest(Context context) {
+            if (null == context) {
+                throw new IllegalArgumentException("context must not be null!");
+            }
+            this.context = context.getApplicationContext();
+        }
+
+        @Override
+        public void execute(final UrlRequestValue requestValue) {
+            RemoteDataSource.with(context)
+                    .load(requestValue.url)
+                    .postData(requestValue.postData)
+                    .listener(new NetContract.NetResultListener() {
+                        @Override
+                        public void onSucceed(NetContract.NetSuccessResult result) {
+                            NetResultValue resultValue = (NetResultValue) result;
+                            getListener().onSucceed(resultValue);
+                        }
+                    })
+                    .errorListener(new NetContract.NetResultErrorListener() {
+                        @Override
+                        public void onFailed(NetContract.NetFailResult fail) {
+                            NetError error = new NetError();
+                            error.setException(fail.getException());
+                            getErrorListener().onError(error);
+                        }
+                    })
+                    .into(requestValue.factory);
+        }
+
+    }
+
+    public static class UrlRequestValue<T extends NetResultValue> implements RequestValue {
+        public String url;
+        public Map<String, String> postData;
+        public NetResultFactory<T> factory;
+    }//class end
+
+    public static class NetResultValue implements NetContract.NetSuccessResult, UseCase.ResponseValue {
+
+        @Override
+        public void setResultType(ResultType resultType) {
+
+        }
+
+        @Override
+        public void setRequestTag(Object tag) {
+
+        }
+
+        @Override
+        public ResultType getResultType() {
+            return null;
+        }
+
+        @Override
+        public Object getRequestTag() {
+            return null;
+        }
+
+        @Override
+        public boolean checkResultLegitimacy() {
+            return false;
+        }
+
+        @Override
+        public Object getWrapper() {
+            return null;
+        }
+    }//class end
+
+    public static class NetError implements ErrorValue {
+        public Exception e;
+
+        @Override
+        public void setException(Exception e) {
+            this.e = e;
+        }
+    }//class end
+
+    public static <T extends NetResultValue, E extends NetError,S extends NetResultValue>
+    void testDomain(Context context, UrlRequestValue<T> requestValue,
+                    ErrorListener<E> errorListener, Listener<S> listener) {
+        UseCaseHandler.instance()
+                .request(requestValue)
+                .error(errorListener)
+                .listener(listener)
+                .execute(new RemoteUseCaseTest(context));
     }
 
 }//class UseCase end
