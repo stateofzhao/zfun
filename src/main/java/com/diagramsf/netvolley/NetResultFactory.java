@@ -10,7 +10,7 @@ import java.util.Map;
  *
  * @version 2.0.0
  */
-public interface NetResultFactory {
+public interface NetResultFactory <T extends NetContract.NetSuccessResult>{
 
     /**
      * 对服务器返回的字符串 进行操作
@@ -21,6 +21,6 @@ public interface NetResultFactory {
      *
      * @return 返回操作完的结果
      */
-    NetContract.NetSuccessResult analysisResult(byte[] result, Map<String, String> responseHeader) throws Exception;
+    T analysisResult(byte[] result, Map<String, String> responseHeader) throws Exception;
 
 }

@@ -249,6 +249,7 @@ public class NetRequestManager {
             request.setErrorListener(errorListener);
             request.setListener(listener);
             request.request(type);
+            request.setCacheKey(cacheKey);
             request.setDeliverToResultTag(deToResultTag);
             return request;
         }
