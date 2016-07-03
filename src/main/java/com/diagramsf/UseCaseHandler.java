@@ -68,7 +68,7 @@ public class UseCaseHandler {
 
         @Override
         public void onSucceed(V response) {
-            if (!useCase.isCancel()) {
+            if (null != listener && !useCase.isCancel()) {
                 handler.notifyResponse(response, listener);
             }
         }
@@ -88,7 +88,7 @@ public class UseCaseHandler {
 
         @Override
         public void onError(E error) {
-            if (!useCase.isCancel()) {
+            if (null != errorListener && !useCase.isCancel()) {
                 handler.error(error, errorListener);
             }
         }
