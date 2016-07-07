@@ -127,7 +127,6 @@ public abstract class UseCase<T extends UseCase.RequestValue
 
     //===================================下面是一个执行远端请求的domain层实现
     public static class RemoteUseCaseTest extends UseCase<UrlRequestValue, NetResultValue, NetError> {
-
         private Context context;
 
         public RemoteUseCaseTest(Context context) {
