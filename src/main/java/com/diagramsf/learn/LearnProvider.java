@@ -1,4 +1,4 @@
-package com.diagramsf.providers;
+package com.diagramsf.learn;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;

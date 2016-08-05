@@ -1,4 +1,4 @@
-package com.diagramsf.customview;
+package com.diagramsf.learn;
 
 import android.annotation.TargetApi;
 import android.content.Context;

@@ -1,4 +1,4 @@
-package com.diagramsf.activities;
+package com.diagramsf.learn;
 
 import android.content.Intent;
 import android.content.res.Configuration;

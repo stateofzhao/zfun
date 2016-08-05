@@ -1,4 +1,4 @@
-package com.diagramsf.fragments;
+package com.diagramsf.learn;
 
 import android.app.Activity;
 import android.os.Bundle;

@@ -1,4 +1,4 @@
-package com.diagramsf.services;
+package com.diagramsf.learn;
 
 import android.app.Service;
 import android.content.Intent;

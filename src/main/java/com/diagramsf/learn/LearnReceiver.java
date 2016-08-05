@@ -1,4 +1,4 @@
-package com.diagramsf.receiver;
+package com.diagramsf.learn;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

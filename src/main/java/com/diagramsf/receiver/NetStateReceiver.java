@@ -16,63 +16,61 @@ import com.diagramsf.helpers.DeviceHelper;
  */
 public abstract class NetStateReceiver extends BroadcastReceiver {
 
-    static final String EXTRA_AIRPLANE_STATE = "state";
+  static final String EXTRA_AIRPLANE_STATE = "state";
 
-    /**
-     * 注册此广播接收器
-     */
-    public void register(Context context) {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        context.registerReceiver(this, filter);
+  /**
+   * 注册此广播接收器
+   */
+  public void register(Context context) {
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+    filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+    context.registerReceiver(this, filter);
+  }
+
+  /**
+   * 取消注册此广播接收器
+   */
+  public void unregister(Context context) {
+    context.unregisterReceiver(this);
+  }
+
+  @Override public void onReceive(Context context, Intent intent) {
+    // On some versions of Android this may be called with a null Intent,
+    // also without extras (getExtras() == null), in such case we use defaults.
+    if (intent == null) {
+      onDefault();
+      return;
     }
 
-    /**
-     * 取消注册此广播接收器
-     */
-    public void unregister(Context context) {
-        context.unregisterReceiver(this);
-    }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        // On some versions of Android this may be called with a null Intent,
-        // also without extras (getExtras() == null), in such case we use defaults.
-        if (intent == null) {
-            onDefault();
-            return;
+    final String action = intent.getAction();
+    if (Intent.ACTION_AIRPLANE_MODE_CHANGED.equals(action)) {
+      if (!intent.hasExtra(EXTRA_AIRPLANE_STATE)) {
+        if (AndroidHelper.isAirplaneModeOn(context)) {
+          onAirMode();
         }
-
-        final String action = intent.getAction();
-        if (Intent.ACTION_AIRPLANE_MODE_CHANGED.equals(action)) {
-            if (!intent.hasExtra(EXTRA_AIRPLANE_STATE)) {
-                if (AndroidHelper.isAirplaneModeOn(context)) {
-                    onAirMode();
-                }
-                return; // No airplane state, ignore it. Should we query RequestManager.isAirplaneModeOn?
-            }
-            if (intent.getBooleanExtra(EXTRA_AIRPLANE_STATE, false)) {
-                onAirMode();
-            }
-        } else if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-            onNetStatChange(DeviceHelper.getNetType(context));
-
-        }
+        return; // No airplane state, ignore it. Should we query RequestManager.isAirplaneModeOn?
+      }
+      if (intent.getBooleanExtra(EXTRA_AIRPLANE_STATE, false)) {
+        onAirMode();
+      }
+    } else if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+      onNetStatChange(DeviceHelper.getNetType(context));
     }
+  }
 
-    /**
-     * 开启了飞行模式
-     */
-    public abstract void onAirMode();
+  /**
+   * 开启了飞行模式
+   */
+  public abstract void onAirMode();
 
-    /**
-     * 网络状态变化
-     */
-    public abstract void onNetStatChange(DeviceHelper.NetType type);
+  /**
+   * 网络状态变化
+   */
+  public abstract void onNetStatChange(DeviceHelper.NetType type);
 
-    /**
-     * 收到Android系统发送的网路状态变化，但是只是收到通知没有收到数据；
-     */
-    public abstract void onDefault();
+  /**
+   * 收到Android系统发送的网路状态变化，但是只是收到通知没有收到数据；
+   */
+  public abstract void onDefault();
 }
