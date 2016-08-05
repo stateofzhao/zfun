@@ -142,16 +142,16 @@ public abstract class UseCase<T extends UseCase.RequestValue
             RemoteDataSource.with(context)
                     .load(requestValue.url)
                     .postData(requestValue.postData)
-                    .listener(new NetContract.NetResultListener() {
+                    .listener(new NetContract.Listener() {
                         @Override
-                        public void onSucceed(NetContract.NetSuccessResult result) {
+                        public void onSucceed(NetContract.Result result) {
                             NetResultValue resultValue = (NetResultValue) result;
                             getListener().onSucceed(resultValue);
                         }
                     })
-                    .errorListener(new NetContract.NetResultErrorListener() {
+                    .errorListener(new NetContract.ErrorListener() {
                         @Override
-                        public void onFailed(NetContract.NetFailResult fail) {
+                        public void onFailed(NetContract.Fail fail) {
                             NetError error = new NetError();
                             error.setException(fail.getException());
                             getErrorListener().onError(error);
@@ -168,7 +168,7 @@ public abstract class UseCase<T extends UseCase.RequestValue
         public NetResultFactory<T> factory;
     }//class end
 
-    public static class NetResultValue implements NetContract.NetSuccessResult, UseCase.ResponseValue {
+    public static class NetResultValue implements NetContract.Result, UseCase.ResponseValue {
 
         @Override
         public void setResultType(ResultType resultType) {
@@ -193,11 +193,6 @@ public abstract class UseCase<T extends UseCase.RequestValue
         @Override
         public boolean checkResultLegitimacy() {
             return false;
-        }
-
-        @Override
-        public Object getWrapper() {
-            return null;
         }
     }//class end
 

@@ -37,248 +37,250 @@ import java.util.Map;
  * 仿照Picasso的API方式（采用Build模式）来实现
  */
 public class NetRequestManager {
-    private static volatile NetRequestManager singleton;
+  private static volatile NetRequestManager singleton;
 
-    private RequestQueue requestQueue;
+  private RequestQueue requestQueue;
 
-    private NetRequestManager(RequestQueue requestQueue) {
-        this.requestQueue = requestQueue;
-    }
+  private NetRequestManager(RequestQueue requestQueue) {
+    this.requestQueue = requestQueue;
+  }
 
-    public static NetRequestManager with(Context context) {
+  public static NetRequestManager with(Context context) {
+    if (singleton == null) {
+      synchronized (NetRequestManager.class) {
         if (singleton == null) {
-            synchronized (NetRequestManager.class) {
-                if (singleton == null) {
-                    singleton = new Builder(context).build();
-                }
-            }
+          singleton = new Builder(context).build();
         }
-        return singleton;
+      }
+    }
+    return singleton;
+  }
+
+  /** 取消请求 */
+  public void cancel(Object tag) {
+    requestQueue.cancelAll(tag);
+  }
+
+  /**
+   * @param url 请求的网址
+   * @param method {@link com.android.volley.Request.Method}中的一种
+   */
+  public <T extends NetContract.Result> RequestCreator<T> load(String url, int method) {
+    return new RequestCreator<>(this, url, method);
+  }
+
+  /**
+   * @param url 请求的网址
+   */
+  public <T extends NetContract.Result> RequestCreator<T> load(String url) {
+    return new RequestCreator<>(this, url, Request.Method.DEPRECATED_GET_OR_POST);
+  }
+
+  public void load(Request request) {
+    requestQueue.add(request);
+  }
+
+  /** 用来定义{@link NetRequestManager}配置参数 */
+  public static class Builder {
+    /** Default on-disk cache directory. */
+    private static final String DEFAULT_CACHE_DIR = "volleyRequestManager";
+    /** 磁盘缓存最大大小 */
+    public static final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
+
+    private final Context context;
+    /** 用户代理，会写入到Http报头中 */
+    private String userAgent;
+    private Cache cache;
+    private HttpStack httpStack;
+
+    public Builder(Context context) {
+      if (context == null) {
+        throw new IllegalArgumentException("Context must not be null");
+      }
+      this.context = context;
     }
 
-    /** 取消请求 */
-    public void cancel(Object tag) {
-        requestQueue.cancelAll(tag);
+    public Builder userAgent(String userAgent) {
+      this.userAgent = userAgent;
+      return this;
     }
 
-    /**
-     * @param url    请求的网址
-     * @param method {@link com.android.volley.Request.Method}中的一种
-     */
-    public RequestCreator load(String url, int method) {
-        return new RequestCreator(this, url, method);
+    public Builder cache(Cache cache) {
+      this.cache = cache;
+      return this;
     }
 
-    /**
-     * @param url 请求的网址
-     */
-    public RequestCreator load(String url) {
-        return new RequestCreator(this, url, Request.Method.DEPRECATED_GET_OR_POST);
+    public Builder httpStack(HttpStack httpStack) {
+      this.httpStack = httpStack;
+      return this;
     }
 
-    public void load(Request request) {
-        requestQueue.add(request);
+    public NetRequestManager build() {
+      if (null == userAgent || "".equals(userAgent)) {
+        this.userAgent = Utils.createUserAgent(context);
+      }
+
+      if (null == cache) {
+        File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
+        cache = new DiskBasedCache(cacheDir, DEFAULT_SIZE_EXTERNAL_CACHE);
+      }
+
+      if (null == httpStack) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
+          httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
+        } else {
+          // Prior to Gingerbread, HttpUrlConnection was unreliable.
+          // See:
+          // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
+          httpStack =
+              new HttpClientStack(AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
+        }
+      }
+
+      Network network = new BasicNetwork(httpStack);
+      RequestQueue queue = new RequestQueue(cache, network);
+      queue.start();
+      return new NetRequestManager(queue);
+    }
+  }// class Builder end
+
+  public static class RequestCreator<T extends NetContract.Result> {
+    private String url;
+    private int method = -1;
+    private Map<String, String> postData;
+    private Map<String, String> header;
+    private RetryPolicy retryPolicy;
+    private Request.Priority priority;
+    private Object cancelTag;
+    private Object deToResultTag;
+    private NetContract.ErrorListener errorListener;
+    private NetContract.Listener<T> listener;
+    private int type;
+    private String cacheKey;
+
+    private NetRequestManager volleyRequestManager;
+
+    /** @param method 是{@link Request.Method}中的一种 */
+    private RequestCreator(NetRequestManager volleyRequestManager, String url, int method) {
+      this.volleyRequestManager = volleyRequestManager;
+      this.url = url;
+      this.method = method;
     }
 
-    public static class Builder {
-        /** Default on-disk cache directory. */
-        private final String DEFAULT_CACHE_DIR = "volleyRequestManager";
-        /** 磁盘缓存最大大小 */
-        public final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
+    /** post传递的参数 */
+    public RequestCreator<T> postData(Map<String, String> postData) {
+      this.postData = postData;
+      return this;
+    }
 
-        private final Context context;
-        /** 用户代理，会写入到Http报头中 */
-        private String userAgent;
-        private Cache cache;
-        private HttpStack httpStack;
+    /** 加载失败回调接口 */
+    public RequestCreator<T> errorListener(NetContract.ErrorListener listener) {
+      errorListener = listener;
+      return this;
+    }
 
-        public Builder(Context context) {
-            if (context == null) {
-                throw new IllegalArgumentException("Context must not be null");
-            }
-            this.context = context;
-        }
+    /** 加载成功回调接口 */
+    public RequestCreator<T> listener(NetContract.Listener<T> listener) {
+      this.listener = listener;
+      return this;
+    }
 
-        public Builder userAgent(String userAgent) {
-            this.userAgent = userAgent;
-            return this;
-        }
+    /** 加载失败重试策略 */
+    public RequestCreator<T> retryPolicy(RetryPolicy retryPolicy) {
+      this.retryPolicy = retryPolicy;
+      return this;
+    }
 
-        public Builder cache(Cache cache) {
-            this.cache = cache;
-            return this;
-        }
+    /** 优先级 */
+    public RequestCreator<T> Priority(Request.Priority priority) {
+      this.priority = priority;
+      return this;
+    }
 
-        public Builder httpStack(HttpStack httpStack) {
-            this.httpStack = httpStack;
-            return this;
-        }
+    /** 自定义包头信息 */
+    public RequestCreator<T> header(Map<String, String> header) {
+      this.header = header;
+      return this;
+    }
 
-        public NetRequestManager build() {
-            if (null == userAgent || "".equals(userAgent)) {
-                this.userAgent = Utils.createUserAgent(context);
-            }
+    /** 请求的tag，可以用来取消请求 */
+    public RequestCreator<T> cancelTag(Object cancelTag) {
+      this.cancelTag = cancelTag;
+      return this;
+    }
 
-            if (null == cache) {
-                File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
-                cache = new DiskBasedCache(cacheDir,
-                        DEFAULT_SIZE_EXTERNAL_CACHE);
-            }
+    /** 请求类型，参见 {@link com.diagramsf.net.NetContract.Type} */
+    public RequestCreator<T> type(@NetContract.Type int type) {
+      this.type = type;
+      return this;
+    }
 
-            if (null == httpStack) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
-                    httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
-                } else {
-                    // Prior to Gingerbread, HttpUrlConnection was unreliable.
-                    // See:
-                    // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
-                    httpStack = new HttpClientStack(
-                            AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
-                }
-            }
+    public RequestCreator<T> deliverToResultTag(Object object) {
+      deToResultTag = object;
+      return this;
+    }
 
-            Network network = new BasicNetwork(httpStack);
-            RequestQueue queue = new RequestQueue(cache, network);
-            queue.start();
+    public RequestCreator<T> cacheKey(String cacheKey) {
+      this.cacheKey = cacheKey;
+      return this;
+    }
 
-            return new NetRequestManager(queue);
-        }
-    }// class Builder end
+    /** 使用结果解析器开始请求网络 */
+    public void into(NetResultFactory<T> factory) {
+      volleyRequestManager.load(createRequest(factory));
+    }
 
-    public static class RequestCreator {
-        private String url;
-        private int method = -1;
-        private Map<String, String> postData;
-        private Map<String, String> header;
-        private RetryPolicy retryPolicy;
-        private Request.Priority priority;
-        private Object cancelTag;
-        private Object deToResultTag;
-        private NetContract.NetResultErrorListener errorListener;
-        private NetContract.NetResultListener listener;
-        private int type;
-        private String cacheKey;
+    private Request<T> createRequest(NetResultFactory<T> factory) {
+      if (null == url || "".equals(url)) {
+        throw new IllegalArgumentException("URL must not be empty!");
+      }
 
-        private NetRequestManager volleyRequestManager;
+      if (-1 == method) {
+        method = Request.Method.DEPRECATED_GET_OR_POST;
+      }
 
-        /** @param method 是{@link Request.Method}中的一种 */
-        private RequestCreator(NetRequestManager volleyRequestManager, String url, int method) {
-            this.volleyRequestManager = volleyRequestManager;
-            this.url = url;
-            this.method = method;
-        }
+      VolleyNetRequest<T> request =
+          new VolleyNetRequest<>(method, url, postData, header, priority, factory, null);
+      if (null != retryPolicy) {
+        request.setRetryPolicy(retryPolicy);
+      }
+      request.setTag(cancelTag);
+      request.setErrorListener(errorListener);
+      request.setListener(listener);
+      request.request(type);
+      request.setCacheKey(cacheKey);
+      request.setDeliverToResultTag(deToResultTag);
+      return request;
+    }
+  }// class RequestCreator end
 
-        /** post传递的参数 */
-        public RequestCreator postData(Map<String, String> postData) {
-            this.postData = postData;
-            return this;
-        }
-
-        /** 加载失败回调接口 */
-        public RequestCreator errorListener(NetContract.NetResultErrorListener listener) {
-            errorListener = listener;
-            return this;
-        }
-
-        /** 加载成功回调接口 */
-        public RequestCreator listener(NetContract.NetResultListener listener) {
-            this.listener = listener;
-            return this;
-        }
-
-        /** 加载失败重试策略 */
-        public RequestCreator retryPolicy(RetryPolicy retryPolicy) {
-            this.retryPolicy = retryPolicy;
-            return this;
-        }
-
-        /** 优先级 */
-        public RequestCreator Priority(Request.Priority priority) {
-            this.priority = priority;
-            return this;
-        }
-
-        /** 自定义包头信息 */
-        public RequestCreator header(Map<String, String> header) {
-            this.header = header;
-            return this;
-        }
-
-        /** 请求的tag，可以用来取消请求 */
-        public RequestCreator tag(Object cancelTag) {
-            this.cancelTag = cancelTag;
-            return this;
-        }
-
-        /** 请求类型，参见 {@link com.diagramsf.net.NetContract.Type} */
-        public RequestCreator type(@NetContract.Type int type) {
-            this.type = type;
-            return this;
-        }
-
-        public RequestCreator deliverToResultTag(Object object) {
-            deToResultTag = object;
-            return this;
-        }
-
-        public RequestCreator cacheKey(String cacheKey) {
-            this.cacheKey = cacheKey;
-            return this;
-        }
-
-        /** 使用结果解析器开始请求网络 */
-        public void into(NetResultFactory factory) {
-            volleyRequestManager.load(createRequest(factory));
-        }
-
-        private Request createRequest(NetResultFactory factory) {
-            if (null == url || "".equals(url)) {
-                throw new IllegalArgumentException("URL must not be empty!");
-            }
-
-            if (-1 == method) {
-                method = Request.Method.DEPRECATED_GET_OR_POST;
-            }
-
-            VolleyNetRequest request = new VolleyNetRequest(method, url, postData,
-                    header, priority, factory, null);
-            if (null != retryPolicy) {
-                request.setRetryPolicy(retryPolicy);
-            }
-            request.setTag(cancelTag);
-            request.setErrorListener(errorListener);
-            request.setListener(listener);
-            request.request(type);
-            request.setCacheKey(cacheKey);
-            request.setDeliverToResultTag(deToResultTag);
-            return request;
-        }
-
-    }// class RequestCreator end
-
-    public static class Utils {
-        public static String createUserAgent(Context context) {
-            // 定义用户代理
-            String userAgent = "volleyRequestManager/0";
-            try {
-                String packageName = context.getPackageName();
-                PackageInfo info = context.getPackageManager().getPackageInfo(
-                        packageName, 0);
-                //            String appName = info.applicationInfo.loadLabel(
-                //                    context.getPackageManager()).toString();
-                String deviceName = Build.MANUFACTURER;
-                String os_version = Build.VERSION.RELEASE;//系统版本
-                //            String app_version = info.versionName;
-                String able = context.getResources().getConfiguration().locale
-                        .getCountry();
-                //将appName修改为packageName，防止出现中文无法解析
-                userAgent = packageName + " (" + deviceName
-                        + "; android " + os_version + "; " + able + ")";
-            } catch (NameNotFoundException e) {
-                e.printStackTrace();
-            }
-            return userAgent;
-        }
-    }// class Utils end
-
+  public static class Utils {
+    public static String createUserAgent(Context context) {
+      // 定义用户代理
+      String userAgent = "volleyRequestManager/0";
+      try {
+        String packageName = context.getPackageName();
+        PackageInfo info = context.getPackageManager().getPackageInfo(packageName, 0);
+        String appName = info.applicationInfo.loadLabel(context.getPackageManager()).toString();
+        String deviceName = Build.MANUFACTURER;
+        String os_version = Build.VERSION.RELEASE;//系统版本
+        //            String app_version = info.versionName;
+        String able = context.getResources().getConfiguration().locale.getCountry();
+        //将appName修改为packageName，防止出现中文无法解析
+        userAgent = packageName
+            + " ("
+            + deviceName
+            + "; android "
+            + os_version
+            + "; "
+            + able
+            + "; appName "
+            + appName
+            + ")";
+      } catch (NameNotFoundException e) {
+        e.printStackTrace();
+      }
+      return userAgent;
+    }
+  }// class Utils end
 }// class NetRequestManager end

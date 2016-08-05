@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import com.diagramsf.helpers.AndroidHelper;
-import com.diagramsf.helpers.DeviceHelper;
+import com.diagramsf.utils.AndroidUtil;
+import com.diagramsf.utils.DeviceUtil;
 
 /**
  * 监听网络状态变化的{@link BroadcastReceiver}，参考
@@ -46,7 +46,7 @@ public abstract class NetStateReceiver extends BroadcastReceiver {
     final String action = intent.getAction();
     if (Intent.ACTION_AIRPLANE_MODE_CHANGED.equals(action)) {
       if (!intent.hasExtra(EXTRA_AIRPLANE_STATE)) {
-        if (AndroidHelper.isAirplaneModeOn(context)) {
+        if (AndroidUtil.isAirplaneModeOn(context)) {
           onAirMode();
         }
         return; // No airplane state, ignore it. Should we query RequestManager.isAirplaneModeOn?
@@ -55,7 +55,7 @@ public abstract class NetStateReceiver extends BroadcastReceiver {
         onAirMode();
       }
     } else if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
-      onNetStatChange(DeviceHelper.getNetType(context));
+      onNetStatChange(DeviceUtil.getNetType(context));
     }
   }
 
@@ -67,7 +67,7 @@ public abstract class NetStateReceiver extends BroadcastReceiver {
   /**
    * 网络状态变化
    */
-  public abstract void onNetStatChange(DeviceHelper.NetType type);
+  public abstract void onNetStatChange(DeviceUtil.NetType type);
 
   /**
    * 收到Android系统发送的网路状态变化，但是只是收到通知没有收到数据；

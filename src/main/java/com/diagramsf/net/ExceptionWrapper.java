@@ -11,7 +11,7 @@ import java.util.Locale;
 import org.apache.http.HttpException;
 
 /**
- * 用于处理网络连接异常，便于排查原因
+ * 用于处理网络连接异常，便于排查原因（Exception的装饰类）
  */
 public class ExceptionWrapper extends Exception {
   /** 定义异常类型 */
@@ -180,8 +180,6 @@ public class ExceptionWrapper extends Exception {
         text = "";
         break;
     }
-
     return text;
   }
-
 }

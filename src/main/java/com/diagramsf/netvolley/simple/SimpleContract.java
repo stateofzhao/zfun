@@ -21,13 +21,13 @@ public interface SimpleContract {
         void onHideCacheLoadProgress();
 
         /** 显示 缓存加载结果 */
-        void onShowCacheResult(NetContract.NetSuccessResult result);
+        void onShowCacheResult(NetContract.Result result);
 
         /** 没有读取到缓存（没有缓存） */
         void onShowNoCache();
 
         /** 读取缓存失败 */
-        void onShowCacheFail(NetContract.NetFailResult result);
+        void onShowCacheFail(NetContract.Fail result);
 
         //----------------------------------------------
 
@@ -38,10 +38,10 @@ public interface SimpleContract {
         void onHideNetProgress();
 
         /** 显示 网络加载结果 */
-        void onShowNetResult(NetContract.NetSuccessResult result);
+        void onShowNetResult(NetContract.Result result);
 
         /** 显示 网络加载失败结果 */
-        void onShowNetFail(NetContract.NetFailResult result);
+        void onShowNetFail(NetContract.Fail result);
     }//class end
 
 
@@ -58,7 +58,7 @@ public interface SimpleContract {
         }
 
         @Override
-        public void onShowCacheResult(NetContract.NetSuccessResult result) {
+        public void onShowCacheResult(NetContract.Result result) {
 
         }
 
@@ -68,7 +68,7 @@ public interface SimpleContract {
         }
 
         @Override
-        public void onShowCacheFail(NetContract.NetFailResult result) {
+        public void onShowCacheFail(NetContract.Fail result) {
 
         }
 
