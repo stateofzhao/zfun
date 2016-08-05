@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 懒加载Handler，只有在{@link #resume()}后才会执行{@link #post(Runnable)}中传递的Runnable，在{@link #pause()}
+ * 后暂停执行{@link #post(Runnable)}中传递的Runnable，{@link #destory()}后销毁所有Runnable。
+ *
  * Created by Diagrams on 2016/6/30 13:49
  */
 public class LazyHandler {
@@ -35,7 +38,7 @@ public class LazyHandler {
     handlerRemoveAll();
   }
 
-  public synchronized void clear(){
+  public synchronized void destory() {
     handlerRemoveAll();
   }
 
@@ -89,5 +92,5 @@ public class LazyHandler {
       runnable.run();
       state = STATE_FINISHED;
     }
-  }
+  }//class end
 }
