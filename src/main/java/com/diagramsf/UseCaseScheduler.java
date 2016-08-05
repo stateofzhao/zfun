@@ -1,5 +1,7 @@
 package com.diagramsf;
 
+import com.diagramsf.domain.UseCase;
+
 /**
  * {@link UseCaseHandler}执行{@link UseCase}的调度器
  * <p>

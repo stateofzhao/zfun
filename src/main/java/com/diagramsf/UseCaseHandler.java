@@ -2,10 +2,11 @@ package com.diagramsf;
 
 import android.support.annotation.NonNull;
 
+import com.diagramsf.domain.UseCase;
 import java.util.concurrent.Callable;
 
 /**
- * 处理{@link com.diagramsf.UseCase}
+ * 处理{@link UseCase}
  * <p>
  * Created by Diagrams on 2016/6/27 11:52
  */

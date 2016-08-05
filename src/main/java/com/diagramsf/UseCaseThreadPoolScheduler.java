@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import com.diagramsf.domain.UseCase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -1,8 +1,10 @@
-package com.diagramsf;
+package com.diagramsf.domain;
 
 import android.content.Context;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
+import com.diagramsf.RemoteDataSource;
+import com.diagramsf.UseCaseHandler;
 import com.diagramsf.net.NetContract;
 import com.diagramsf.netvolley.ResultFactory;
 
@@ -11,10 +13,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Map;
 
 /**
- * domain layer 入口，所有对数据层进行操作的行为都需要通过这个来进入。
- * domainLayer起到把数据处理逻辑和app需求逻辑隔离开来，在这里 衔接数据处理逻辑和app需求业务逻辑。
+ * domain layer (domain层)，所有的业务逻辑都是在这层处理的。考虑到Android工程，
+ * 你会看到所有的 interactors (use cases) 也是在这里实现的
  * <p>
  * 这层是一个纯Java的模块，不包含任何Android依赖。
+ *
  * Created by Diagrams on 2016/6/27 11:31
  */
 public abstract class UseCase<T extends UseCase.RequestValue
