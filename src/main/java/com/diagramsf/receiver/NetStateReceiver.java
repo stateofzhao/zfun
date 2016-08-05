@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import com.diagramsf.utils.AndroidUtil;
-import com.diagramsf.utils.DeviceUtil;
+import com.diagramsf.util.AndroidUtil;
+import com.diagramsf.util.DeviceUtil;
 
 /**
  * 监听网络状态变化的{@link BroadcastReceiver}，参考

@@ -18,8 +18,8 @@ package com.diagramsf.netvolley;
 
 import com.android.volley.*;
 import com.android.volley.toolbox.HttpHeaderParser;
-import com.diagramsf.utils.AppDebugLog;
-import com.diagramsf.utils.StringUtils;
+import com.diagramsf.util.AppDebugLog;
+import com.diagramsf.util.StringUtils;
 import com.diagramsf.net.NetContract;
 
 import java.io.UnsupportedEncodingException;
@@ -48,7 +48,7 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
 
   private String mCacheKey;
 
-  private NetResultFactory<T> mResultFactory;
+  private ResultFactory<T> mResultFactory;
 
   private Map<String, String> mParams;
   private String mRequestBody;
@@ -72,7 +72,7 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
    * @param errorListener 传递异常信息的接口
    */
   public VolleyNetRequest(int method, String url, String strRequest, Map<String, String> header,
-      Request.Priority priority, NetResultFactory<T> resultFactory,
+      Request.Priority priority, ResultFactory<T> resultFactory,
       Response.ErrorListener errorListener) {
     super(method, url, errorListener);
     mResultFactory = resultFactory;
@@ -93,7 +93,7 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
    * @param errorListener 传递异常信息的接口
    */
   public VolleyNetRequest(int method, String url, Map<String, String> params,
-      Map<String, String> header, Request.Priority priority, NetResultFactory<T> resultFactory,
+      Map<String, String> header, Request.Priority priority, ResultFactory<T> resultFactory,
       Response.ErrorListener errorListener) {
     super(method, url, errorListener);
     mResultFactory = resultFactory;
@@ -111,7 +111,7 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
 
   @Override public void deliverError(VolleyError error) {
     if (null != mErrorListener) {
-      NetContract.Fail fr = new CommNetFailResult();
+      NetContract.Fail fr = new CommFail();
       fr.setDeliverToResultTag(mDeliverToResultTag);
       fr.setException(error);
       mErrorListener.onFailed(fr);
