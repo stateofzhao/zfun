@@ -17,7 +17,7 @@
 package com.android.volley;
 
 /**
- * Indicates that there was a network error when performing a NetRequestManager request.
+ * Indicates that there was a network error when performing a RequestManager request.
  */
 @SuppressWarnings("serial")
 public class NetworkError extends VolleyError {

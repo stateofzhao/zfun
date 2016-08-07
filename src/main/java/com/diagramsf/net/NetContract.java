@@ -12,9 +12,8 @@ import java.lang.annotation.RetentionPolicy;
  * Created by Diagrams on 2016/4/20 17:17
  */
 public interface NetContract {
-
   /**
-   * 只读取缓存，不考虑缓存是否过期，如果读取不到缓存也会 回调{@link NetResultListener#onSucceed(NetSuccessResult)}
+   * 只读取缓存，不考虑缓存是否过期，如果读取不到缓存也会 回调{@link Listener#onSucceed(Result)}
    * ，只是结果传递的是null
    */
   int ONLY_CACHE = 1;
@@ -27,24 +26,23 @@ public interface NetContract {
   /** 优先读取缓存（不考虑缓存是否过期），如果没有缓存就读取网络（有缓存了就不读取网络了） */
   int PRIORITY_CACHE = 5;
 
-  //这里做一下解释
   @Retention(RetentionPolicy.SOURCE)
   @IntDef({ ONLY_CACHE, ONLY_NET_NO_CACHE, ONLY_NET_THEN_CACHE, HTTP_HEADER_CACHE, PRIORITY_CACHE })
   @interface Type {
   }
 
-  interface NetRequest {
+  interface Request<T extends Result> {
     /**
-     * 此值会传递给结果 通过调用{@link NetSuccessResult#getRequestTag()}
-     * 或者{@link NetFailResult#getRequestTag()} 来获取
+     * 此值会传递给结果 通过调用{@link Result#getRequestTag()}
+     * 或者{@link Fail#getRequestTag()} 来获取
      */
     void setDeliverToResultTag(Object tag);
 
     /** 失败回调接口 */
-    void setErrorListener(NetResultErrorListener errorListener);
+    void setErrorListener(ErrorListener errorListener);
 
     /** 成功回调接口 */
-    void setListener(NetResultListener listener);
+    void setListener(Listener<T> listener);
 
     /** 设置请求的缓存key */
     void setCacheKey(String cacheKey);
@@ -54,20 +52,19 @@ public interface NetContract {
   }//end class NetRequest
 
   /** 失败回调接口 */
-  interface NetResultErrorListener {
+  interface ErrorListener {
     /** 网络请求失败回调 */
-    void onFailed(NetFailResult fail);
+    void onFailed(Fail fail);
   }//end class NetResultErrorListener
 
   /** 成功回调接口 */
-  interface NetResultListener {
+  interface Listener<T extends Result> {
     /** 网络请求成功回调 */
-    void onSucceed(NetSuccessResult result);
+    void onSucceed(T result);
   }//end class NetResultListener
 
   /** 网络请求成功的结果 */
-  interface NetSuccessResult<T> {
-
+  interface Result {
     enum ResultType {
       /** 来自网络 */
       NET,
@@ -79,18 +76,6 @@ public interface NetContract {
       INTERMEDIATE
     }
 
-    /** 设置数据来源 */
-    void setResultType(ResultType resultType);
-
-    /** 设置{@link NetRequest#setDeliverToResultTag(Object)} 传递的tag */
-    void setRequestTag(Object tag);
-
-    /** 获得数据来源类型 */
-    ResultType getResultType();
-
-    /** 获取相应的 {@link NetRequest#setDeliverToResultTag(Object tag)} 中设置的 tag */
-    Object getRequestTag();
-
     /**
      * 检测结果数据的合法性
      *
@@ -98,11 +83,21 @@ public interface NetContract {
      */
     boolean checkResultLegitimacy();
 
-    T getWrapper();
+    /** 设置数据来源 */
+    void setResultType(ResultType resultType);
+
+    /** 设置{@link Request#setDeliverToResultTag(Object)} 传递的tag */
+    void setRequestTag(Object tag);
+
+    /** 获得数据来源类型 */
+    ResultType getResultType();
+
+    /** 获取相应的 {@link Request#setDeliverToResultTag(Object tag)} 中设置的 tag */
+    Object getRequestTag();
   }//class NetSuccessResult end
 
   /** 网络请求失败的结果 */
-  interface NetFailResult {
+  interface Fail {
 
     /** 设置结果的异常 */
     void setException(Exception e);
@@ -119,7 +114,9 @@ public interface NetContract {
     /** 获取异常信息的 文字描述 */
     String getInfoText(Context context);
 
-    /** 获取通过 {@link NetRequest#setDeliverToResultTag(Object)} 设置的值 */
+    /** 获取通过 {@link Request#setDeliverToResultTag(Object)} 设置的值 */
     Object getRequestTag();
+
+    void setDeliverToResultTag(Object tag);
   }// class NetFailResult end
 }

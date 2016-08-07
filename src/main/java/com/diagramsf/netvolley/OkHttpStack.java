@@ -15,21 +15,20 @@ import java.net.URL;
  * Created by Diagrams on 2016/6/27 9:58
  */
 public class OkHttpStack extends HurlStack {
-    private final OkUrlFactory okUrlFactory;
+  private final OkUrlFactory okUrlFactory;
 
-    public OkHttpStack() {
-        this(new OkUrlFactory(new OkHttpClient()));
-    }
+  public OkHttpStack() {
+    this(new OkUrlFactory(new OkHttpClient()));
+  }
 
-    public OkHttpStack(OkUrlFactory okUrlFactory) {
-        if (okUrlFactory == null) {
-            throw new NullPointerException("Client must not be null.");
-        }
-        this.okUrlFactory = okUrlFactory;
+  public OkHttpStack(OkUrlFactory okUrlFactory) {
+    if (okUrlFactory == null) {
+      throw new IllegalArgumentException("Client must not be null.");
     }
+    this.okUrlFactory = okUrlFactory;
+  }
 
-    @Override
-    protected HttpURLConnection createConnection(URL url) throws IOException {
-        return okUrlFactory.open(url);
-    }
+  @Override protected HttpURLConnection createConnection(URL url) throws IOException {
+    return okUrlFactory.open(url);
+  }
 }

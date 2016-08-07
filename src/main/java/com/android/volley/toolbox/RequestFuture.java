@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A Future that represents a NetRequestManager request.
+ * A Future that represents a RequestManager request.
  *
  * Used by providing as your response and error listeners. For example:
  * <pre>
