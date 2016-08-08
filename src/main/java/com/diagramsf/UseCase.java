@@ -1,10 +1,8 @@
-package com.diagramsf.domain;
+package com.diagramsf;
 
 import android.content.Context;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
-import com.diagramsf.RemoteDataSource;
-import com.diagramsf.UseCaseHandler;
 import com.diagramsf.net.NetContract;
 import com.diagramsf.netvolley.ResultFactory;
 

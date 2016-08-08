@@ -2,7 +2,6 @@ package com.diagramsf;
 
 import android.support.annotation.NonNull;
 
-import com.diagramsf.domain.UseCase;
 import java.util.concurrent.Callable;
 
 /**
