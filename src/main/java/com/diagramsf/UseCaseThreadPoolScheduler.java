@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
-import com.diagramsf.domain.UseCase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -100,10 +99,9 @@ public class UseCaseThreadPoolScheduler implements UseCaseScheduler {
       if (null != futures) {
         for (UseCaseFuture future : futures) {
           //一旦cancel(boolean)可以被取消（返回true），那么会在返回 true之前回调 FutureTask的 done()方法！
-          if (!future.cancel(false)) {
-            UseCase useCase = future.useCase;
-            useCase.cancel();
-          }
+          future.cancel(false);
+          UseCase useCase = future.useCase;
+          useCase.cancel();
         }
       }
     }
