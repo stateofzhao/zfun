@@ -11,13 +11,13 @@ import com.diagramsf.executor.InteractorHandler;
  *
  * Created by Diagrams on 2016/8/9 11:48
  */
-public class GetStudentByIdInteractor extends BaseInteractor {
+public class GetStudentByIdInteractor extends BaseInteractor implements GetStudentById {
   private static final long WAIT_TIME = 1500;
 
   private StudentRepository repository;
   private String id;
   private FireThread postThread;
-  private StudentRepository.Callback callback;
+  private Callback callback;
 
   public GetStudentByIdInteractor(String id) {
     repository = new StudentDataRepository();
@@ -25,9 +25,13 @@ public class GetStudentByIdInteractor extends BaseInteractor {
     this.id = id;
   }
 
-  public void execute(Object tag, StudentRepository.Callback callback) {
+  public void execute(Object tag, Callback callback) {
     this.callback = callback;
     InteractorHandler.instance().execute(this, tag);
+  }
+
+  @Override public void cancel(Object tag) {
+    InteractorHandler.instance().cancel(tag);
   }
 
   @Override public void run() {
