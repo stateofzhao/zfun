@@ -3,9 +3,12 @@ package com.diagramsf.domain.example;
 import com.diagramsf.datalayer.example.StudentDataRepository;
 import com.diagramsf.executor.FireMainThread;
 import com.diagramsf.executor.FireThread;
+import com.diagramsf.executor.Interactor;
 import com.diagramsf.executor.InteractorHandler;
 
 /**
+ * {@link Interactor}示例
+ *
  * Created by Diagrams on 2016/8/9 11:48
  */
 public class GetStudentByIdInteractor extends BaseInteractor {
@@ -18,7 +21,7 @@ public class GetStudentByIdInteractor extends BaseInteractor {
 
   public GetStudentByIdInteractor(String id) {
     repository = new StudentDataRepository();
-    postThread = new FireMainThread();
+    postThread = new FireMainThread(this);
     this.id = id;
   }
 
@@ -41,27 +44,23 @@ public class GetStudentByIdInteractor extends BaseInteractor {
     try {
       Thread.sleep(WAIT_TIME);
     } catch (InterruptedException e) {
-      //Empty
+      notifyError();
     }
   }
 
   private void notifyResponse(final StudentEntity studentEntity) {
-    if (!isCancel()) {
-      postThread.post(new Runnable() {
-        @Override public void run() {
-          callback.onResponse(studentEntity);
-        }
-      });
-    }
+    postThread.post(new Runnable() {
+      @Override public void run() {
+        callback.onResponse(studentEntity);
+      }
+    });
   }
 
   private void notifyError() {
-    if (!isCancel()) {
-      postThread.post(new Runnable() {
-        @Override public void run() {
-          callback.onError();
-        }
-      });
-    }
+    postThread.post(new Runnable() {
+      @Override public void run() {
+        callback.onError();
+      }
+    });
   }
 }

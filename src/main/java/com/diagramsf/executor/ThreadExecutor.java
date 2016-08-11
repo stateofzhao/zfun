@@ -45,6 +45,7 @@ public class ThreadExecutor implements Executor {
     dispatcher.dispatchSubmit(runnable);
   }
 
+  /** 如果任务正在执行，不会取消任务，只是会把任务标记为取消状态，如果任务在队列中未运行，那么会直接取掉任务 */
   @Override public void cancel(Object tag) {
     dispatcher.dispatchCancel(tag);
   }
