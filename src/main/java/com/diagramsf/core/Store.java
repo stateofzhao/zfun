@@ -15,6 +15,6 @@ public class Store {
   }
 
   public void bindToTarget(Action action) {
-    target.showAction(action);
+    target.showAction(this);
   }
 }
