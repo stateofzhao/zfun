@@ -193,6 +193,7 @@ public class ThreadExecutor implements Executor {
     }
 
     void performSubmit(HolderRunnable runnable) {
+      runnable.interactor.StateChange(Interactor.NEW);
       Object tag = runnable.tag;
       PriorityFuture future = (PriorityFuture) service.submit(runnable);
       if (null != tag) {
@@ -216,6 +217,7 @@ public class ThreadExecutor implements Executor {
             future.cancel(false);
             Interactor interactor = future.interactor;
             interactor.cancel();
+            interactor.StateChange(Interactor.CANCEL);
           }
         }
       }
@@ -229,6 +231,8 @@ public class ThreadExecutor implements Executor {
           PriorityFuture f = futures.get(i);
           if (f.interactor == holderRunnable.interactor) {
             futures.remove(f);
+            f.interactor.StateChange(Interactor.FINISHED);
+            f.interactor.StateChange(Interactor.DIE);
             break;
           }
         }
