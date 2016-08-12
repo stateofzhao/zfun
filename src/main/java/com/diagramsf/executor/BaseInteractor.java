@@ -1,6 +1,4 @@
-package com.diagramsf.domain.example;
-
-import com.diagramsf.executor.Interactor;
+package com.diagramsf.executor;
 
 /**
  * Created by Diagrams on 2016/8/9 11:50
@@ -23,5 +21,9 @@ public abstract class BaseInteractor implements Interactor {
 
   @Override public void priority(@Priority int priority) {
     this.priority = priority;
+  }
+
+  @Override public void StateChange(@State int state) {
+    
   }
 }

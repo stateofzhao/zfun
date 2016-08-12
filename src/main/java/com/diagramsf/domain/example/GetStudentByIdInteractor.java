@@ -1,6 +1,7 @@
 package com.diagramsf.domain.example;
 
 import com.diagramsf.datalayer.example.StudentDataRepository;
+import com.diagramsf.executor.BaseInteractor;
 import com.diagramsf.executor.FireMainThread;
 import com.diagramsf.executor.FireThread;
 import com.diagramsf.executor.Interactor;
