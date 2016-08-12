@@ -19,7 +19,6 @@ package com.diagramsf.netvolley;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import com.android.volley.*;
 import com.android.volley.toolbox.*;
@@ -126,15 +125,16 @@ public class RequestManager {
       }
 
       if (null == httpStack) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
-          httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
-        } else {
-          // Prior to Gingerbread, HttpUrlConnection was unreliable.
-          // See:
-          // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
-          httpStack =
-              new HttpClientStack(AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
-        }
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
+        //  httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
+        //} else {
+        //  // Prior to Gingerbread, HttpUrlConnection was unreliable.
+        //  // See:
+        //  // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
+        //  httpStack =
+        //      new HttpClientStack(AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
+        //}
+        httpStack = new OkHttpStack();
       }
 
       Network network = new BasicNetwork(httpStack);
