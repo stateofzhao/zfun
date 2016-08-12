@@ -55,5 +55,5 @@ public interface Interactor {
   void priority(@Priority int priority);
 
   /** 状态变化的回调 */
-  void StateChange(@State int state);
+  void onStateChange(@State int state);
 }

@@ -3,7 +3,6 @@ package com.diagramsf.domain.example;
 import com.diagramsf.executor.BaseInteractor;
 import com.diagramsf.executor.FireMainThread;
 import com.diagramsf.executor.FireThread;
-import com.diagramsf.executor.InteractorHandler;
 
 /**
  * Created by Diagrams on 2016/8/11 10:25
@@ -39,11 +38,13 @@ public class GetTeacherByIdInteractor extends BaseInteractor implements GetTeach
     this.callback = callback;
     this.tag = tag;
     this.id = id;
-    InteractorHandler.instance().execute(this, tag);
+    run();//直接执行即可，没必要非得使用Executor来执行。
+    //InteractorHandler.instance().execute(this, tag);
   }
 
   @Override public void cancel(Object tag) {
-    InteractorHandler.instance().cancel(tag);
+    //InteractorHandler.instance().cancel(tag);
+    cancel();
     repository.cancel(tag);
   }
 
