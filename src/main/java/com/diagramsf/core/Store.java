@@ -1,20 +1,13 @@
 package com.diagramsf.core;
 
 /**
- * Created by Diagrams on 2016/8/12 17:03
+ * Created by Diagrams on 2016/8/15 17:18
  */
-public class Store {
-  private Target target;
-
-  public Store(Target target) {
-    this.target = target;
-  }
-
-  public boolean analysisAction(Action action) {
-    return false;
-  }
-
-  public void bindToTarget(Action action) {
-    target.showAction(this);
-  }
+public interface Store {
+  /**
+   * 接收到了{@link Action}
+   *
+   * @return 接收并且消耗Action的话返回true，否则返回false
+   */
+  boolean onAction(Action action);
 }

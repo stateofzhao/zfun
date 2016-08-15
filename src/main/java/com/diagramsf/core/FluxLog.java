@@ -5,10 +5,10 @@ package com.diagramsf.core;
  *
  * Created by Diagrams on 2016/8/12 17:47
  */
-public class LogPendding {
+public class FluxLog {
   private Action action;
 
-  public LogPendding(Action action) {
+  public FluxLog(Action action) {
     this.action = action;
   }
 

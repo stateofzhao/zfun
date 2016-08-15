@@ -10,7 +10,7 @@ public class Dispatcher {
   private List<Store> storeList;
 
   public Dispatcher() {
-    init();
+    storeList = new ArrayList<>();
   }
 
   public void dispatch(Action action) {
@@ -29,13 +29,15 @@ public class Dispatcher {
     storeList.remove(store);
   }
 
-  private void init() {
-    storeList = new ArrayList<>();
-  }
-
   private boolean hitDescribe(Action action) {
-    //TODO 解析Action找到合适的Store来处理Action
-    return false;
+    boolean hit = false;
+    for (Store store : storeList) {
+      boolean temp = store.onAction(action);
+      if (!hit && temp) {
+        hit = true;
+      }
+    }
+    return hit;
   }
 
   private boolean readtextDescribe() {
