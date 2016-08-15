@@ -5,12 +5,11 @@ package com.diagramsf.core;
  */
 public class Action {
   public FluxLog log;
-  private String textDescribe;
+  public String textDescribe;
 
   public Action(String textDescribe) {
     this.textDescribe = textDescribe;
     this.log = new FluxLog(this);
-
     log.mark("Action created");
   }
 }
