@@ -8,39 +8,40 @@ import java.util.List;
  */
 public class Dispatcher {
   private List<Store> storeList;
+  private Config.ConfigStore configStore;
 
   public Dispatcher() {
     storeList = new ArrayList<>();
+    configStore = new Config.ConfigStore();
   }
 
   public void dispatch(Action action) {
-    if (hitDescribe(action)) {
-      action.log.mark("hit");
-    } else {
-      //TODO 没有能够处理Action的Store，需要做默认处理
-    }
-  }
-
-  public void regist(Store store) {
-    storeList.add(store);
-  }
-
-  public void unRegist(Store store) {
-    storeList.remove(store);
-  }
-
-  private boolean hitDescribe(Action action) {
-    boolean hit = false;
+    action.mark("dispatch");
+    boolean hit = analysisAction(action);
     for (Store store : storeList) {
       boolean temp = store.onAction(action);
       if (!hit && temp) {
         hit = true;
       }
     }
-    return hit;
+
+    if (!hit) {
+      action.mark("no Store to hit this action,action finish");
+    }
   }
 
-  private boolean readtextDescribe() {
-    return false;
+  public void register(Store store) {
+    Utils.checkNotNull(store);
+    storeList.add(store);
+  }
+
+  public void unRegister(Store store) {
+    Utils.checkNotNull(store);
+    storeList.remove(store);
+  }
+
+  //使用Config.ConfigStore 分析Action
+  private boolean analysisAction(Action action) {
+    return configStore.onAction(action);
   }
 }

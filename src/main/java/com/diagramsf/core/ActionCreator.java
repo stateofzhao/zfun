@@ -27,7 +27,15 @@ public class ActionCreator {
     interceptorList.remove(interceptor);
   }
 
-  public void sendAction(String textDescribe) {
-    dispatcher.dispatch(new Action(textDescribe));
+  public void createAction(String textDescribe) {
+    Action action = new Action(textDescribe);
+    dispatcher.dispatch(decorateAction(action));
+  }
+
+  private Action decorateAction(Action action) {
+    for (ActionInterceptor interceptor : interceptorList) {
+      action = interceptor.wrapAction(action);
+    }
+    return action;
   }
 }
