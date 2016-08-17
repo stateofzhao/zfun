@@ -8,11 +8,9 @@ import java.util.List;
  */
 public class Dispatcher {
   private List<Store> storeList;
-  private Config.ConfigStore configStore;
 
   public Dispatcher() {
     storeList = new ArrayList<>();
-    configStore = new Config.ConfigStore();
   }
 
   public void dispatch(Action action) {
@@ -40,8 +38,8 @@ public class Dispatcher {
     storeList.remove(store);
   }
 
-  //使用Config.ConfigStore 分析Action
+  //分析Action
   private boolean analysisAction(Action action) {
-    return configStore.onAction(action);
+    return false;
   }
 }
