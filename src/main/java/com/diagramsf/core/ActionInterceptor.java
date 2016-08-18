@@ -6,6 +6,4 @@ package com.diagramsf.core;
 public interface ActionInterceptor {
   /** 对{@link Action}进行包装 */
   Action wrapAction(Action original);
-
-  boolean intercept(Action action);
 }
