@@ -8,11 +8,11 @@ public class FluxAndroid {
 
   ActionCreator actionCreator;
 
-  FluxAndroid(ActionCreator actionCreator){
+  FluxAndroid(ActionCreator actionCreator) {
     this.actionCreator = actionCreator;
   }
 
-  public static FluxAndroid instance(){
+  public static FluxAndroid instance() {
     if (singleton == null) {
       synchronized (FluxAndroid.class) {
         if (singleton == null) {
@@ -24,13 +24,28 @@ public class FluxAndroid {
     return singleton;
   }
 
-  static class Builder{
+  public static class ActionDescribe {
+    StringBuilder describeBuilder;
+
+    public ActionDescribe() {
+      describeBuilder = new StringBuilder();
+    }
+
+    ActionDescribe http(String url) {
+      describeBuilder.append("http%&");
+      describeBuilder.append(url);
+      return this;
+    }
+  }
+
+  static class Builder {
     ActionCreator creator;
 
-    Builder(ActionCreator creator){
+    Builder(ActionCreator creator) {
       this.creator = creator;
     }
-    FluxAndroid build(){
+
+    FluxAndroid build() {
       return new FluxAndroid(creator);
     }
   }//class Builder end
