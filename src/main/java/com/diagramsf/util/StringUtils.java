@@ -262,7 +262,7 @@ import java.util.regex.Pattern;
 
   /** 高亮显示字符串中的 关键词 */
   @SuppressLint("DefaultLocale") public static SpannableString getHighlightShow(String[] keywords,
-      String sourceStr) {
+      String sourceStr,int color) {
     if (keywords == null || keywords.length == 0) {
       return new SpannableString(sourceStr);
     }
@@ -279,7 +279,7 @@ import java.util.regex.Pattern;
           new StringChangeColorHolder(position, oneKeyLower.length());
       groupChangeList.add(oneHolder);
     }
-    return changeStrPositionColor(sourceStr, groupChangeList);
+    return changeStrPositionColor(sourceStr, groupChangeList,color);
   }
 
   /**
@@ -310,13 +310,13 @@ import java.util.regex.Pattern;
    * @param groupChangeList 改变颜色的开始位置，以及要改变的字符串长度
    */
   private static SpannableString changeStrPositionColor(String sourceStr,
-      List<StringChangeColorHolder> groupChangeList) {
+      List<StringChangeColorHolder> groupChangeList,int color) {
     SpannableString sp = new SpannableString(sourceStr);
     for (StringChangeColorHolder one : groupChangeList) {
       Integer[] startPositions = one.startPosition;
       int length = one.positionStrLength;
       for (Integer startPosition : startPositions) {
-        sp.setSpan(new ForegroundColorSpan(Color.BLACK), startPosition, startPosition + length,
+        sp.setSpan(new ForegroundColorSpan(color), startPosition, startPosition + length,
             Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
       }
     }
