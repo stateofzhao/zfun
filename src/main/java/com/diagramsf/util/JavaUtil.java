@@ -67,4 +67,13 @@ public class JavaUtil {
   public static int calculationWithAndHeight(int orangeWith, int orangeHeight, int desWith) {
     return (orangeHeight * desWith) / orangeWith;
   }
+
+  /**
+   * 简单的比较两个字符串是否相似
+   *
+   * @return true相似，false不相似
+   */
+  public static boolean strSample(String str1, String str2) {
+    return str1.equals(str2) || str1.contains(str2) || str2.contains(str1);
+  }
 }

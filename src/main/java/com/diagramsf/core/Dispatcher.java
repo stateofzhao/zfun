@@ -15,6 +15,8 @@ public class Dispatcher {
   static final int STORE_REGISTER = 3;
   static final int STORE_UNREGISTER = 4;
 
+  static volatile Dispatcher singleton;
+
   final List<ActionInterceptor> interceptorList;
   final List<Store> storeList;
   final Handler handler;
@@ -25,6 +27,27 @@ public class Dispatcher {
 
     //FIXME 这里可以使用其他线程的Handler
     handler = new DispatcherHandler(Looper.myLooper(), this);
+  }
+
+  public static Dispatcher get() {
+    if (null == singleton) {
+      synchronized (Dispatcher.class) {
+        if (null == singleton) {
+          singleton = new Dispatcher();
+        }
+      }
+    }
+    return singleton;
+  }
+
+  public void performRegister(Store store) {
+    Utils.checkNotNull(store);
+    storeList.add(store);
+  }
+
+  public void performUnRegister(Store store) {
+    Utils.checkNotNull(store);
+    storeList.remove(store);
   }
 
   void dispatchAction(Action action) {
@@ -67,16 +90,6 @@ public class Dispatcher {
     } else {
       action.mark("end perform:no Store to hit this action");
     }
-  }
-
-  public void performRegister(Store store) {
-    Utils.checkNotNull(store);
-    storeList.add(store);
-  }
-
-  public void performUnRegister(Store store) {
-    Utils.checkNotNull(store);
-    storeList.remove(store);
   }
 
   private Action decorateAction(Action action) {

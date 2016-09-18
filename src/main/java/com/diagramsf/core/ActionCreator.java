@@ -6,10 +6,23 @@ package com.diagramsf.core;
  * Created by Diagrams on 2016/8/12 17:00
  */
 public class ActionCreator {
+  private static volatile ActionCreator singleton = null;
+
   private Dispatcher dispatcher;
 
-  public ActionCreator() {
-    dispatcher = new Dispatcher();
+  private ActionCreator(Dispatcher dispatcher) {
+    this.dispatcher = dispatcher;
+  }
+
+  public static ActionCreator get(Dispatcher dispatcher) {
+    if (null == singleton) {
+      synchronized (ActionCreator.class) {
+        if (null == singleton) {
+          singleton = new ActionCreator(dispatcher);
+        }
+      }
+    }
+    return singleton;
   }
 
   public void sendAction(String textDescribe) {
