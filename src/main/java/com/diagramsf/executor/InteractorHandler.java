@@ -92,6 +92,10 @@ public class InteractorHandler {
         @Override public void priority(@Priority int priority) {
           this.priority = priority;
         }
+
+        @Override public void onStateChange(@State int state) {
+
+        }
       };
       interactor.priority(priority);
 

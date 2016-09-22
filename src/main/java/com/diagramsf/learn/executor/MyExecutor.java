@@ -46,7 +46,7 @@ public class MyExecutor {
   private static InternalHandler mInternalHandler;// 回调主线程的Handler
   private final ExecutorService mExecutor;// 线程池
 
-  private final ReferenceQueue<Object> mReferenceQueue;// 弱引用回收队列
+  private final ReferenceQueue<ResultCallback> mReferenceQueue;// 弱引用回收队列
 
   // 暂时没用，后期用来取消请求用的
   private Map<WeakReference<Callable>, MyFutureTask> mTasks;
@@ -162,14 +162,13 @@ public class MyExecutor {
     }
 
     @Override public void handleMessage(Message msg) {
-
       int what = msg.what;
       MyCallable myCallable = (MyCallable) msg.obj;
       if (null == myCallable) {
         return;
       }
 
-      CallbackWeakReference<ResultCallback> callback_ref = myCallable.callback_ref;
+      ResultCallbackWeakReference callback_ref = myCallable.callback_ref;
       ResultCallback callback = null;
       if (null != callback_ref) {
         callback = callback_ref.get();
@@ -197,8 +196,9 @@ public class MyExecutor {
   }
 
   /**
-   * 自定义的线程池,最主要的就是为了实现 submit(Callable) 方法，来返回自定义的Future {@link MyFutureTask}
-   * ，这样就能够在 {@link MyExecutor#mQueue}中比较优先级了
+   * 自定义的线程池,最主要的就是为了实现 {@link ThreadPoolExecutor#submit(Callable)} 方法，
+   * 来返回自定义的Future {@link MyFutureTask}，这样就能够在 线程池的PriorityBlockingQueue(优先级队列)
+   * 中比较优先级了
    */
   private static class MyExecutorService extends ThreadPoolExecutor {
 
@@ -216,8 +216,9 @@ public class MyExecutor {
   }
 
   /**
-   * 提交到 {@link #mQueue} 中的任务, 泛型 T 表示任务执行完 生成的结果类型<br>
-   * 实现了 Comparable接口 为了在{@link #mQueue}中来比较优先级，并且重写了 done()方法来传递任务执行的结果
+   * 提交到 线程池的PriorityBlockingQueue 中的任务, 泛型 T 表示任务执行完 生成的结果类型<br>
+   * 实现了 Comparable接口 为了在 线程池的PriorityBlockingQueue(优先级队列) 中来比较优先级，
+   * 并且重写了 done()方法来传递任务执行的结果
    */
   private static class MyFutureTask<T> extends FutureTask<T>
       implements Comparable<MyFutureTask<T>> {
@@ -234,7 +235,7 @@ public class MyExecutor {
     // cancel(boolean)掉FutureTask也会把FutureTask标记为isDone状态，
     // 也就是也会回调这个方法
     @Override protected void done() {
-      CallbackWeakReference<ResultCallback<T>> callback_ref = myCallable.callback_ref;
+      ResultCallbackWeakReference callback_ref = myCallable.callback_ref;
       if (null == callback_ref) {// 没有回调接口，直接返回
         return;
       }
@@ -293,7 +294,7 @@ public class MyExecutor {
 
     private WeakReference<Callable<T>> realTask_ref;
 
-    public CallbackWeakReference<ResultCallback<T>> callback_ref;
+    public ResultCallbackWeakReference callback_ref;
 
     public T result;
 
@@ -310,7 +311,8 @@ public class MyExecutor {
       realTask_ref = new WeakReference<>(real);
 
       if (null != callback) {
-        this.callback_ref = new CallbackWeakReference<>(this, callback, myExecutor.mReferenceQueue);
+        this.callback_ref =
+            new ResultCallbackWeakReference(this, callback, myExecutor.mReferenceQueue);
       }
     }
 
@@ -344,12 +346,17 @@ public class MyExecutor {
 
   /***
    * 弱引用，当弱引用的对象释放后，这个弱引用会加入到一个ReferenceQueue 中（构造函数传入的q参数），然后遍历此队列取出不需要的
-   * {@link CallbackWeakReference#myCallable},cancel掉任务，达到自动检测 取消不需要的任务。
+   * {@link ResultCallbackWeakReference#myCallable},cancel掉任务，达到自动检测 取消不需要的任务。
    */
-  final static class CallbackWeakReference<M> extends WeakReference<M> {
+  final static class ResultCallbackWeakReference extends WeakReference<ResultCallback> {
     MyCallable myCallable; // 弱引用中 额外缓存的字段，当本弱引用类引用的对象被回收后，用来清理资源的。
 
-    public CallbackWeakReference(MyCallable myCallable, M r, ReferenceQueue<? super M> q) {
+    //这里需要说明下，ReferenceQueue<T>的泛型需要跟 放入到其中的 引用的泛型保持一致，例如这里的 弱引用的泛型就是ResultCallback，
+    // 那么 ReferenceQueue的泛型也是ResultCallback。
+    //但是通常情况下，如果自定义的弱引用是公共的（希望让其他人使用）那么就需要让ReferenceQueue的泛型类型扩大，
+    // 不要直接写死一个类型，那么此时就需要设置泛型的下界了，在本例类中需要这么写ReferenceQueue<? super ResultCallback>
+    public ResultCallbackWeakReference(MyCallable myCallable, ResultCallback r,
+        ReferenceQueue<ResultCallback> q) {
       super(r, q);
       this.myCallable = myCallable;
     }
@@ -357,9 +364,9 @@ public class MyExecutor {
 
   /** 守护线程,当主线程结束后自己会结束掉 */
   final static class ClearThread extends Thread {
-    ReferenceQueue<Object> referenceQueue;
+    ReferenceQueue<ResultCallback> referenceQueue;
 
-    public ClearThread(ReferenceQueue<Object> referenceQueue) {
+    public ClearThread(ReferenceQueue<ResultCallback> referenceQueue) {
 
       this.referenceQueue = referenceQueue;
       setDaemon(true);
@@ -369,8 +376,7 @@ public class MyExecutor {
       Process.setThreadPriority(THREAD_PRIORITY_BACKGROUND);
       while (true) {
         try {
-          CallbackWeakReference<?> ref =
-              (CallbackWeakReference<?>) referenceQueue.remove();// 这个是阻塞方法，当没有值时，会让线程wait()
+          ResultCallbackWeakReference ref = (ResultCallbackWeakReference) referenceQueue.remove();// 这个是阻塞方法，当没有值时，会让线程wait()
           Message msg = mInternalHandler.obtainMessage();
           msg.what = MESSAGE_DO_CANCEL;
           msg.obj = ref.myCallable;

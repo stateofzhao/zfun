@@ -45,6 +45,7 @@ public class ThreadExecutor implements Executor {
     dispatcher.dispatchSubmit(runnable);
   }
 
+  /** 如果任务正在执行，不会取消任务，只是会把任务标记为取消状态，如果任务在队列中未运行，那么会直接取掉任务 */
   @Override public void cancel(Object tag) {
     dispatcher.dispatchCancel(tag);
   }
@@ -192,6 +193,7 @@ public class ThreadExecutor implements Executor {
     }
 
     void performSubmit(HolderRunnable runnable) {
+      runnable.interactor.onStateChange(Interactor.NEW);
       Object tag = runnable.tag;
       PriorityFuture future = (PriorityFuture) service.submit(runnable);
       if (null != tag) {
@@ -215,6 +217,7 @@ public class ThreadExecutor implements Executor {
             future.cancel(false);
             Interactor interactor = future.interactor;
             interactor.cancel();
+            interactor.onStateChange(Interactor.CANCEL);
           }
         }
       }
@@ -228,6 +231,8 @@ public class ThreadExecutor implements Executor {
           PriorityFuture f = futures.get(i);
           if (f.interactor == holderRunnable.interactor) {
             futures.remove(f);
+            f.interactor.onStateChange(Interactor.FINISHED);
+            f.interactor.onStateChange(Interactor.DIE);
             break;
           }
         }
