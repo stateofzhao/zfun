@@ -29,4 +29,32 @@ public class ActionCreator {
     Action action = new Action(textDescribe);
     dispatcher.dispatchAction(action);
   }
+
+  //解析Action
+  private void performAction(Action action) {
+    action.mark("start perform ");
+    action = decorateAction(action);
+    boolean hit = false;
+    for (Store store : storeList) {
+      boolean temp = store.onAction(action);
+      if (!hit && temp) {
+        hit = true;
+      }
+    }
+    if (hit) {
+      action.mark("end perform ");
+    } else {
+      action.mark("end perform : no Store to hit this action ");
+    }
+  }
+
+  private Action decorateAction(Action action) {
+    action.mark("start decorate ");
+    for (ActionInterceptor interceptor : interceptorList) {
+      action = interceptor.wrapAction(action);
+    }
+    action.mark("end decorate ");
+    return action;
+  }
+
 }

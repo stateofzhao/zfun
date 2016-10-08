@@ -7,23 +7,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Action分发器，很简单，只是负责把Action分发到所有注册的Store中
+ *
  * Created by Diagrams on 2016/8/12 17:03
  */
 class Dispatcher {
-  static final int ACTION_INTERCEPTOR_ADD = 1;
-  static final int ACTION_DISPATCH = 2;
-  static final int STORE_REGISTER = 3;
-  static final int STORE_UNREGISTER = 4;
+  private static final int ACTION_DISPATCH = 2;
+  private static final int STORE_REGISTER = 3;
+  private static final int STORE_UNREGISTER = 4;
 
-  static volatile Dispatcher singleton;
+  private static volatile Dispatcher singleton;
 
-  final List<ActionInterceptor> interceptorList;
-  final List<Store> storeList;
-  final Handler handler;
+  private final List<Store> storeList;
+  private final Handler handler;
 
   private Dispatcher() {
     this.storeList = new ArrayList<>();
-    this.interceptorList = new ArrayList<>();
 
     //FIXME 这里可以使用其他线程的Handler
     handler = new DispatcherHandler(Looper.myLooper(), this);
@@ -60,32 +59,21 @@ class Dispatcher {
     handler.sendMessage(handler.obtainMessage(STORE_UNREGISTER, store));
   }
 
-  void dispatchAddActionInterceptor(ActionInterceptor interceptor) {
-    Utils.checkNotNull(interceptor);
-    handler.sendMessage(handler.obtainMessage(ACTION_INTERCEPTOR_ADD, interceptor));
-  }
-
   //执行注册Store的操作
-  private void performRegister(Store store) {
+  private void performRegisterStore(Store store) {
     Utils.checkNotNull(store);
     storeList.add(store);
   }
 
   //执行取消注册Store的操作
-  private void performUnRegister(Store store) {
+  private void performUnRegisterStore(Store store) {
     Utils.checkNotNull(store);
     storeList.remove(store);
   }
 
-  //执行添加Action拦截器的操作
-  private void performAddActionInterceptor(ActionInterceptor interceptor) {
-    interceptorList.add(interceptor);
-  }
-
   //解析Action
-  private void performAction(Action action) {
-    action.mark("start perform");
-    action = decorateAction(action);
+  private void performDispatchAction(Action action) {
+    action.mark("start dispatch ");
     boolean hit = false;
     for (Store store : storeList) {
       boolean temp = store.onAction(action);
@@ -94,19 +82,11 @@ class Dispatcher {
       }
     }
     if (hit) {
-      action.mark("end perform");
+      action.mark("end dispatch ");
     } else {
-      action.mark("end perform:no Store to hit this action");
+      action.mark("end dispatch : no Store to hit this action ");
     }
-  }
-
-  private Action decorateAction(Action action) {
-    action.mark("start decorate ");
-    for (ActionInterceptor interceptor : interceptorList) {
-      action = interceptor.wrapAction(action);
-    }
-    action.mark("end decorate ");
-    return action;
+    action.finish();
   }
 
   private static class DispatcherHandler extends Handler {
@@ -119,24 +99,19 @@ class Dispatcher {
 
     @Override public void handleMessage(Message msg) {
       switch (msg.what) {
-        case ACTION_INTERCEPTOR_ADD: {
-          ActionInterceptor interceptor = (ActionInterceptor) msg.obj;
-          dispatcher.performAddActionInterceptor(interceptor);
-          break;
-        }
         case ACTION_DISPATCH: {
           Action action = (Action) msg.obj;
-          dispatcher.performAction(action);
+          dispatcher.performDispatchAction(action);
           break;
         }
         case STORE_REGISTER: {
           Store store = (Store) msg.obj;
-          dispatcher.performRegister(store);
+          dispatcher.performRegisterStore(store);
           break;
         }
         case STORE_UNREGISTER: {
           Store store = (Store) msg.obj;
-          dispatcher.performUnRegister(store);
+          dispatcher.performUnRegisterStore(store);
           break;
         }
       }//switch end
