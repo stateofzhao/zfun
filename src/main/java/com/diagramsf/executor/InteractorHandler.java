@@ -41,7 +41,7 @@ public class InteractorHandler {
     return new InteractorBuilder(this);
   }
 
-  private static class InteractorBuilder {
+  public static class InteractorBuilder {
     private InteractorHandler interactorHandler;
 
     private Object tag;

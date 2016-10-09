@@ -56,7 +56,7 @@ class Dispatcher {
   /** 取消注册Store */
   void unRegisterStore(Store store) {
     Utils.checkNotNull(store);
-    handler.sendMessage(handler.obtainMessage(STORE_UNREGISTER, store));
+    handler.sendMessageAtFrontOfQueue(handler.obtainMessage(STORE_UNREGISTER, store));
   }
 
   //执行注册Store的操作
