@@ -21,9 +21,6 @@ android {
 
 dependencies {
   compile fileTree(include: ['*.jar'], dir: 'libs')
-  compile 'com.nineoldandroids:library:2.4.0'
-  compile 'com.tonicartos:stickygridheaders:1.0.1'
-  compile 'com.tonicartos:superslim:0.4.13'
   compile 'com.squareup.okhttp:okhttp:2.5.0'
   compile 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
   compile 'com.google.guava:guava:18.0'
