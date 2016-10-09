@@ -41,15 +41,14 @@ public class InteractorHandler {
     return new InteractorBuilder(this);
   }
 
-  public static class InteractorBuilder {
+  private static class InteractorBuilder {
     private InteractorHandler interactorHandler;
 
     private Object tag;
     private @Interactor.Priority int priority;
 
-    public InteractorBuilder(InteractorHandler interactorHandler) {
+    InteractorBuilder(InteractorHandler interactorHandler) {
       this.interactorHandler = interactorHandler;
-      priority = Interactor.NORMAL;
     }
 
     public InteractorBuilder priority(@Interactor.Priority int priority) {
@@ -69,6 +68,13 @@ public class InteractorHandler {
      */
     public Interactor execute(final Runnable runnable) {
       Preconditions.checkNotNull(runnable);
+      if (null == tag) {
+        tag = new Object();
+      }
+      if (priority <= 0) {
+        priority = Interactor.NORMAL;
+      }
+
       Interactor interactor = new Interactor() {
         private boolean cancel = false;
         private @Priority int priority;
@@ -98,7 +104,6 @@ public class InteractorHandler {
         }
       };
       interactor.priority(priority);
-
       interactorHandler.execute(interactor, tag);
       return interactor;
     }

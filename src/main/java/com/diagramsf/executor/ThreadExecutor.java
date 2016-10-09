@@ -22,10 +22,10 @@ import java.util.concurrent.TimeUnit;
  *
  * Created by Diagrams on 2016/8/8 11:33
  */
-public class ThreadExecutor implements Executor {
-  protected static final int CORE_SIZE = 2;
-  protected static final int MAX_SIZE = 4;
-  protected static final long TIMEOUT = 30;
+class ThreadExecutor implements Executor {
+  private static final int CORE_SIZE = 2;
+  private static final int MAX_SIZE = 4;
+  private static final long TIMEOUT = 30;
 
   private static final int ADD = 0X1;
   private static final int CANCEL = 0X2;
@@ -33,7 +33,7 @@ public class ThreadExecutor implements Executor {
 
   private Dispatcher dispatcher;
 
-  public ThreadExecutor() {
+  ThreadExecutor() {
     PriorityBlockingQueue<Runnable> queue = new PriorityBlockingQueue<>();
     ExecutorService service =
         new MyThreadPoolExecutor(CORE_SIZE, MAX_SIZE, TIMEOUT, TimeUnit.SECONDS, queue);
@@ -51,11 +51,11 @@ public class ThreadExecutor implements Executor {
   }
 
   private static class HolderRunnable implements Runnable {
-    public Interactor interactor;
-    public ThreadExecutor scheduler;
+    Interactor interactor;
+    ThreadExecutor scheduler;
     public Object tag;
 
-    public HolderRunnable(Interactor interactor, Object tag, ThreadExecutor scheduler) {
+    HolderRunnable(Interactor interactor, Object tag, ThreadExecutor scheduler) {
       this.interactor = interactor;
       this.scheduler = scheduler;
       this.tag = tag;
@@ -83,14 +83,14 @@ public class ThreadExecutor implements Executor {
     Interactor interactor;
     ThreadExecutor scheduler;
 
-    public PriorityFuture(HolderRunnable runnable, ThreadExecutor scheduler) {
+    PriorityFuture(HolderRunnable runnable, ThreadExecutor scheduler) {
       super(runnable, null);
       this.holderRunnable = runnable;
       this.interactor = runnable.interactor;
       this.scheduler = scheduler;
     }
 
-    public int getPriority() {
+    int getPriority() {
       return interactor.getPriority();
     }
 
@@ -125,8 +125,8 @@ public class ThreadExecutor implements Executor {
 
   private static class MyThreadPoolExecutor extends ThreadPoolExecutor {
 
-    public MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime,
-        TimeUnit unit, BlockingQueue<Runnable> workQueue) {
+    MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+        BlockingQueue<Runnable> workQueue) {
       super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
     }
 
@@ -141,7 +141,7 @@ public class ThreadExecutor implements Executor {
   private static class DispatcherHandler extends Handler {
     private Dispatcher dispatcher;
 
-    public DispatcherHandler(Dispatcher dispatcher) {
+    DispatcherHandler(Dispatcher dispatcher) {
       super(Looper.getMainLooper());
       this.dispatcher = dispatcher;
     }
