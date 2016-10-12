@@ -29,6 +29,7 @@ dependencies {
   compile 'com.google.guava:guava:18.0'
   compile 'com.facebook.fresco:fresco:0.14.0'
   compile 'com.android.support:support-v4:24.2.1'
+  compile 'com.nineoldandroids:library:2.4.0'
 }
 repositories {
   flatDir {
