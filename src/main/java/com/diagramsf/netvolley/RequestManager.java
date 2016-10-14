@@ -80,11 +80,11 @@ public class RequestManager {
   }
 
   /** 用来定义{@link RequestManager}配置参数 */
-  public static class Builder {
+  private static class Builder {
     /** Default on-disk cache directory. */
     private static final String DEFAULT_CACHE_DIR = "volleyRequestManager";
     /** 磁盘缓存最大大小 */
-    public static final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
+    private static final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
 
     private final Context context;
     /** 用户代理，会写入到Http报头中 */
@@ -92,7 +92,7 @@ public class RequestManager {
     private Cache cache;
     private HttpStack httpStack;
 
-    public Builder(Context context) {
+    private Builder(Context context) {
       if (context == null) {
         throw new IllegalArgumentException("Context must not be null");
       }
@@ -254,8 +254,8 @@ public class RequestManager {
     }
   }// class RequestCreator end
 
-  public static class Utils {
-    public static String createUserAgent(Context context) {
+  private static class Utils {
+    private static String createUserAgent(Context context) {
       // 定义用户代理
       String userAgent = "volleyRequestManager/0";
       try {

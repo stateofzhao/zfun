@@ -8,11 +8,11 @@ import com.diagramsf.executor.FireThread;
  * Created by Diagrams on 2016/8/11 10:25
  */
 public class GetTeacherByIdInteractor extends BaseInteractor implements GetTeacherById {
-  FireThread postThread;
-  Callback callback;
-  Object tag;
-  TeacherRepository repository;
-  String id;
+  private FireThread postThread;
+  private Callback callback;
+  private Object tag;
+  private TeacherRepository repository;
+  private String id;
 
   public GetTeacherByIdInteractor(TeacherRepository repository) {
     postThread = new FireMainThread(this);

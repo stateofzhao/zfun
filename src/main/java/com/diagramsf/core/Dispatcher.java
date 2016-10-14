@@ -7,28 +7,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Action分发器，很简单，只是负责把Action分发到所有注册的Store中
+ *
  * Created by Diagrams on 2016/8/12 17:03
  */
-public class Dispatcher {
-  static final int ACTION_INTERCEPTOR_ADD = 1;
-  static final int ACTION_DISPATCH = 2;
-  static final int STORE_REGISTER = 3;
-  static final int STORE_UNREGISTER = 4;
+class Dispatcher {
+  private static final int ACTION_DISPATCH = 2;
+  private static final int STORE_REGISTER = 3;
+  private static final int STORE_UNREGISTER = 4;
 
-  static volatile Dispatcher singleton;
+  private static volatile Dispatcher singleton;
 
-  final List<ActionInterceptor> interceptorList;
-  final List<Store> storeList;
-  final Handler handler;
+  private final List<Store> storeList;
+  private final Handler handler;
 
-  Dispatcher() {
+  private Dispatcher() {
     this.storeList = new ArrayList<>();
-    this.interceptorList = new ArrayList<>();
 
     //FIXME 这里可以使用其他线程的Handler
     handler = new DispatcherHandler(Looper.myLooper(), this);
   }
 
+  /** 获取Dispatcher的单例 */
   public static Dispatcher get() {
     if (null == singleton) {
       synchronized (Dispatcher.class) {
@@ -40,44 +40,40 @@ public class Dispatcher {
     return singleton;
   }
 
-  public void performRegister(Store store) {
-    Utils.checkNotNull(store);
-    storeList.add(store);
-  }
-
-  public void performUnRegister(Store store) {
-    Utils.checkNotNull(store);
-    storeList.remove(store);
-  }
-
+  /** 开始分发Action */
   void dispatchAction(Action action) {
     Utils.checkNotNull(action);
     action.mark("start dispatch");
     handler.sendMessage(handler.obtainMessage(ACTION_DISPATCH, action));
   }
 
-  void dispatchAddActionInterceptor(ActionInterceptor interceptor) {
-    Utils.checkNotNull(interceptor);
-    handler.sendMessage(handler.obtainMessage(ACTION_INTERCEPTOR_ADD, interceptor));
-  }
-
-  void dispatchRegisterStore(Store store) {
+  /** 注册Store */
+  void registerStore(Store store) {
     Utils.checkNotNull(store);
     handler.sendMessage(handler.obtainMessage(STORE_REGISTER, store));
   }
 
-  void dispatchUnRegisterStore(Store store) {
+  /** 取消注册Store */
+  void unRegisterStore(Store store) {
     Utils.checkNotNull(store);
-    handler.sendMessage(handler.obtainMessage(STORE_UNREGISTER, store));
+    handler.sendMessageAtFrontOfQueue(handler.obtainMessage(STORE_UNREGISTER, store));
   }
 
-  void performAddActionInterceptor(ActionInterceptor interceptor) {
-    interceptorList.add(interceptor);
+  //执行注册Store的操作
+  private void performRegisterStore(Store store) {
+    Utils.checkNotNull(store);
+    storeList.add(store);
   }
 
-  void performAction(Action action) {
-    action.mark("start perform");
-    action = decorateAction(action);
+  //执行取消注册Store的操作
+  private void performUnRegisterStore(Store store) {
+    Utils.checkNotNull(store);
+    storeList.remove(store);
+  }
+
+  //解析Action
+  private void performDispatchAction(Action action) {
+    action.mark("start dispatch ");
     boolean hit = false;
     for (Store store : storeList) {
       boolean temp = store.onAction(action);
@@ -86,49 +82,36 @@ public class Dispatcher {
       }
     }
     if (hit) {
-      action.mark("end perform");
+      action.mark("end dispatch ");
     } else {
-      action.mark("end perform:no Store to hit this action");
+      action.mark("end dispatch : no Store to hit this action ");
     }
+    action.finish();
   }
 
-  private Action decorateAction(Action action) {
-    action.mark("start decorate ");
-    for (ActionInterceptor interceptor : interceptorList) {
-      action = interceptor.wrapAction(action);
-    }
-    action.mark("end decorate ");
-    return action;
-  }
-
-  static class DispatcherHandler extends Handler {
+  private static class DispatcherHandler extends Handler {
     Dispatcher dispatcher;
 
-    public DispatcherHandler(Looper looper, Dispatcher dispatcher) {
+    DispatcherHandler(Looper looper, Dispatcher dispatcher) {
       super(looper);
       this.dispatcher = dispatcher;
     }
 
     @Override public void handleMessage(Message msg) {
       switch (msg.what) {
-        case ACTION_INTERCEPTOR_ADD: {
-          ActionInterceptor interceptor = (ActionInterceptor) msg.obj;
-          dispatcher.performAddActionInterceptor(interceptor);
-          break;
-        }
         case ACTION_DISPATCH: {
           Action action = (Action) msg.obj;
-          dispatcher.performAction(action);
+          dispatcher.performDispatchAction(action);
           break;
         }
         case STORE_REGISTER: {
           Store store = (Store) msg.obj;
-          dispatcher.performRegister(store);
+          dispatcher.performRegisterStore(store);
           break;
         }
         case STORE_UNREGISTER: {
           Store store = (Store) msg.obj;
-          dispatcher.performUnRegister(store);
+          dispatcher.performUnRegisterStore(store);
           break;
         }
       }//switch end
