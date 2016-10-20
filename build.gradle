@@ -1,57 +1,59 @@
 apply plugin: 'com.android.library'
 
 android {
-  compileSdkVersion 24
-  buildToolsVersion "23.0.3"
+    compileSdkVersion 24
+    buildToolsVersion "23.0.3"
 
-  defaultConfig {
-    minSdkVersion 14
-    targetSdkVersion 24
-    versionCode 1
-    versionName "1.0"
-  } // end defaultConfig
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 24
+        versionCode 1
+        versionName "1.0"
+    } // end defaultConfig
 
-  buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-    }
-  } // end buildTypes
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    } // end buildTypes
 
-  // `return void` removes the lint error: `Not all execution paths return a value`.
-  return void
+    // `return void` removes the lint error: `Not all execution paths return a value`.
+    return void
 }
 
 dependencies {
-  compile fileTree(include: ['*.jar'], dir: 'libs')
-  compile 'com.squareup.okhttp:okhttp:2.5.0'
-  compile 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
-  compile 'com.google.guava:guava:18.0'
-  compile 'com.facebook.fresco:fresco:0.14.0'
-  compile 'com.android.support:support-v4:24.2.1'
-  compile 'com.nineoldandroids:library:2.4.0'
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.squareup.okhttp:okhttp:2.5.0'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
+    compile 'com.google.guava:guava:18.0'
+    compile 'com.facebook.fresco:fresco:0.14.0'
+    compile 'com.android.support:support-v4:24.2.1'
+    compile 'com.nineoldandroids:library:2.4.0'
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:recyclerview-v7:24.2.1'
 }
 repositories {
-  flatDir {
-    dirs 'libs'
-  }
+    flatDir {
+        dirs 'libs'
+    }
 }
 
 buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    // NOTE: Do not place your application dependencies here; they belong
-    // in the individual module build.gradle files
-    // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+        // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
 
-    classpath 'com.android.tools.build:gradle:2.2.0'
-  }
+        classpath 'com.android.tools.build:gradle:2.2.1'
+    }
 }
 
 allprojects {
-  repositories {
-    jcenter()
-  }
+    repositories {
+        jcenter()
+    }
 }

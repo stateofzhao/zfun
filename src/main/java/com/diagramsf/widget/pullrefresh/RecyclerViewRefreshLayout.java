@@ -7,7 +7,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
-import com.tonicartos.superslim.LayoutManager;
 
 /**
  * 专门针对{@link android.support.v7.widget.RecyclerView} 优化的下拉刷新 .
@@ -162,14 +161,6 @@ public class RecyclerViewRefreshLayout extends PullRefreshLayout {
                 final int firstCompletelyVisibleItemPosition = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
                 if ((firstCompletelyVisibleItemPosition == 0 && view.getPaddingTop() <= mInitPaddingTop)
                         || linearLayoutManager.getItemCount() == 0) {
-                    return false;
-                }
-            } else if (layoutManager instanceof LayoutManager) {
-                LayoutManager layoutManager1 = (LayoutManager) layoutManager;
-                // 获取第一个完全显示的item position
-                final int firstCompletelyVisibleItemPosition = layoutManager1.findFirstCompletelyVisibleItemPosition();
-                if ((firstCompletelyVisibleItemPosition == 0 && view.getPaddingTop() <= mInitPaddingTop)
-                        || layoutManager1.getItemCount() == 0) {
                     return false;
                 }
             }
