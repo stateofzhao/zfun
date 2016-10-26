@@ -2,6 +2,7 @@ package com.diagramsf.util;
 
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.util.Log;
 import com.facebook.drawee.drawable.ScalingUtils;
 import com.facebook.drawee.view.DraweeView;
 
@@ -22,10 +23,12 @@ public class FrescoUtil {
       @Override public void getTransformImpl(Matrix outTransform, Rect parentRect, int childWidth,
           int childHeight, float focusX, float focusY, float scaleX, float scaleY) {
         float dx, dy;
-        if(-1 != basisOfWidth){
+        if (-1 != basisOfWidth && -1 != basisOfHeight) {
+          scaleX = (basisOfWidth * 1f) / childWidth;
+          scaleY = (basisOfHeight * 1f) / childHeight;
+          outTransform.setScale(scaleX, scaleY);
+
           childWidth = basisOfWidth;
-        }
-        if(-1 != basisOfHeight){
           childHeight = basisOfHeight;
         }
 
