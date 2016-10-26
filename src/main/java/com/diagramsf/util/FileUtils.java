@@ -222,12 +222,20 @@ public class FileUtils {
    *
    * @return bytes
    */
-  @TargetApi(9) public static long getUsableSpace(File path) {
+  @TargetApi(9) public static long getUsableSpace(File file) {
     if (OSVersion.hasGingerbread()) {
-      return path.getUsableSpace();
+      return file.getUsableSpace();//比getFreeSpace()方法更准确，参考http://stackoverflow.com/questions/21439596/difference-between-getfreespace-and-getusablespace-of-file
     }
-    final StatFs stats = new StatFs(path.getPath());
-    return (long) stats.getBlockSize() * (long) stats.getAvailableBlocks();
+    StatFs stat = new StatFs(file.getPath());
+    long blockSize, totalBlocks;
+    if (OSVersion.hasJellyBeanMR2()) {
+      blockSize = stat.getBlockSizeLong();
+      totalBlocks = stat.getBlockCountLong();
+    } else {
+      blockSize = stat.getBlockSize();
+      totalBlocks = stat.getBlockCount();
+    }
+    return totalBlocks * blockSize;
   }
 
   /**
