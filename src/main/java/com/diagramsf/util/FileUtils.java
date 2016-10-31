@@ -11,9 +11,11 @@ import android.util.Log;
 import com.diagramsf.net.ExceptionWrapper;
 
 import com.google.common.base.Preconditions;
+import com.squareup.okhttp.HttpUrl;
 import java.io.*;
 import java.net.*;
 import java.util.UUID;
+import org.apache.http.protocol.HTTP;
 
 public class FileUtils {
   private static final boolean DEBUG = true;
@@ -338,14 +340,15 @@ public class FileUtils {
    * @param httpURL 请求的URL连接地址
    * @param postData 向服务器发送的数据
    * @param uploadFilePath 上传文件的路径
+   * @param fileType 上传文件的类型例如：image/jpeg
    */
   public static String postUploadFile(String httpURL, String postData, String uploadFilePath,
-      String imageKeyName) throws ExceptionWrapper {
-    HttpURLConnection httpConnection = getHttpURLConnection(httpURL);
+      String fileType,String userAgent) throws ExceptionWrapper {
+    HttpURLConnection httpConnection = getHttpURLConnection(httpURL,userAgent);
     if (null == httpConnection) {
       return null;
     }
-    InputStream is = http_post_upload(httpConnection, postData, uploadFilePath, imageKeyName);
+    InputStream is = http_post_upload(httpConnection, postData, uploadFilePath, fileType);
     if (null == is) {
       return null;
     }
@@ -362,14 +365,9 @@ public class FileUtils {
     return result;
   }
 
-  // 获得接口用户代理信息
-  public static String getInterfaceUserAgent() {
-    return null;
-  }
-
   // 以post的形式请求服务器，上传文件
   private static InputStream http_post_upload(HttpURLConnection httpConnection, String postData,
-      String filePath, String imageKeyName) throws ExceptionWrapper {
+      String filePath, String fileType) throws ExceptionWrapper {
 
     if (null == httpConnection) {
       return null;
@@ -397,7 +395,7 @@ public class FileUtils {
       httpConnection.addRequestProperty("app", "test");
       DataOutputStream dos = new DataOutputStream(httpConnection.getOutputStream());
 
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append(PREFIX);
       sb.append(BOUNDARY);
       sb.append(LINE_END);
@@ -428,12 +426,12 @@ public class FileUtils {
       /**
        * 封装要上传的图片文件
        *
-       * 这里重点注意： name里面的值为服务器端需要key 只有这个key 才可以得到对应的文件;
+       * 这里重点注意： name里面的值（imageKeyName）为服务器端需要的上传文件的类型，这里要与服务器进行约定，或者
+       * 使用HTTP标准规定的图片类型：“image/jpeg”等。
        * filename是文件的名字，包含后缀名的 比如:abc.png
        */
-
       sb.append("Content-Disposition: form-data; name=\"")
-          .append(imageKeyName)
+          .append(fileType)
           .append("\"; filename=\"")
           .append(filePath)
           .append("\"")
@@ -470,7 +468,8 @@ public class FileUtils {
   }
 
   // 取得HttpURLConnection
-  private static HttpURLConnection getHttpURLConnection(String url) throws ExceptionWrapper {
+  private static HttpURLConnection getHttpURLConnection(String url, String userAgent)
+      throws ExceptionWrapper {
     URL httpURL;
     URLConnection connection;
     HttpURLConnection httpConnection;
@@ -485,7 +484,7 @@ public class FileUtils {
       httpConnection.setConnectTimeout(1000 * 15);// 设置连接超时时间
       httpConnection.setReadTimeout(20000);// 设置读取超时时间
       httpConnection.setRequestProperty("Charset", UTF_8);
-      httpConnection.setRequestProperty("User-Agent", getInterfaceUserAgent());
+      httpConnection.setRequestProperty("User-Agent", userAgent);
       httpConnection.setUseCaches(false);
     } catch (MalformedURLException e) { // String 转换成URL时可能会报这个错误
       e.printStackTrace();
