@@ -120,7 +120,7 @@ public class FrescoUtil {
         final File localFile = getCacheImageOnDisk(cacheKey);
         if (null != localFile) {//本地有图片缓存
           if (systemPic.mkdirs() || systemPic.exists()) {
-            boolean result = FileUtils.copyFile(localFile.getPath(), systemPic.getPath() + "/" + imageName);
+            boolean result = FileUtil.copyFile(localFile.getPath(), systemPic.getPath() + "/" + imageName);
             if (result) {
               try {
                 pendingIntent.send();
