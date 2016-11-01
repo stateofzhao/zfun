@@ -22,67 +22,68 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * 从{@link Network#performRequest(Request)} 返回的数据和 headers </p>
- * 持有的数据有:
- * 1.HTTP 响应的状态码，</p>
- * 2.响应的原始数据，byte[] </p>
- * 3.Response 的报头信息 headers</p>
- * 4.维护一个Boolean变量 标记请求结果是否更新（是否是 304 响应）。</p>
- * 
- * 
+ * 从{@link Network#performRequest(Request)} 返回的数据和 headers
+ * <p>
+ * 持有的数据有:<br/>
+ * 1.HTTP 响应的状态码，<br/>
+ * 2.响应的原始数据或者如果响应状态码是304（Not Modified）那么这个就是上次缓存的数据，byte[] <br/>
+ * 3.Response 的报头信息 headers<br/>
+ * 4.维护一个Boolean变量 标记请求结果是否需要更新（是否是 304 响应,true是304，false不是304）。<br/>
+ *<p>
  * Data and headers returned from {@link Network#performRequest(Request)}.
  */
 public class NetworkResponse {
-    /**
-     * Creates a new network response.
-     * @param statusCode the HTTP status code
-     * @param data Response body
-     * @param headers Headers returned with this response, or null for none
-     * @param notModified True if the server returned a 304 and the data was already in cache(304响应 客户端中所请求资源的缓存仍然是有效的,也就是说该资源从上次缓存到现在并没有被修改过)
-     */
-    public NetworkResponse(int statusCode, byte[] data, Map<String, String> headers,
-            boolean notModified) {
-        this.statusCode = statusCode;
-        this.data = data;
-        this.headers = headers;
-        this.notModified = notModified;
-    }
+  /**
+   * Creates a new network response.
+   *
+   * @param statusCode the HTTP status code
+   * @param data Response body
+   * @param headers Headers returned with this response, or null for none
+   * @param notModified True if the server returned a 304 and the data was already in cache(304响应
+   * 客户端中所请求资源的缓存仍然是有效的,也就是说该资源从上次缓存到现在并没有被修改过)
+   */
+  public NetworkResponse(int statusCode, byte[] data, Map<String, String> headers,
+      boolean notModified) {
+    this.statusCode = statusCode;
+    this.data = data;
+    this.headers = headers;
+    this.notModified = notModified;
+  }
 
-    public NetworkResponse(byte[] data) {
-        this(HttpStatus.SC_OK, data, Collections.<String, String>emptyMap(), false);
-    }
+  public NetworkResponse(byte[] data) {
+    this(HttpStatus.SC_OK, data, Collections.<String, String>emptyMap(), false);
+  }
 
-    public NetworkResponse(byte[] data, Map<String, String> headers) {
-        this(HttpStatus.SC_OK, data, headers, false);
-    }
+  public NetworkResponse(byte[] data, Map<String, String> headers) {
+    this(HttpStatus.SC_OK, data, headers, false);
+  }
 
-    /** The HTTP status code. */
-    public final int statusCode;
+  /** The HTTP status code. */
+  public final int statusCode;
 
-    /** Raw data from this response. */
-    public final byte[] data;
+  /** Raw data from this response. */
+  public final byte[] data;
 
-    /** Response headers. */
-    public final Map<String, String> headers;
+  /** Response headers. */
+  public final Map<String, String> headers;
 
-    /** True if the server returned a 304 (Not Modified). */
-    public final boolean notModified;
-    
-    
+  /** True if the server returned a 304 (Not Modified). */
+  public final boolean notModified;
+
   //----------------------------------------
-  	/** 结果是否来自缓存 */
-  	private boolean isFromCache = false;
+  /** 结果是否来自缓存 */
+  private boolean isFromCache = false;
 
-  	public void setFromCache(boolean is) {
-  		this.isFromCache = is;
-  	}
+  public void setFromCache(boolean is) {
+    this.isFromCache = is;
+  }
 
-  	/**
-  	 * 结果是否来自缓存
-  	 * 
-  	 * @return true 是，
-  	 */
-  	public boolean isFromCache() {
-  		return isFromCache;
-  	}
+  /**
+   * 结果是否来自缓存
+   *
+   * @return true 是，
+   */
+  public boolean isFromCache() {
+    return isFromCache;
+  }
 }

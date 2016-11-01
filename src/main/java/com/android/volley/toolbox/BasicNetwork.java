@@ -74,10 +74,10 @@ public class BasicNetwork implements Network {
                 Map<String, String> headers = new HashMap<String, String>();
                 addCacheHeaders(headers, request.getCacheEntry());
                 httpResponse = mHttpStack.performRequest(request, headers);
-                StatusLine statusLine = httpResponse.getStatusLine();
+                StatusLine statusLine = httpResponse.getStatusLine();//获取结果状态描述
                 int statusCode = statusLine.getStatusCode();
 
-                responseHeaders = convertHeaders(httpResponse.getAllHeaders());
+                responseHeaders = convertHeaders(httpResponse.getAllHeaders());//保存网络结果所有报头信息
                 // Handle cache validation.
                 if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
                     return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED,

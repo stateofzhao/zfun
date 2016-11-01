@@ -35,11 +35,9 @@ public interface HttpStack {
 	 * <p>
 	 * 如果request.getPostBody()==null 执行GET request。
 	 * 否则执行POST request，并把 Content-Type header 设置成 request.getPostBodyContentType()。
-	 * 
-	 * 
 	 * <p>
+	 *
 	 * Performs an HTTP request with the given parameters.
-	 * 
 	 * <p>
 	 * A GET request is sent if request.getPostBody() == null. A POST request is
 	 * sent otherwise, and the Content-Type header is set to
@@ -56,5 +54,4 @@ public interface HttpStack {
 	public HttpResponse performRequest(Request<?> request,
 									   Map<String, String> additionalHeaders) throws IOException,
 			AuthFailureError;
-
 }

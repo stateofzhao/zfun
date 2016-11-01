@@ -418,7 +418,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
-     * 返回带注释的缓存条目,如果没有就返回null。
+     * 返回带注释（包含HTTP报头信息）的缓存条目,如果没有就返回null。
      * <p>
      * <p>
      * Returns the annotated cache entry, or null if there isn't one.

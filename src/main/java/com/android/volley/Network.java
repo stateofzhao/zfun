@@ -16,20 +16,27 @@
 
 package com.android.volley;
 
+import com.android.volley.toolbox.HttpStack;
+import java.util.Map;
+
 /**
- * 一个处理 requests 的接口.
- * 
- * 
+ * 一个处理 requests 的接口.<br/>
+ * **注意：**与{@link HttpStack}的区别，这个是负责本框架中整个与网络有关的所有处理（包括：
+ * 1.)解析缓存中的报头信息，然后把此报头（Map<String,String>）作为额外报头作为第二个参数传递给{@link HttpStack#performRequest(Request,
+ * Map)}方法，{@link HttpStack#performRequest(Request, Map)}需要结合{@link Request#getHeaders()}来一块处理。；
+ * 2.)
+ * <P>
  * An interface for performing requests.
  */
 public interface Network {
-    /**
-     * 处理制定的 request </p>
-     * 
-     * Performs the specified request.
-     * @param request Request to process
-     * @return A {@link NetworkResponse} with data and caching metadata; will never be null
-     * @throws VolleyError on errors
-     */
-    public NetworkResponse performRequest(Request<?> request) throws VolleyError;
+  /**
+   * 处理指定的 request
+   * <p>
+   * Performs the specified request.
+   *
+   * @param request Request to process
+   * @return A {@link NetworkResponse} with data and caching metadata; will never be null
+   * @throws VolleyError on errors
+   */
+  public NetworkResponse performRequest(Request<?> request) throws VolleyError;
 }
