@@ -11,21 +11,20 @@ import android.util.Log;
 import com.diagramsf.net.ExceptionWrapper;
 
 import com.google.common.base.Preconditions;
-import com.squareup.okhttp.HttpUrl;
 import java.io.*;
 import java.net.*;
 import java.util.UUID;
-import org.apache.http.protocol.HTTP;
 
-public class FileUtils {
+/** android文件获取工具类，封装了一些获取系统文件路径，以及判断外部存储是否可用的工具方法 */
+public class FileUtil {
   private static final boolean DEBUG = true;
-  private static final String TAG = "FileUtils";
-  public static final String UTF_8 = "UTF-8";
+  private static final String TAG = "FileUtil";
+  private static final String UTF_8 = "UTF-8";
 
   /** 内部缓存目录最大大小 */
   private static final int SIZE_INTERNAL_CACHE = 1024 * 1024;
 
-  // -----------------手机内部存储,非外部存储---start
+  // =============================================================================手机内部存储,非外部存储---start
 
   /**
    * 获取app在手机内部缓存的临时文件,使用完了 要删除这个文件
@@ -34,7 +33,8 @@ public class FileUtils {
    */
   public File getAppInternalTempFile(Context context, String fileName) throws IOException {
     Preconditions.checkNotNull(fileName);
-    return File.createTempFile(fileName, null, getAppInternalCacheDir(context));
+    return File.createTempFile(fileName, null,
+        getAppInternalCacheDir(context));//这个方法的第二个参数是文件.xxx后缀
   }
 
   /**
@@ -58,27 +58,22 @@ public class FileUtils {
       deleteDir(cacheDir);
     }
     return cacheDir;
-  }// -----------------手机内部存储---end
+  }// =============================================================================手机内部存储---end
 
-  // -----------------手机外部存储---start
+  // =============================================================================手机外部存储---start
 
   /**
    * 外部存储是否可以读写
    */
   public static boolean isExternalStorageWritable() {
     String state = Environment.getExternalStorageState();
-
     // sd卡是否安装了
-    boolean isSDcardMounted = Environment.MEDIA_MOUNTED.equals(state);
+    boolean isSDCardMounted = Environment.MEDIA_MOUNTED.equals(state);
     // sd卡是否是不可手动移除的
-    boolean isSDcardRemovable = isExternalStorageRemovable();
+    boolean isSDCardRemovable = isExternalStorageRemovable();
     // sd卡是否正在与电脑共享
-    boolean isSDcardShared = Environment.MEDIA_SHARED.equals(state);
-
-    if (isSDcardMounted || (!isSDcardRemovable && !isSDcardShared)) {
-      return true;
-    }
-    return false;
+    boolean isSDCardShared = Environment.MEDIA_SHARED.equals(state);
+    return isSDCardMounted || (!isSDCardRemovable && !isSDCardShared);
   }
 
   /**
@@ -86,18 +81,13 @@ public class FileUtils {
    */
   public static boolean isExternalStorageReadable() {
     String state = Environment.getExternalStorageState();
-    if (state.equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
-      return true;
-    }
-    return false;
+    return state.equals(Environment.MEDIA_MOUNTED_READ_ONLY);
   }
 
   /** 判断存储卡是否可以被手动移除 */
   @TargetApi(9) public static boolean isExternalStorageRemovable() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-      return Environment.isExternalStorageRemovable();
-    }
-    return true;
+    return Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD
+        || Environment.isExternalStorageRemovable();
   }
 
   /**
@@ -106,14 +96,14 @@ public class FileUtils {
    * @return byte;
    */
   public static long externalStorageAvailableBytes() {
-    File extdir = Environment.getExternalStorageDirectory();
-    return getUsableSpace(extdir);
-  }// -----------------手机外部存储---end
+    File extDir = Environment.getExternalStorageDirectory();
+    return getUsableSpace(extDir);
+  }// =============================================================================手机外部存储---end
 
-  // -----------------------------------app目录下的外部存储---start
+  // =============================================================================app目录下的外部存储---start
 
   /**
-   * 取得app目录下的外部存储路径，如果为null，就返回内部存储目录
+   * 取得app目录下的外部存储路径，如果为无法获取外部存储路径就获取内部存储目录
    *
    * @param context android上下文
    * @param uniqueName 目录名称
@@ -127,16 +117,13 @@ public class FileUtils {
     if (isExternalStorageWritable) {
       desFile = getAppExternalCacheDir(context);
     }
-
     if ((null == desFile) && maybeInternal) {
       desFile = context.getCacheDir();
     }
-
     if (null != desFile) {
       String cachePath = desFile.getPath();
       return new File(cachePath + File.separator + uniqueName);
     }
-
     return null;
   }
 
@@ -149,12 +136,11 @@ public class FileUtils {
     if (OSVersion.hasFroyo()) {
       return context.getExternalCacheDir();
     }
-
     final String cacheDir = "/Android/data/" + context.getPackageName() + "/cache/";
     return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
-  }// -----------------------------------app目录下的外部存储---end
+  }// =============================================================================app目录下的外部存储---end
 
-  // -------------------------------------外部路径，不在app目录下的---start
+  // =============================================================================外部路径，不在app目录下的---start
 
   /**
    * 获得android外部存储路径(SD卡)，如果外部存储不可用，就返回app内部存储路径，不一定在app的目录下,
@@ -171,9 +157,9 @@ public class FileUtils {
       cacheFile = context.getCacheDir();
     }
     return cacheFile;
-  }// -------------------------------------外部路径，不在app目录下的---end
+  }// =============================================================================外部路径，不在app目录下的---end
 
-  // --------------------------------------app外部的公共存储路径，卸载后仍会保留
+  // =============================================================================app外部的公共存储路径，卸载后仍会保留---start
 
   /**
    * 获得 需要在外部存储的 公共存储区域存储图片的 目录
@@ -197,16 +183,16 @@ public class FileUtils {
       }
     }
     return file;
-  }
-  //----------------------------其它---------start
+  }// =============================================================================app外部的公共存储路径，卸载后仍会保留---end
+
+  //=============================================================================其它---start
 
   /** 删除目录下的所有文件 */
   public static void deleteDir(File dir) {
     if (dir.exists()) {
       if (dir.isDirectory()) {
         File[] files = dir.listFiles();
-        for (int i = 0; i < files.length; i++) {
-          File one = files[i];
+        for (File one : files) {
           if (one.isDirectory()) {
             deleteDir(one);
           } else {
@@ -247,12 +233,12 @@ public class FileUtils {
    */
   public static long getFileSize(File f) {
     long size = 0;
-    File flist[] = f.listFiles();
-    for (int i = 0; i < flist.length; i++) {
-      if (flist[i].isDirectory()) {
-        size = size + getFileSize(flist[i]);
+    File fList[] = f.listFiles();
+    for (File aFList : fList) {
+      if (aFList.isDirectory()) {
+        size = size + getFileSize(aFList);
       } else {
-        size = size + flist[i].length();
+        size = size + aFList.length();
       }
     }
     return size;
@@ -261,7 +247,7 @@ public class FileUtils {
   /**
    * 获取文件扩展名
    */
-  public static String getFileFormat(String fileName) {
+  public static String getFileParams(String fileName) {
     if (StringUtils.isEmpty(fileName)) {
       return "";
     }
@@ -309,31 +295,91 @@ public class FileUtils {
     context.sendBroadcast(mediaScanIntent);
   }
 
-  //-------------向服务器上传文件 start
-
   /**
-   * 将inputStream写入byte数组
+   * 复制整个文件夹内容
    *
-   * @throws IOException
+   * @param oldPath String 原文件路径 如：c:/fqf
+   * @param newPath String 复制后路径 如：f:/fqf/ff
+   * @return boolean true成功，false失败
    */
-  public static byte[] readInputStream(InputStream inputStream) throws IOException {
-    if (null == inputStream) {
-      return null;
-    }
-    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-    byte[] buffer = new byte[1024];
-    int len;
-    while ((len = inputStream.read(buffer)) != -1) {
+  public static void copyFolder(String oldPath, String newPath) {
+    try {
+      (new File(newPath)).mkdirs(); //如果文件夹不存在 则建立新文件夹
+      File a = new File(oldPath);
+      String[] file = a.list();
+      File temp;
+      for (String aFile : file) {
+        if (oldPath.endsWith(File.separator)) {
+          temp = new File(oldPath + aFile);
+        } else {
+          temp = new File(oldPath + File.separator + aFile);
+        }
 
-      outStream.write(buffer, 0, len);
+        if (temp.isFile()) {
+          FileInputStream input = new FileInputStream(temp);
+          FileOutputStream output = new FileOutputStream(newPath + "/" +
+              (temp.getName()));
+          byte[] b = new byte[1024 * 5];
+          int len;
+          while ((len = input.read(b)) != -1) {
+            output.write(b, 0, len);
+          }
+          output.flush();
+          output.close();
+          input.close();
+        }
+        if (temp.isDirectory()) {//如果是子文件夹
+          copyFolder(oldPath + "/" + aFile, newPath + "/" + aFile);
+        }
+      }
+    } catch (Exception e) {
+      if (DEBUG) {
+        Log.e(TAG, "复制整个文件夹内容操作出错");
+      }
+      e.printStackTrace();
     }
-    outStream.close();
-    inputStream.close();
-
-    return outStream.toByteArray();
   }
 
-  /** 上传文件 */
+  /**
+   * 复制单个文件
+   *
+   * @param oldPath String 原文件路径 如：c:/fqf.txt
+   * @param newPath String 复制后路径 如：f:/fqf.txt
+   * @return boolean
+   */
+  public static boolean copyFile(String oldPath, String newPath) {
+    boolean isok = true;
+    try {
+      int byteread;
+      File oldfile = new File(oldPath);
+      if (oldfile.exists()) { //文件存在时
+        InputStream inStream = new FileInputStream(oldPath); //读入原文件
+        FileOutputStream fs = new FileOutputStream(newPath);
+        byte[] buffer = new byte[1024];
+        while ((byteread = inStream.read(buffer)) != -1) {
+          fs.write(buffer, 0, byteread);
+        }
+        fs.flush();
+        fs.close();
+        inStream.close();
+      } else {
+        if (DEBUG) {
+          Log.e(TAG, "复制单个文件元文件不存在");
+        }
+        isok = false;
+      }
+    } catch (Exception e) {
+      if (DEBUG) {
+        Log.e(TAG, "复制单个文件操作出错");
+      }
+      e.printStackTrace();
+      isok = false;
+    }
+    return isok;
+  }//=============================================================================其它---end
+
+  //=============================================================================向服务器上传文件---start
+
   /**
    * 以post的形式向服务器上传文件
    *
@@ -343,8 +389,8 @@ public class FileUtils {
    * @param fileType 上传文件的类型例如：image/jpeg
    */
   public static String postUploadFile(String httpURL, String postData, String uploadFilePath,
-      String fileType,String userAgent) throws ExceptionWrapper {
-    HttpURLConnection httpConnection = getHttpURLConnection(httpURL,userAgent);
+      String fileType, String userAgent) throws ExceptionWrapper {
+    HttpURLConnection httpConnection = getHttpURLConnection(httpURL, userAgent);
     if (null == httpConnection) {
       return null;
     }
@@ -363,6 +409,26 @@ public class FileUtils {
       throw ExceptionWrapper.io(e);
     }
     return result;
+  }
+
+  /**
+   * 将inputStream写入byte数组
+   *
+   * @throws IOException
+   */
+  private static byte[] readInputStream(InputStream inputStream) throws IOException {
+    if (null == inputStream) {
+      return null;
+    }
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    byte[] buffer = new byte[1024];
+    int len;
+    while ((len = inputStream.read(buffer)) != -1) {
+      outStream.write(buffer, 0, len);
+    }
+    outStream.close();
+    inputStream.close();
+    return outStream.toByteArray();
   }
 
   // 以post的形式请求服务器，上传文件
@@ -493,90 +559,6 @@ public class FileUtils {
       e.printStackTrace();
       throw ExceptionWrapper.io(e);
     }
-
     return httpConnection;
-  }//-------------向服务器上传文件 end
-
-  /**
-   * 复制整个文件夹内容
-   *
-   * @param oldPath String 原文件路径 如：c:/fqf
-   * @param newPath String 复制后路径 如：f:/fqf/ff
-   * @return boolean true成功，false失败
-   */
-  public static void copyFolder(String oldPath, String newPath) {
-    try {
-      (new File(newPath)).mkdirs(); //如果文件夹不存在 则建立新文件夹
-      File a = new File(oldPath);
-      String[] file = a.list();
-      File temp;
-      for (String aFile : file) {
-        if (oldPath.endsWith(File.separator)) {
-          temp = new File(oldPath + aFile);
-        } else {
-          temp = new File(oldPath + File.separator + aFile);
-        }
-
-        if (temp.isFile()) {
-          FileInputStream input = new FileInputStream(temp);
-          FileOutputStream output = new FileOutputStream(newPath + "/" +
-              (temp.getName()));
-          byte[] b = new byte[1024 * 5];
-          int len;
-          while ((len = input.read(b)) != -1) {
-            output.write(b, 0, len);
-          }
-          output.flush();
-          output.close();
-          input.close();
-        }
-        if (temp.isDirectory()) {//如果是子文件夹
-          copyFolder(oldPath + "/" + aFile, newPath + "/" + aFile);
-        }
-      }
-    } catch (Exception e) {
-      if (DEBUG) {
-        Log.e(TAG, "复制整个文件夹内容操作出错");
-      }
-      e.printStackTrace();
-    }
-  }
-
-  /**
-   * 复制单个文件
-   *
-   * @param oldPath String 原文件路径 如：c:/fqf.txt
-   * @param newPath String 复制后路径 如：f:/fqf.txt
-   * @return boolean
-   */
-  public static boolean copyFile(String oldPath, String newPath) {
-    boolean isok = true;
-    try {
-      int byteread;
-      File oldfile = new File(oldPath);
-      if (oldfile.exists()) { //文件存在时
-        InputStream inStream = new FileInputStream(oldPath); //读入原文件
-        FileOutputStream fs = new FileOutputStream(newPath);
-        byte[] buffer = new byte[1024];
-        while ((byteread = inStream.read(buffer)) != -1) {
-          fs.write(buffer, 0, byteread);
-        }
-        fs.flush();
-        fs.close();
-        inStream.close();
-      } else {
-        if (DEBUG) {
-          Log.e(TAG, "复制单个文件元文件不存在");
-        }
-        isok = false;
-      }
-    } catch (Exception e) {
-      if (DEBUG) {
-        Log.e(TAG, "复制单个文件操作出错");
-      }
-      e.printStackTrace();
-      isok = false;
-    }
-    return isok;
-  }
+  }//=============================================================================向服务器上传文件---end
 }//class end
