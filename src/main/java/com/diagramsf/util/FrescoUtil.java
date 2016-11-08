@@ -37,6 +37,7 @@ import org.greenrobot.eventbus.EventBus;
  * Fresco图片库常用工具
  */
 public class FrescoUtil {
+  private static final String IMAGE_PATH = "diagrams";
 
   /**
    * 把原始图片缩放到指定宽高后再根据 焦点进行裁剪，焦点需要调用{@link DraweeView#getHierarchy()#setActualImageScaleType()}来设置
