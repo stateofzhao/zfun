@@ -121,7 +121,8 @@ public class FrescoUtil {
         final File localFile = getCacheImageOnDisk(cacheKey);
         if (null != localFile) {//本地有图片缓存
           if (systemPic.mkdirs() || systemPic.exists()) {
-            boolean result = FileUtil.copyFile(localFile.getPath(), systemPic.getPath() + "/" + imageName);
+            boolean result =
+                FileUtil.copyFile(localFile.getPath(), systemPic.getPath() + "/" + imageName);
             if (result) {
               try {
                 pendingIntent.send();
@@ -141,7 +142,7 @@ public class FrescoUtil {
           DataSource<CloseableReference<CloseableImage>> dataSource =
               imagePipeline.fetchDecodedImage(imageRequest, callerContext);
           dataSource.subscribe(new BaseBitmapDataSubscriber() {
-            @Override protected void onNewResultImpl(@javax.annotation.Nullable Bitmap bitmap) {
+            @Override protected void onNewResultImpl(Bitmap bitmap) {
               File file = new File(systemPic, imageName);
               try {
                 FileOutputStream fos = new FileOutputStream(file);
