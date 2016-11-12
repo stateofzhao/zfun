@@ -402,7 +402,7 @@ public class LetterNavigation extends View {
      * @param rx 背景x轴上圆角率
      * @param ry 背景y轴上圆角率
      */
-    public BgDrawable(int color, float rx, float ry) {
+    BgDrawable(int color, float rx, float ry) {
       this.color = color;
       paint.setColor(color);
       this.rx = rx;
