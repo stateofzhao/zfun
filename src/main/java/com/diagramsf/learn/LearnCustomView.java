@@ -48,7 +48,10 @@ public class LearnCustomView extends View {
   // 自定义View（非ViewGroup）如果不关心 layout
   // parameters,可以不重写这个方法，只是重写onSizeChanged()方法即可。<P>
   // 自定义ViewGroup 需要重写这个方法。<P>
-  // 这个方法就是根据布局属性（父容器的布局属性和自身布局属性共同决定）来确定自身以及通知子View来计算其尺寸。
+
+  // 这个方法就是根据布局属性（父容器的布局属性[通过两个参数传递进来]和自身布局属性[通过getLayoutParams()方法来获得]共同决定）来确定自身尺寸和通知View来计算其尺寸。
+  // 如果是ViewGroup,如果layoutParams是wrap_content需要先计算子View的尺寸(measureChildWithMargins()来计算子View尺寸，然后通过子View的getMeasureWidth()等方法来后去子View的尺寸)，
+  // 然后再来计算自己的尺寸。
   @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);//调用这个父方法，能够实现设置ViewGroup自身所需的尺寸。
 
