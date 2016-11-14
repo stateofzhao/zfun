@@ -45,23 +45,31 @@ public class LearnCustomView extends View {
     return super.getSuggestedMinimumWidth();
   }
 
-  // 自定义View（非ViewGroup）如果不关心 layout
-  // parameters,可以不重写这个方法，只是重写onSizeChanged()方法即可。<P>
-  // 自定义ViewGroup 需要重写这个方法。<P>
+  // 非ViewGroup的View如果不做特殊处理（例如根据自定的xml属性来改变默认的测量实现），不必重写此方法。<P>
 
-  // 这个方法就是根据布局属性（父容器的布局属性[通过两个参数传递进来]和自身布局属性[通过getLayoutParams()方法来获得]共同决定）来确定自身尺寸和通知View来计算其尺寸。
-  // 如果是ViewGroup,如果layoutParams是wrap_content需要先计算子View的尺寸(measureChildWithMargins()来计算子View尺寸，然后通过子View的getMeasureWidth()等方法来后去子View的尺寸)，
-  // 然后再来计算自己的尺寸。
+  // ViewGroup也可以不重写此方法，因为最终确定子View显示位置和大小的是onLayout()方法控制的。
+  // 此方法确定的子View大小（子View.getMeasuredWidth()和子View.getMeasuredHeight()）只是给onLayout方法提供一个参考。
+  // 虽然此方法不是必须的，但是一般ViewGroup还是要重写此方法，来给子View设置measureWidth和measureHeight（通过measureChildren()、
+  // measureChild()或者measureChildWithMargin()来设置）<P>
+
+  // 这个方法是有两个作用：
+  // 1. 通过调用setMeasuredDimension()设置自身尺寸;
+  // 2. 读取子View的LayoutParams中的layout_width和layout_height 分别结合 widthMeasureSpec 和 heightMeasureSpec
+  // 来设置子View的尺寸（这个过程被封装到了 View的measureChild()、measureChildren()和measureChildWithMargin()方法中，
+  // 具体怎么计算的可以看在measureChild()、measureChildren()、measureChildWidthMargin()中调用的getChildMeasureSpec()方法）；
   @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);//调用这个父方法，能够实现设置ViewGroup自身所需的尺寸。
 
-    // 1.方法中的参数怎么来的-----由父View中的layout_width，layout_height和padding以及View自身的layout_margin共同决定。
-    // 权值weight也是尤其需要考虑的因素，有它的存在情况可能会稍微复杂点。参见ViewGroup的measureChildWithMargins()方法<P>
+    // 1.方法中的参数怎么来的-----由父View中的layout_width，layout_height和padding以及View自身的LayoutParams共同决定。
+    // 参见ViewGroup的getChildMeasureSpec()方法<P>
 
     // 2. 参数 widthMeasureSpec
     // 这个值由高32位和低16位组成，高32位保存的值叫specMode，可以通过如代码中所示的MeasureSpec.getMode()获取；
     // 低16位为specSize，同样可以由MeasureSpec.getSize()获取；
-    // 需要注意的是 padding属性是自身属性，所以也包含在specSize中。所以在计算时要考虑到 内容的宽高需要减去padding值；不包括marging。
+
+    // 需要注意的是：padding属性是自身属性，也包含在specSize中，所以specSize减去padding才是显示内容的尺寸；margin不是自身尺寸的范畴，
+    // 所以specSize是已经减去了自身margin后的值。
+
     // 注意：specMode是本身的LayoutParams指定的（例如，layout_width="wrap_content"）；
     // specSize则是父布局和本身LayoutParams共同决定的（由android系统来生成）。
 
@@ -86,7 +94,7 @@ public class LearnCustomView extends View {
   // 自定义ViewGroup 必须重写这个方法<P>
   // 这个方法是确定怎么放置**子View**的，其实ViewGroup根据这个方法来确定把子View画到画布的什么位置上。
   //（具体逻辑应该是这样的，一个画布对应一个Activity，ViewGroup负责确定子View在画布上的位置而View只专注负责绘制具体内容）。<P>
-  // 关于本ViewGroup如何放置（布局）是本ViewGroup的父View来确定的。<P>
+  // 关于 本ViewGroup 如何放置（布局），是 本ViewGroup 的父View来确定的。<P>
   @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
     super.onLayout(changed, left, top, right, bottom);
 
