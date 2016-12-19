@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
+import com.diagramsf.widget.StackLayout;
 
 /**
  * 自定义View 需要注意的重写方法！<P>
@@ -52,6 +53,7 @@ public class LearnCustomView extends View {
   // 虽然此方法不是必须的，但是一般ViewGroup还是要重写此方法，来给子View设置measureWidth和measureHeight（通过measureChildren()、
   // measureChild()或者measureChildWithMargin()来设置）<P>
 
+  /** 可以参见{@link StackLayout}的用法 */
   // 这个方法是有两个作用：
   // 1. 通过调用setMeasuredDimension()设置自身尺寸;
   // 2. 读取子View的LayoutParams中的layout_width和layout_height 分别结合 widthMeasureSpec 和 heightMeasureSpec
@@ -78,7 +80,7 @@ public class LearnCustomView extends View {
     // ViewGroup.LayoutParams.MATCH_PARENT,或者直接指定大小)
     // MeasureSpec.AT_MOST：子视图的大小最多是specSize中指定的值，也就是说不建议子视图的大小超过specSize中给定的值。（一般对应与
     // ViewGroup.LayoutParams.WRAP_CONTENT）
-    // MeasureSpec.UNSPECIFIED：我们可以随意指定视图的大小。（这个暂时不知道是怎么出来的）<P>
+    // MeasureSpec.UNSPECIFIED：我们可以随意指定视图的大小。（这个暂时不知道是怎么出来的，有一个猜测，RecyclerView,ListView等列表ViewGroup会给子View传递这个值）<P>
     // 从这里可以看出，这个方法就是用来根据布局属性来确定 自身尺寸的。
 
     // 3.必须在这个方法中调用

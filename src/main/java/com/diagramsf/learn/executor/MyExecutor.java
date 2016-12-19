@@ -354,7 +354,8 @@ public class MyExecutor {
     //这里需要说明下，ReferenceQueue<T>的泛型需要跟 放入到其中的 引用的泛型保持一致，例如这里的 弱引用的泛型就是ResultCallback，
     // 那么 ReferenceQueue的泛型也是ResultCallback。
     //但是通常情况下，如果自定义的弱引用是公共的（希望让其他人使用）那么就需要让ReferenceQueue的泛型类型扩大，
-    // 不要直接写死一个类型，那么此时就需要设置泛型的下界了，在本例类中需要这么写ReferenceQueue<? super ResultCallback>
+    // 不要直接写死一个类型，那么此时就需要设置泛型的下界了，在本例类中需要这么写ReferenceQueue<? super ResultCallback>。
+    //这里有一点需要说明白，就是引用队列中的泛型，并不是它里面元素的类型，而是它里面的元素（它里面元素是Reference）中包含的类型。
     public ResultCallbackWeakReference(MyCallable myCallable, ResultCallback r,
         ReferenceQueue<ResultCallback> q) {
       super(r, q);
