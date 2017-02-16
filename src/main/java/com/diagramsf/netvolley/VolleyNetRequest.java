@@ -18,8 +18,8 @@ package com.diagramsf.netvolley;
 
 import com.android.volley.*;
 import com.android.volley.toolbox.HttpHeaderParser;
-import com.diagramsf.util.AppDebugLog;
-import com.diagramsf.util.StringUtils;
+import com.diagramsf.util.AppLog;
+import com.diagramsf.util.StringUtil;
 import com.diagramsf.net.NetContract;
 
 import java.io.UnsupportedEncodingException;
@@ -143,7 +143,7 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
   }
 
   @Override public byte[] getBody() throws AuthFailureError {
-    if (!StringUtils.isEmpty(mRequestBody)) {//如果是字符串型的post参数
+    if (!StringUtil.isEmpty(mRequestBody)) {//如果是字符串型的post参数
       try {
         return mRequestBody.getBytes(PROTOCOL_CHARSET);
       } catch (UnsupportedEncodingException e) {
@@ -197,15 +197,15 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
       return resultResponse;
     } catch (Exception e) {
       e.printStackTrace();
-      AppDebugLog.e(TAG, e.toString());
+      AppLog.e(TAG, e.toString());
       return Response.error(new ParseError(e));
     }
   }
 
   @Override public String getCacheKey() {
-    if (StringUtils.isEmpty(mCacheKey)) {//如果没有额外设置缓存key
+    if (StringUtil.isEmpty(mCacheKey)) {//如果没有额外设置缓存key
       String postParam = mRequestBody;//首先取字符串形式的post参数
-      if (StringUtils.isEmpty(postParam)) {//如果没有获取到字符串参数，就获取Map类型的Post参数
+      if (StringUtil.isEmpty(postParam)) {//如果没有获取到字符串参数，就获取Map类型的Post参数
         byte[] body = null;
         try {
           body = getBody();
@@ -221,7 +221,7 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
         }
       }
 
-      if (StringUtils.isEmpty(postParam)) {
+      if (StringUtil.isEmpty(postParam)) {
         postParam = "";
       }
       return getUrl() + postParam;
@@ -234,10 +234,10 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
   private NetContract.Result.ResultType createAppResultType(NetworkResponse response) {
     boolean isFromCache = response.isFromCache();
     if (isFromCache) {
-      AppDebugLog.i(TAG, "结果从缓存来：" + getCacheKey());
+      AppLog.i(TAG, "结果从缓存来：" + getCacheKey());
       return NetContract.Result.ResultType.CATCH;
     } else {
-      AppDebugLog.i(TAG, "结果从网络来：" + getCacheKey());
+      AppLog.i(TAG, "结果从网络来：" + getCacheKey());
       return NetContract.Result.ResultType.NET;
     }
   }

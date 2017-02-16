@@ -269,7 +269,7 @@ public class DeviceUtil {
         return jdkSuppliedAddress;
       }
     } catch (Exception ex) {
-      AppDebugLog.e(TAG, "get ip address error:" + ex.toString());
+      AppLog.e(TAG, "get ip address error:" + ex.toString());
     } // for now eat exceptions
     return null;
   }
@@ -308,7 +308,7 @@ public class DeviceUtil {
         }
       }
     } catch (Exception ex) {
-      AppDebugLog.e(TAG, "get ip address error:" + ex.toString());
+      AppLog.e(TAG, "get ip address error:" + ex.toString());
     } // for now eat exceptions
     return "";
   }
@@ -397,7 +397,7 @@ public class DeviceUtil {
     try {
       ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
     } catch (UnknownHostException ex) {
-      AppDebugLog.e("WIFIIP", "Unable to get host address.");
+      AppLog.e("WIFIIP", "Unable to get host address.");
       ipAddressString = null;
     }
     return ipAddressString;

@@ -44,7 +44,7 @@ public class SpacingDecoration extends RecyclerView.ItemDecoration {
         return;
       }
       //int column = position % spanCount;//原始的计算column的方法
-      getGridItemOffsets(outRect, position, column, spanCount);
+      setGridItemOffsets(outRect, position, column, spanCount);
     } else if (parent.getLayoutManager() instanceof StaggeredGridLayoutManager) {
       StaggeredGridLayoutManager layoutManager =
           (StaggeredGridLayoutManager) parent.getLayoutManager();
@@ -52,7 +52,7 @@ public class SpacingDecoration extends RecyclerView.ItemDecoration {
       StaggeredGridLayoutManager.LayoutParams lp =
           (StaggeredGridLayoutManager.LayoutParams) view.getLayoutParams();
       int column = lp.getSpanIndex();
-      getGridItemOffsets(outRect, position, column, spanCount);
+      setGridItemOffsets(outRect, position, column, spanCount);
     } else if (parent.getLayoutManager() instanceof LinearLayoutManager) {
       outRect.left = mHorizontalSpacing;
       outRect.right = mHorizontalSpacing;
@@ -69,7 +69,7 @@ public class SpacingDecoration extends RecyclerView.ItemDecoration {
     }
   }
 
-  private void getGridItemOffsets(Rect outRect, int position, int column, int spanCount) {
+  private void setGridItemOffsets(Rect outRect, int position, int column, int spanCount) {
     if (mIncludeEdge) {
       outRect.left = mHorizontalSpacing * (spanCount - column) / spanCount;
       outRect.right = mHorizontalSpacing * (column + 1) / spanCount;
@@ -84,5 +84,36 @@ public class SpacingDecoration extends RecyclerView.ItemDecoration {
         outRect.top = mVerticalSpacing;
       }
     }
+  }
+
+  /**
+   * 给定[列item]是否在一个[横穿列item]的上面
+   *
+   * @param gridLayoutManager {@link GridLayoutManager}
+   * @param itemPosition 列表项的position
+   */
+  public static boolean itemIsAboveAcrossRow(GridLayoutManager gridLayoutManager, int itemPosition,
+      int itemCount) {
+    if (itemCount <= 0) {
+      return false;
+    }
+    GridLayoutManager.SpanSizeLookup spanSizeLookup = gridLayoutManager.getSpanSizeLookup();
+    int spanCount = gridLayoutManager.getSpanCount();//列数
+    int column = spanSizeLookup.getSpanIndex(itemPosition, spanCount);//给position上item在哪一列
+    int maxNextRowStartPosition = itemPosition + (spanCount - column);//开始下一行的最大position
+    maxNextRowStartPosition = maxNextRowStartPosition >= itemCount ? itemCount - 1
+        : maxNextRowStartPosition;//最大position不能超过itemCount
+    boolean b = false;
+    if (maxNextRowStartPosition == itemCount - 1) {
+      b = true;
+    }
+    for (int j = itemPosition + 1; j <= maxNextRowStartPosition && !b; j++) {
+      int positionSpanSize = spanSizeLookup.getSpanSize(j);
+      if (positionSpanSize == spanCount) {//贯穿整列
+        b = true;
+        break;//一旦检测到下一个item是贯穿列的就可以跳出了
+      }
+    }
+    return b;
   }
 }

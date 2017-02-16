@@ -8,7 +8,7 @@ import com.diagramsf.BuildConfig;
  * <p>
  * create by Diagrams
  */
-public class AppDebugLog {
+public class AppLog {
 
   public static void logSystemOut(String log) {
     if (BuildConfig.DEBUG) {

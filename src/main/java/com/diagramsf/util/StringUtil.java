@@ -4,14 +4,15 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 
+import android.util.Log;
 import java.io.*;
+import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -24,10 +25,10 @@ import java.util.regex.Pattern;
 /**
  * 字符串操作工具包
  */
-@SuppressLint("SimpleDateFormat") public class StringUtils {
-  public static final String SCHEME_HTTP = "http";
-  public static final String SCHEME_HTTPS = "https";
-  public static final String PROTOCOL_CHARSET = "utf-8";
+@SuppressLint("SimpleDateFormat") public class StringUtil {
+  private static final String SCHEME_HTTP = "http";
+  private static final String SCHEME_HTTPS = "https";
+  private static final String PROTOCOL_CHARSET = "utf-8";
 
   private final static Pattern email =
       Pattern.compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
@@ -57,7 +58,7 @@ import java.util.regex.Pattern;
    * @return true是；false不是
    */
   public static boolean isEmail(String email) {
-    return !(email == null || email.trim().length() == 0) && StringUtils.email.matcher(email)
+    return !(email == null || email.trim().length() == 0) && StringUtil.email.matcher(email)
         .matches();
   }
 
@@ -262,7 +263,7 @@ import java.util.regex.Pattern;
 
   /** 高亮显示字符串中的 关键词 */
   @SuppressLint("DefaultLocale") public static SpannableString getHighlightShow(String[] keywords,
-      String sourceStr,int color) {
+      String sourceStr, int color) {
     if (keywords == null || keywords.length == 0) {
       return new SpannableString(sourceStr);
     }
@@ -279,7 +280,7 @@ import java.util.regex.Pattern;
           new StringChangeColorHolder(position, oneKeyLower.length());
       groupChangeList.add(oneHolder);
     }
-    return changeStrPositionColor(sourceStr, groupChangeList,color);
+    return changeStrPositionColor(sourceStr, groupChangeList, color);
   }
 
   /**
@@ -293,11 +294,11 @@ import java.util.regex.Pattern;
     String copyStr = sourceStr;
 
     int position = copyStr.indexOf(pointStr);
-    int hasSubedStrLenght = 0;// 已经截取掉的字符串的长度
+    int hasSubStrLength = 0;// 已经截取掉的字符串的长度
     while (-1 != position) {
-      result_list.add(hasSubedStrLenght + position);
+      result_list.add(hasSubStrLength + position);
       copyStr = copyStr.substring(position + pointStr.length());
-      hasSubedStrLenght = hasSubedStrLenght + position + pointStr.length();
+      hasSubStrLength = hasSubStrLength + position + pointStr.length();
       position = copyStr.indexOf(pointStr);
     }
     return result_list.toArray(new Integer[result_list.size()]);
@@ -310,7 +311,7 @@ import java.util.regex.Pattern;
    * @param groupChangeList 改变颜色的开始位置，以及要改变的字符串长度
    */
   private static SpannableString changeStrPositionColor(String sourceStr,
-      List<StringChangeColorHolder> groupChangeList,int color) {
+      List<StringChangeColorHolder> groupChangeList, int color) {
     SpannableString sp = new SpannableString(sourceStr);
     for (StringChangeColorHolder one : groupChangeList) {
       Integer[] startPositions = one.startPosition;
@@ -325,10 +326,10 @@ import java.util.regex.Pattern;
 
   /** 给字符串标记高亮用到的数据类 */
   private static class StringChangeColorHolder {
-    public final Integer[] startPosition;// 字符串中匹配上的字符开始位置
-    public final int positionStrLength;
+    final Integer[] startPosition;// 字符串中匹配上的字符开始位置
+    final int positionStrLength;
 
-    public StringChangeColorHolder(Integer[] startPosition, int positionStrLength) {
+    StringChangeColorHolder(Integer[] startPosition, int positionStrLength) {
       this.startPosition = startPosition;
       this.positionStrLength = positionStrLength;
     }
@@ -370,8 +371,8 @@ import java.util.regex.Pattern;
 
     DecimalFormat df = new DecimalFormat("#." + sb.toString());
     String result_ = df.format(d);
-    String[] result_strs = result_.split("[.]");
-    if (result_strs.length == 1 || result_strs[0].equals("")) {
+    String[] result_str = result_.split("[.]");
+    if (result_str.length == 1 || result_str[0].equals("")) {
       result_ = "0" + result_;
     }
     return result_;
@@ -432,7 +433,7 @@ import java.util.regex.Pattern;
 
   /** 将PostData 转换成Map */
   public static Map<String, String> changePostDataToMap(String postData) {
-    if (StringUtils.isEmpty(postData)) {
+    if (StringUtil.isEmpty(postData)) {
       return null;
     }
     Map<String, String> result = new HashMap<>();
@@ -459,5 +460,37 @@ import java.util.regex.Pattern;
     }
     postMap.remove(versionName);
     return changeMapParamToStr(postMap, PROTOCOL_CHARSET);
+  }
+
+  /**
+   * 将有符号的十进制整数转换成有符号的二进制（正常二进制，非计算机中存储的补码）
+   *
+   * @param i 有符号整数字符串
+   */
+  public static String intToBinaryStr(String i) {
+    BigInteger src = new BigInteger(i, 10);
+    return src.toString(2);
+  }
+
+  /** 将有符号的二进制（正常二进制，非计算机中存储的补码）字符串转换成有符号的十进制整数 */
+  public static String binaryToIntStr(String binary) {
+    //第一个参数是数源，第二个参数是数源进制
+    BigInteger src = new BigInteger(binary, 2);
+    return src.toString(10);
+  }
+
+  /**
+   * 将有符号十进制整数转换成二进制字符串（这个转换的二进制不是数学上的二进制，是计算机中存储的二进制（补码））
+   *
+   * @param i 有符号整数字符串
+   */
+  public static String intToBinaryStrComplement(long i) {
+    return Long.toBinaryString(i);//这个就是取得i在计算机中的二进制表示，所以返回的就是补码
+  }
+
+  /** 将二进制（计算机中存储的补码）字符串转换成有符号的十进制整数 */
+  public static String binaryToIntStrComplement(String binary) {
+    BigInteger src = new BigInteger(binary, 2);
+    return src.intValue() + "";
   }
 }

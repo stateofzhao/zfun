@@ -177,9 +177,9 @@ public class FileUtil {
     file = new File(path.getAbsolutePath() + "/" + dirName + "/");
     if (!file.mkdirs()) {
       if (file.exists()) {
-        AppDebugLog.v(TAG, dirName + ":" + "公共图片目录已经存在");
+        AppLog.v(TAG, dirName + ":" + "公共图片目录已经存在");
       } else {
-        AppDebugLog.v(TAG, dirName + ":" + "公共图片目录创建失败");
+        AppLog.v(TAG, dirName + ":" + "公共图片目录创建失败");
       }
     }
     return file;
@@ -248,7 +248,7 @@ public class FileUtil {
    * 获取文件扩展名
    */
   public static String getFileParams(String fileName) {
-    if (StringUtils.isEmpty(fileName)) {
+    if (StringUtil.isEmpty(fileName)) {
       return "";
     }
     int point = fileName.lastIndexOf('.');
@@ -259,7 +259,7 @@ public class FileUtil {
    * 根据文件绝对路径获取文件名
    */
   public static String getFileName(String filePath) {
-    if (StringUtils.isEmpty(filePath)) {
+    if (StringUtil.isEmpty(filePath)) {
       return "";
     }
     return filePath.substring(filePath.lastIndexOf(File.separator) + 1);
@@ -467,7 +467,7 @@ public class FileUtil {
       sb.append(LINE_END);
 
       // ---------发送postData对应的数据
-      if (!StringUtils.isEmpty(postData)) {
+      if (!StringUtil.isEmpty(postData)) {
         sb.append("Content-Disposition: form-data; name=\"postData\"").append(LINE_END);
         sb.append("Content-Type: text/plain;charset=UTF-8")
             .append(LINE_END)

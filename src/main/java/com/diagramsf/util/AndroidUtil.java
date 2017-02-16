@@ -76,7 +76,7 @@ public class AndroidUtil {
       Context context) {
     UserManager userManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
     if (userManager == null) {
-      AppDebugLog.e(TAG, "userManager not exsit !!!");
+      AppLog.e(TAG, "userManager not exsit !!!");
       return null;
     }
     return userManager.getSerialNumberForUser(android.os.Process.myUserHandle()) + "";
@@ -662,7 +662,7 @@ public class AndroidUtil {
           int lines = l.getLineCount();
           if (lines > 0) {
             if (l.getEllipsisCount(lines - 1) > 0) {
-              AppDebugLog.d(TAG, "Text is ellipsized");
+              AppLog.d(TAG, "Text is ellipsized");
               callback.onEllipsized();
             } else {
               callback.onNoEllipsized();

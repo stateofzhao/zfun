@@ -21,6 +21,7 @@ public class SystemPropertiesInvoke {
         getLongMethod = Class.forName("android.os.SystemProperties")
             .getMethod("getLong", String.class, long.class);
       }
+      //noinspection UnnecessaryUnboxing
       return ((Long) getLongMethod.invoke(null, key, def)).longValue();
     } catch (Exception e) {
       Log.e(TAG, "Platform error: " + e.toString());
