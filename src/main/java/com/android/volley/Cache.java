@@ -16,12 +16,17 @@
 
 package com.android.volley;
 
+import com.android.volley.toolbox.DiskBasedCache;
 import java.util.Collections;
 import java.util.Map;
 
 /**
  * Volley对于缓存的处理比较特殊，它没有直接借助于网络实现部分的缓存（例如，使用okhttp库自带的缓存功能），
  * 而是直接实现了自己单独的缓存，并且这个单独实现的缓存还是会自己来读取结果的http报头信息，如果过去还是会重新请求网络的。
+ * <P>
+ * 我们可以看一下Volley自带的一个实现类是{@link DiskBasedCache},这个是作为磁盘缓存而存在的（并不是内存缓存），
+ * 所以这里就有问题了，后续优化的话，可以自己实现一个缓存类，但是这个缓存类只作为内存缓存，
+ * 而磁盘缓存我们可以直接在{@link Network#performRequest(Request)}中实现（一般网络库都会自带磁盘缓存的，所以一般不需要自己来实现）
  * <P>
  *
  * An interface for a cache keyed by a String with a byte array as data.
