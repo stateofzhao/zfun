@@ -46,6 +46,7 @@ public class MyExecutor {
   private static InternalHandler mInternalHandler;// 回调主线程的Handler
   private final ExecutorService mExecutor;// 线程池
 
+  //当一个obj被gc掉之后，其相应的包装类，即ref对象会被放入queue中
   private final ReferenceQueue<ResultCallback> mReferenceQueue;// 弱引用回收队列
 
   // 暂时没用，后期用来取消请求用的
