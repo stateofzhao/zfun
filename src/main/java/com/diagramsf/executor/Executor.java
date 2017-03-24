@@ -1,7 +1,7 @@
 package com.diagramsf.executor;
 
 /**
- * 执行所有实现了{@link Interactor}接口的任务(use case / interactor)。
+ * 执行所有实现了{@link Task}接口的任务(use case / interactor)。
  *
  * //也可以命名为UseCaseScheduler，看个人喜好。
  *
@@ -9,16 +9,16 @@ package com.diagramsf.executor;
  */
 interface Executor {
   /**
-   * 执行 {@link Interactor}
+   * 执行 {@link Task}
    *
    * @param tag 取消执行用的标志
    */
-  void execute(final Interactor interactor, Object tag);
+  void execute(final Task task, Object tag);
 
   /**
-   * 取消{@link Interactor} 的执行
+   * 取消{@link Task} 的执行
    *
-   * @param tag {@link #execute(Interactor, Object)}的第二个参数
+   * @param tag {@link #execute(Task, Object)}的第二个参数
    */
   void cancel(Object tag);
 }

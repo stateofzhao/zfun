@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -16,9 +18,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 用线程池实现的{@link Executor}。
- *
- * //也可以命名为UseCaseThreadPoolScheduler，看个人喜好。
+ * 用线程池实现的{@link Executor}。<P>
+ * 暂时在主线程回调{@link Task#onStateChange(int)}方法。<P>
  *
  * Created by Diagrams on 2016/8/8 11:33
  */
@@ -40,8 +41,8 @@ class ThreadExecutor implements Executor {
     dispatcher = new Dispatcher(service);
   }
 
-  @Override public void execute(Interactor interactor, Object tag) {
-    HolderRunnable runnable = new HolderRunnable(interactor, tag, this);
+  @Override public void execute(Task task, Object tag) {
+    HolderRunnable runnable = new HolderRunnable(task, tag, this);
     dispatcher.dispatchSubmit(runnable);
   }
 
@@ -50,19 +51,20 @@ class ThreadExecutor implements Executor {
     dispatcher.dispatchCancel(tag);
   }
 
+  /** 用来将{@link Task} 转换成{@link Runnable} ，并且持有task对应的tag */
   private static class HolderRunnable implements Runnable {
-    Interactor interactor;
+    Task task;
     ThreadExecutor scheduler;
     public Object tag;
 
-    HolderRunnable(Interactor interactor, Object tag, ThreadExecutor scheduler) {
-      this.interactor = interactor;
+    HolderRunnable(Task task, Object tag, ThreadExecutor scheduler) {
+      this.task = task;
       this.scheduler = scheduler;
       this.tag = tag;
     }
 
     @Override public void run() {
-      interactor.run();
+      task.run();
     }
   }// end PriorityRunnable class
 
@@ -80,30 +82,40 @@ class ThreadExecutor implements Executor {
   private static class PriorityFuture extends FutureTask<Object>
       implements Comparable<PriorityFuture> {
     HolderRunnable holderRunnable;
-    Interactor interactor;
+    Task task;
     ThreadExecutor scheduler;
 
     PriorityFuture(HolderRunnable runnable, ThreadExecutor scheduler) {
       super(runnable, null);
       this.holderRunnable = runnable;
-      this.interactor = runnable.interactor;
+      this.task = runnable.task;
       this.scheduler = scheduler;
     }
 
     int getPriority() {
-      return interactor.getPriority();
+      return task.getPriority();
     }
 
     //这个方法，不是在固定线程中执行的，如果是在主线程调用了cancel()方法，如果任务被取消掉，
     // 那么执行任务的此方法就是在主线程中执行；
     //如果任务正常执行完毕，那么这个方法就是在执行任务的那个线程中调用。
     @Override protected void done() {
-      if (isCancelled()) {//如果被取消掉了，（会在调用cancel()方法的同一个线程中执行）
-        interactor.cancel();//取消掉UseCase的回调
-      } else {//正常执行完任务后，需要把任务从mFutureMap中移除，防止内存泄露
-        if (!interactor.isCancel()) {
-          scheduler.dispatcher.dispatchFinish(holderRunnable);
-        }
+      try {
+        //fixme 此处以后要直接有结果，可以通过修改Task类的run方法来实现返回结果，然后把Task封装成Callable即可
+        get();
+        scheduler.dispatcher.dispatchFinish(holderRunnable);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        //执行线程被终止了，当调用了Future的cancel(true)方法，并且用户在run()/call()方法中处理了如何终止线程的情况下，会回调此方法
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+        //此处出现其它异常
+      } catch (CancellationException e) {//如果被取消掉了，（会在调用cancel()方法的同一个线程中执行）
+        e.printStackTrace();
+        //用户直接取消了任务执行，此时任务应该还在队列中，没有被执行到，此时不必通过dispatcher来通知删除引用，
+        // 因为在掉cancel(tag)方法是，已经直接通过dispatcher进行了操作
+
+        //在android系统AsyncTask中的实现是，在这里仍然会传递一个null结果到onResult()方法中
       }
     }
 
@@ -112,7 +124,7 @@ class ThreadExecutor implements Executor {
     // 反之代表在被比较对象之后
     @Override public int compareTo(PriorityFuture another) {
       int priorityMe = getPriority();
-      int priorityOther = another.interactor.getPriority();
+      int priorityOther = another.task.getPriority();
       if (priorityMe == priorityOther) {
         return 0;
       } else if (priorityMe > priorityOther) {
@@ -123,6 +135,11 @@ class ThreadExecutor implements Executor {
     }
   }// end UseCaseFuture class
 
+  /**
+   * 制定ThreadPoolExecutor ，主要是要重写{@link ThreadPoolExecutor#submit(Runnable)} 方法，
+   * 来返回自定义的Future，这样就可以通过自定义Future 来实现当队列是{@link PriorityBlockingQueue}时，
+   * 能够按照优先级排队，同时能够通过重写Future的done()方法，来进行进一步的监听
+   */
   private static class MyThreadPoolExecutor extends ThreadPoolExecutor {
 
     MyThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
@@ -193,7 +210,7 @@ class ThreadExecutor implements Executor {
     }
 
     void performSubmit(HolderRunnable runnable) {
-      runnable.interactor.onStateChange(Interactor.NEW);
+      runnable.task.onStateChange(Task.NEW);
       Object tag = runnable.tag;
       PriorityFuture future = (PriorityFuture) service.submit(runnable);
       if (null != tag) {
@@ -215,9 +232,8 @@ class ThreadExecutor implements Executor {
           for (PriorityFuture future : futures) {
             //一旦cancel(boolean)可以被取消（返回true），那么会在返回 true之前回调 FutureTask的 done()方法！
             future.cancel(false);
-            Interactor interactor = future.interactor;
-            interactor.cancel();
-            interactor.onStateChange(Interactor.CANCEL);
+            Task task = future.task;
+            task.onStateChange(Task.CANCEL);//放到这里才能保证所有Task的onStateChange()都在同一个线程中回调
           }
         }
       }
@@ -229,10 +245,10 @@ class ThreadExecutor implements Executor {
         List<PriorityFuture> futures = futureMap.get(tag);
         for (int i = futures.size() - 1; i >= 0; i--) {
           PriorityFuture f = futures.get(i);
-          if (f.interactor == holderRunnable.interactor) {
+          if (f.task == holderRunnable.task) {
             futures.remove(f);
-            f.interactor.onStateChange(Interactor.FINISHED);
-            f.interactor.onStateChange(Interactor.DIE);
+            f.task.onStateChange(Task.FINISHED);
+            f.task.onStateChange(Task.DIE);
             break;
           }
         }

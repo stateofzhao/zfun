@@ -1,19 +1,12 @@
 package com.diagramsf.executor;
 
 /**
+ * {@link Task}基类，缩小了setter和getter方法。<P>
+ *
  * Created by Diagrams on 2016/8/9 11:50
  */
-public abstract class BaseInteractor implements Interactor {
-  private boolean cancel = false;
+public abstract class BaseTask implements Task {
   private @Priority int priority;
-
-  @Override final public void cancel() {
-    cancel = true;
-  }
-
-  @Override final public boolean isCancel() {
-    return cancel;
-  }
 
   @Override final public int getPriority() {
     return priority;
@@ -24,6 +17,6 @@ public abstract class BaseInteractor implements Interactor {
   }
 
   @Override public void onStateChange(@State int state) {
-    
+
   }
 }
