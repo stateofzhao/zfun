@@ -1,4 +1,4 @@
-package com.diagramsf.core;
+package com.diagramsf.flux;
 
 /**
  * 维护一组UI或者一个页面UI的状态（持有所有UI需要的数据，主要作用就是架空UI，

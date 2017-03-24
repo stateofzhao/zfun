@@ -1,4 +1,4 @@
-package com.diagramsf.core;
+package com.diagramsf.flux;
 
 /**
  * //http://www.jianshu.com/p/896ce1a8e4ed

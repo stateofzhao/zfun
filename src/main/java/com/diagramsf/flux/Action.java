@@ -1,4 +1,4 @@
-package com.diagramsf.core;
+package com.diagramsf.flux;
 
 /**
  * Action 是一个抽象概念，一个应用中可以有多个 Action。一个常见的 action 包含两个部分：type 和 payload。

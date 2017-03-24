@@ -1,4 +1,4 @@
-package com.diagramsf.core;
+package com.diagramsf.flux;
 
 import android.os.Handler;
 import android.os.Looper;

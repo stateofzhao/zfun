@@ -1,4 +1,4 @@
-package com.diagramsf.core;
+package com.diagramsf.flux;
 
 /**
  * Created by Diagrams on 2016/8/15 19:19
