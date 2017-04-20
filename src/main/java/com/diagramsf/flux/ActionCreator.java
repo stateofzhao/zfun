@@ -1,10 +1,10 @@
 package com.diagramsf.flux;
 
 /**
- * //http://www.jianshu.com/p/896ce1a8e4ed
+ * http://www.jianshu.com/p/896ce1a8e4ed
  *
  * =======================知乎这个回答觉着很好，对Flux理解又进一步
- * //https://www.zhihu.com/question/33864532
+ * https://www.zhihu.com/question/33864532
  * 1. 视图组件变得很薄，只包含了渲染逻辑和触发 action 这两个职责，即所谓 "dumb components"。
  *
  * 2. 要理解一个 store 可能发生的状态变化，只需要看它所注册的 actions 回调就可以。
