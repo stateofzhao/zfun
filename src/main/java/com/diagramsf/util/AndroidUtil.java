@@ -69,6 +69,47 @@ public class AndroidUtil {
   }//class end
 
   /**
+   * 在Android马上要绘制targetView时，post一个主线程操作
+   *
+   * @return 可以使用{@link #removePreDrawListener(View,ViewTreeObserver.OnPreDrawListener)}来取消执行，防止内存泄露
+   */
+  public static ViewTreeObserver.OnPreDrawListener deferredActionPreDraw(final View targetView,
+      final Runnable action) {
+    final ViewTreeObserver.OnPreDrawListener listener = new ViewTreeObserver.OnPreDrawListener() {
+
+      @Override public boolean onPreDraw() {
+        if (null == targetView || null == action) {
+          return true;
+        }
+
+        ViewTreeObserver vto = targetView.getViewTreeObserver();
+        if (!vto.isAlive()) {
+          return true;
+        }
+        vto.removeOnPreDrawListener(this);
+        action.run();
+        return true;
+      }
+    };
+    //添加监听
+    targetView.getViewTreeObserver().addOnPreDrawListener(listener);
+    return listener;
+  }
+
+  /** 针对targetView来移除在它上面注册的{@link ViewTreeObserver.OnPreDrawListener} */
+  public static void removePreDrawListener(View targetView,
+      ViewTreeObserver.OnPreDrawListener listener) {
+    if (null == targetView || null == listener) {
+      return;
+    }
+    ViewTreeObserver vto = targetView.getViewTreeObserver();
+    if (!vto.isAlive()) {
+      return;
+    }
+    vto.removeOnPreDrawListener(listener);
+  }
+
+  /**
    * 获取当前登录用户的字符串表示
    */
   // 由于targetSdkVersion低于17，只能通过反射获取
