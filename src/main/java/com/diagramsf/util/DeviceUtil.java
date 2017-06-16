@@ -507,6 +507,7 @@ public class DeviceUtil {
         case 2: //因为移动网络编号46000下的IMSI已经用完，所以虚拟了一个46002编号，134/159号段使用了此编号 //中国移动
           return MNCType.CMCC;
         case 3:
+        case 11://电信4G返回的是 46011
           return MNCType.CTCC;
       }
     } catch (Exception e) {
