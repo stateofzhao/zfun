@@ -18,6 +18,10 @@ package com.diagramsf.flux;
  * 市面上各种各样的 Flux 实现那么多，归根结底是因为 1. Flux 这个概念本来就定义松散，具体怎么实现大家各有各的看法；
  * 2. 官方实现又臭又长，不好用。
  *
+ * ====================================
+ * 一个app中不一定只有一个ActionCreator，可以有多个，其实这个ActionCreator并不是Flux必须有的，
+ * 而是作为dispatcher的辅助函数，通常可以认为是Flux中的第四部分
+ *
  * Created by Diagrams on 2016/8/12 17:00
  */
 public class ActionCreator {

@@ -25,7 +25,7 @@ class Dispatcher {
     this.storeList = new ArrayList<>();
 
     //FIXME 这里可以使用其他线程的Handler
-    handler = new DispatcherHandler(Looper.myLooper(), this);
+    handler = new DispatcherHandler(Looper.getMainLooper(), this);
   }
 
   /** 获取Dispatcher的单例 */
@@ -41,20 +41,20 @@ class Dispatcher {
   }
 
   /** 开始分发Action */
-  void dispatchAction(Action action) {
+  public void dispatchAction(Action action) {
     Utils.checkNotNull(action);
     action.mark("start dispatch");
     handler.sendMessage(handler.obtainMessage(ACTION_DISPATCH, action));
   }
 
   /** 注册Store */
-  void registerStore(Store store) {
+  public void registerStore(Store store) {
     Utils.checkNotNull(store);
     handler.sendMessage(handler.obtainMessage(STORE_REGISTER, store));
   }
 
   /** 取消注册Store */
-  void unRegisterStore(Store store) {
+  public void unRegisterStore(Store store) {
     Utils.checkNotNull(store);
     handler.sendMessageAtFrontOfQueue(handler.obtainMessage(STORE_UNREGISTER, store));
   }
