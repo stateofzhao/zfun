@@ -12,4 +12,3 @@
 - com.google.guava:guava:18.0
 - com.facebook.fresco:fresco:0.14.0
 - com.android.support:support-v4:24.2.1
-- com.nineoldandroids:library:2.4.0

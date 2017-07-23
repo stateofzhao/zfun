@@ -20,19 +20,34 @@ import com.android.volley.*;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.diagramsf.util.AppLog;
 import com.diagramsf.util.StringUtil;
-import com.diagramsf.net.NetContract;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 /**
- * A request for retrieving a {@link NetContract.Result} response body at a given URL,
- * allowing for an optional {@link NetContract.Result} to be passed in as part of the
- * request body.
+ * 能够使用URL请求服务器JSON数据，并且将JSON数据转换成Class对象。
  */
-public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
-    implements NetContract.Request<T> {
-  public static final String TAG = "VolleyNetRequest";
+public class JsonToClassRequest<T> extends Request<T> {
+  public static final String TAG = "JsonToClassRequest";
+
+  /**
+   * 只读取缓存，不考虑缓存是否过期，如果读取不到缓存也会 回调{@link Response.Listener#onResponse(Object)}
+   * ，只是结果传递的是null
+   */
+  public static final int ONLY_CACHE = 1;
+  /** 只读取网络，并且不会把结果缓存起来 */
+  public static final int ONLY_NET_NO_CACHE = 2;
+  /** 忽略缓存，只读取网络，但是会把结果缓存起来 */
+  public static final int ONLY_NET_THEN_CACHE = 3;
+  /** 如果有缓存就读取缓存(并且缓存不能过期（根据http报头信息判断是否过期的）)，否则读取网络 */
+  public static final int HTTP_HEADER_CACHE = 4;
+  /** 优先读取缓存（不考虑缓存是否过期），如果没有缓存就读取网络（有缓存了就不读取网络了） */
+  public static final int PRIORITY_CACHE = 5;
 
   /** 请求的编码格式. */
   protected static final String PROTOCOL_CHARSET = "utf-8";
@@ -48,8 +63,6 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
 
   private String mCacheKey;
 
-  private ResultFactory<T> mResultFactory;
-
   private Map<String, String> mParams;
   private String mRequestBody;
 
@@ -57,8 +70,27 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
 
   private Priority mPriority;
 
-  NetContract.ErrorListener mErrorListener;
-  NetContract.Listener<T> mListener;
+  private Class<T> mTargetClass;
+  private ResultFactory<T> mResultFactory;
+  private Response.ErrorListener mErrorListener;
+  private Response.Listener<T> mListener;
+
+  /**
+   * 对服务器返回的结果进行解析
+   */
+  public interface ResultFactory<T> {
+
+    /**
+     * 对服务器返回的字符串 进行操作
+     * e
+     *
+     * @param result 服务器返回的结果
+     * @param responseHeader 服务器返回结果的header
+     * @return 返回操作完的结果
+     */
+    T analysisResult(byte[] result, Map<String, String> responseHeader, boolean fromCache,
+        String cacheKey) throws Exception;
+  }
 
   /**
    * Creates a new request.
@@ -69,12 +101,10 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
    * @param header 包头信息
    * @param priority 优先级
    * @param resultFactory 解析JSON数据，生成结果对象的工厂
-   * @param errorListener 传递异常信息的接口
    */
-  public VolleyNetRequest(int method, String url, String strRequest, Map<String, String> header,
-      Request.Priority priority, ResultFactory<T> resultFactory,
-      Response.ErrorListener errorListener) {
-    super(method, url, errorListener);
+  public JsonToClassRequest(int method, String url, String strRequest, Map<String, String> header,
+      Request.Priority priority, ResultFactory<T> resultFactory) {
+    super(method, url, null);
     mResultFactory = resultFactory;
     mRequestBody = strRequest;
     mHeader = header;
@@ -90,31 +120,65 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
    * @param header 包头信息
    * @param priority 优先级
    * @param resultFactory 解析JSON数据，生成结果对象的工厂
-   * @param errorListener 传递异常信息的接口
    */
-  public VolleyNetRequest(int method, String url, Map<String, String> params,
-      Map<String, String> header, Request.Priority priority, ResultFactory<T> resultFactory,
-      Response.ErrorListener errorListener) {
-    super(method, url, errorListener);
+  public JsonToClassRequest(int method, String url, Map<String, String> params,
+      Map<String, String> header, Request.Priority priority, ResultFactory<T> resultFactory) {
+    super(method, url, null);
     mResultFactory = resultFactory;
     mParams = params;
     mHeader = header;
     mPriority = priority;
   }
 
+  /**
+   * Creates a new request.
+   *
+   * @param method 请求方式
+   * @param url 请求的URL
+   * @param strRequest post数据
+   * @param header 包头信息
+   * @param priority 优先级
+   * @param clazz json要转换成的目标对象
+   */
+  public JsonToClassRequest(int method, String url, String strRequest, Map<String, String> header,
+      Request.Priority priority, Class<T> clazz) {
+    super(method, url, null);
+    mRequestBody = strRequest;
+    mHeader = header;
+    mPriority = priority;
+    mTargetClass = clazz;
+    mResultFactory = null;
+  }
+
+  /**
+   * Creates a new request.
+   *
+   * @param method 请求方式
+   * @param url 请求的URL
+   * @param params post请求发送的数据
+   * @param header 包头信息
+   * @param priority 优先级
+   * @param clazz json要转换成的目标对象
+   */
+  public JsonToClassRequest(int method, String url, Map<String, String> params,
+      Map<String, String> header, Request.Priority priority, Class<T> clazz) {
+    super(method, url, null);
+    mParams = params;
+    mHeader = header;
+    mPriority = priority;
+    mResultFactory = null;
+    mTargetClass = clazz;
+  }
+
   @Override protected void deliverResponse(T response) {
     if (null != mListener) {
-      response.setRequestTag(mDeliverToResultTag);
-      mListener.onSucceed(response);
+      mListener.onResponse(response);
     }
   }
 
   @Override public void deliverError(VolleyError error) {
     if (null != mErrorListener) {
-      NetContract.Fail fr = new CommFail();
-      fr.setDeliverToResultTag(mDeliverToResultTag);
-      fr.setException(error);
-      mErrorListener.onFailed(fr);
+      mErrorListener.onErrorResponse(error);
     }
   }
 
@@ -179,22 +243,16 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
   //当只请求缓存，并且没有读取到缓存的时候，会在 CacheDispatch中直接返回结果给回调接口。
   @Override protected Response<T> parseNetworkResponse(NetworkResponse response) {
     try {
-      NetContract.Result.ResultType type = createAppResultType(response);
-
       if (null == mResultFactory) {
         return Response.success(null, null);
       }
-      T resultBean = mResultFactory.analysisResult(response.data, response.headers);
-      if (null == resultBean) {//不需要转换成结果对象，表明此次请求不关注返回的结果，这里直接返回成功，并且结果回调null
+
+      T result = createTargetModel(response);
+      if (null == result) {//不需要转换成结果对象，表明此次请求不关注返回的结果，这里直接返回成功，并且结果回调null
         return Response.success(null, null);
       }
 
-      resultBean.setResultType(type);
-
-      Response<T> resultResponse =
-          Response.success(resultBean, HttpHeaderParser.parseCacheHeaders(response));
-      resultResponse.setResultDatLegitimacy(resultBean.checkResultLegitimacy());
-      return resultResponse;
+      return Response.success(result, HttpHeaderParser.parseCacheHeaders(response));
     } catch (Exception e) {
       e.printStackTrace();
       AppLog.e(TAG, e.toString());
@@ -230,54 +288,53 @@ public class VolleyNetRequest<T extends NetContract.Result> extends Request<T>
     }
   }
 
-  /** 获取请求结果是来自网络还是来自缓存 */
-  private NetContract.Result.ResultType createAppResultType(NetworkResponse response) {
-    boolean isFromCache = response.isFromCache();
-    if (isFromCache) {
-      AppLog.i(TAG, "结果从缓存来：" + getCacheKey());
-      return NetContract.Result.ResultType.CATCH;
-    } else {
-      AppLog.i(TAG, "结果从网络来：" + getCacheKey());
-      return NetContract.Result.ResultType.NET;
-    }
-  }
-
-  //========================NetContract.NetRequest 接口方法
-  private Object mDeliverToResultTag;
-
-  @Override public void setDeliverToResultTag(Object tag) {
-    mDeliverToResultTag = tag;
-  }
-
-  @Override public void setErrorListener(NetContract.ErrorListener errorListener) {
+  public void setErrorListener(Response.ErrorListener errorListener) {
     mErrorListener = errorListener;
   }
 
-  @Override public void setListener(NetContract.Listener<T> listener) {
+  public void setListener(Response.Listener<T> listener) {
     mListener = listener;
   }
 
-  @Override public void setCacheKey(String cacheKey) {
+  public void setCacheKey(String cacheKey) {
     mCacheKey = cacheKey;
   }
 
-  @Override public void request(@NetContract.Type int type) {
+  public void requestType(int type) {
     switch (type) {
-      case NetContract.ONLY_CACHE:
+      case ONLY_CACHE:
         setJustReadCache();
         break;
-      case NetContract.ONLY_NET_NO_CACHE:
+      case ONLY_NET_NO_CACHE:
         setShouldCache(false);
         break;
-      case NetContract.ONLY_NET_THEN_CACHE:
+      case ONLY_NET_THEN_CACHE:
         skipCache();
         break;
-      case NetContract.HTTP_HEADER_CACHE:
-        //Volley默认就是此种方式请求的网络数据
-        break;
-      case NetContract.PRIORITY_CACHE:
+      case PRIORITY_CACHE:
         setReadCacheWithoutTimeLimit();
         break;
+      case HTTP_HEADER_CACHE:
+        //Volley默认就是此种方式请求的网络数据
+        break;
+      default:
+        break;
     }
+  }
+
+  private T createTargetModel(NetworkResponse response) throws Exception {
+    if (null != mResultFactory) {
+      return mResultFactory.analysisResult(response.data, response.headers, response.isFromCache(),
+          getCacheKey());
+    }
+
+    if (null != mTargetClass) {
+      String json = new String(response.data, PROTOCOL_CHARSET);
+      JsonReader reader = new JsonReader(new StringReader(json));
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(reader);
+      return new Gson().fromJson(element, mTargetClass);
+    }
+    return null;
   }
 }

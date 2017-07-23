@@ -2,9 +2,9 @@ package com.diagramsf.netvolley.simple;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import com.diagramsf.net.NetContract;
-import com.diagramsf.net.base.BaseResult;
-import com.diagramsf.netvolley.ResultFactory;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.diagramsf.netvolley.JsonToClassRequest;
 import com.diagramsf.netvolley.RequestManager;
 
 import java.util.Map;
@@ -22,19 +22,19 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
   }
 
   @Override public void requestCache(String url, Map<String, String> postData, String cancelTag,
-      ResultFactory factory) {
+      JsonToClassRequest.ResultFactory factory) {
     mView.onShowCacheLoadProgress();
-    requestData(url, postData, cancelTag, factory, false, NetContract.ONLY_CACHE);
+    requestData(url, postData, cancelTag, factory, false, JsonToClassRequest.ONLY_CACHE);
   }
 
   @Override public void requestNet(String url, Map<String, String> postData, String cancelTag,
-      ResultFactory factory, boolean saveCache) {
+      JsonToClassRequest.ResultFactory factory, boolean saveCache) {
     mView.onShowNetProgress();
 
     if (saveCache) {
-      requestData(url, postData, cancelTag, factory, true, NetContract.ONLY_NET_THEN_CACHE);
+      requestData(url, postData, cancelTag, factory, true, JsonToClassRequest.ONLY_NET_THEN_CACHE);
     } else {
-      requestData(url, postData, cancelTag, factory, true, NetContract.ONLY_NET_NO_CACHE);
+      requestData(url, postData, cancelTag, factory, true, JsonToClassRequest.ONLY_NET_NO_CACHE);
     }
   }
 
@@ -48,7 +48,7 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
     mView.onHideNetProgress();
   }
 
-  public void onResultFromCache(NetContract.Result result) {
+  public void onResultFromCache(SimpleContract.ResultBean result) {
     mView.onHideCacheLoadProgress();
     mView.onShowCacheResult(result);
   }
@@ -58,45 +58,45 @@ public class SimpleRequestPresenter implements SimpleContract.Presenter {
     mView.onShowNoCache();
   }
 
-  public void onFailFromCache(NetContract.Fail result) {
+  public void onFailFromCache(VolleyError result) {
     mView.onHideCacheLoadProgress();
     mView.onShowCacheFail(result);
   }
 
-  public void onResultFromNet(NetContract.Result result) {
+  public void onResultFromNet(SimpleContract.ResultBean result) {
     mView.onHideNetProgress();
     mView.onShowNetResult(result);
   }
 
-  public void onFailFromNet(NetContract.Fail result) {
+  public void onFailFromNet(VolleyError result) {
     mView.onHideNetProgress();
     mView.onShowNetFail(result);
   }
 
   private void requestData(String url, Map<String, String> postData, String cancelTag,
-      ResultFactory<BaseResult> factory, final boolean fromNet,
-      @NetContract.Type int type) {
-    mNetRequestManager.<BaseResult>load(url).postData(postData)
+      JsonToClassRequest.ResultFactory<SimpleContract.ResultBean> factory, final boolean fromNet,
+      int type) {
+    mNetRequestManager.<SimpleContract.ResultBean>load(url).postData(postData)
         .cancelTag(cancelTag)
         .type(type)
-        .errorListener(new NetContract.ErrorListener() {
-          @Override public void onFailed(NetContract.Fail fail) {
+        .errorListener(new Response.ErrorListener() {
+          @Override public void onErrorResponse(VolleyError error) {
             if (fromNet) {
-              onFailFromNet(fail);
+              onFailFromNet(error);
             } else {
-              onFailFromCache(fail);
+              onFailFromCache(error);
             }
           }
         })
-        .listener(new NetContract.Listener<BaseResult>() {
-          @Override public void onSucceed(BaseResult result) {
+        .listener(new Response.Listener<SimpleContract.ResultBean>() {
+          @Override public void onResponse(SimpleContract.ResultBean response) {
             if (fromNet) {
-              onResultFromNet(result);
+              onResultFromNet(response);
             } else {
-              if (null == result) {
+              if (null == response) {
                 onNoResultFromCache();
               } else {
-                onResultFromCache(result);
+                onResultFromCache(response);
               }
             }
           }

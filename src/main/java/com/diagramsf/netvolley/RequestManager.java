@@ -22,7 +22,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import com.android.volley.*;
 import com.android.volley.toolbox.*;
-import com.diagramsf.net.NetContract;
 
 import java.io.File;
 import java.util.Map;
@@ -35,6 +34,7 @@ import java.util.Map;
  * <p>
  * 仿照Picasso的API方式（采用Build模式）来实现
  */
+@Deprecated
 public class RequestManager {
   private static volatile RequestManager singleton;
 
@@ -64,14 +64,14 @@ public class RequestManager {
    * @param url 请求的网址
    * @param method {@link com.android.volley.Request.Method}中的一种
    */
-  public <T extends NetContract.Result> RequestCreator<T> load(String url, int method) {
+  public <T> RequestCreator<T> load(String url, int method) {
     return new RequestCreator<>(this, url, method);
   }
 
   /**
    * @param url 请求的网址
    */
-  public <T extends NetContract.Result> RequestCreator<T> load(String url) {
+  public <T> RequestCreator<T> load(String url) {
     return new RequestCreator<>(this, url, Request.Method.DEPRECATED_GET_OR_POST);
   }
 
@@ -144,7 +144,7 @@ public class RequestManager {
     }
   }// class Builder end
 
-  public static class RequestCreator<T extends NetContract.Result> {
+  public static class RequestCreator<T> {
     private String url;
     private int method = -1;
     private Map<String, String> postData;
@@ -152,9 +152,8 @@ public class RequestManager {
     private RetryPolicy retryPolicy;
     private Request.Priority priority;
     private Object cancelTag;
-    private Object deToResultTag;
-    private NetContract.ErrorListener errorListener;
-    private NetContract.Listener<T> listener;
+    private Response.ErrorListener errorListener;
+    private Response.Listener<T> listener;
     private int type;
     private String cacheKey;
 
@@ -174,13 +173,13 @@ public class RequestManager {
     }
 
     /** 加载失败回调接口 */
-    public RequestCreator<T> errorListener(NetContract.ErrorListener listener) {
+    public RequestCreator<T> errorListener(Response.ErrorListener listener) {
       errorListener = listener;
       return this;
     }
 
     /** 加载成功回调接口 */
-    public RequestCreator<T> listener(NetContract.Listener<T> listener) {
+    public RequestCreator<T> listener(Response.Listener<T> listener) {
       this.listener = listener;
       return this;
     }
@@ -209,14 +208,9 @@ public class RequestManager {
       return this;
     }
 
-    /** 请求类型，参见 {@link com.diagramsf.net.NetContract.Type} */
-    public RequestCreator<T> type(@NetContract.Type int type) {
+    /** 请求类型，参见 {@link JsonToClassRequest#ONLY_CACHE}等 */
+    public RequestCreator<T> type(int type) {
       this.type = type;
-      return this;
-    }
-
-    public RequestCreator<T> deliverToResultTag(Object object) {
-      deToResultTag = object;
       return this;
     }
 
@@ -226,11 +220,11 @@ public class RequestManager {
     }
 
     /** 使用结果解析器开始请求网络 */
-    public void into(ResultFactory<T> factory) {
+    public void into(JsonToClassRequest.ResultFactory<T> factory) {
       volleyRequestManager.load(createRequest(factory));
     }
 
-    private Request<T> createRequest(ResultFactory<T> factory) {
+    private Request<T> createRequest(JsonToClassRequest.ResultFactory<T> factory) {
       if (null == url || "".equals(url)) {
         throw new IllegalArgumentException("URL must not be empty!");
       }
@@ -239,17 +233,16 @@ public class RequestManager {
         method = Request.Method.DEPRECATED_GET_OR_POST;
       }
 
-      VolleyNetRequest<T> request =
-          new VolleyNetRequest<>(method, url, postData, header, priority, factory, null);
+      JsonToClassRequest<T> request =
+          new JsonToClassRequest<>(method, url, postData, header, priority, factory);
       if (null != retryPolicy) {
         request.setRetryPolicy(retryPolicy);
       }
       request.setTag(cancelTag);
       request.setErrorListener(errorListener);
       request.setListener(listener);
-      request.request(type);
+      request.requestType(type);
       request.setCacheKey(cacheKey);
-      request.setDeliverToResultTag(deToResultTag);
       return request;
     }
   }// class RequestCreator end

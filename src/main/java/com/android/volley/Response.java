@@ -110,25 +110,4 @@ public class Response<T> {
         this.cacheEntry = null;
         this.error = error;
     }
-
-    // --------------我添加的
-    private boolean mIsResultLegitimacy = true;
-
-    /**
-     * 判断结果数据是否合法
-     *
-     * @return true 数据合法，false数据不合法
-     */
-    public boolean isResultDataLegitimacy() {
-        return mIsResultLegitimacy;
-    }
-
-    /**
-     * 设置结果是否合法
-     *
-     * @param isLegitimacy true 合法，false 不合法
-     */
-    public void setResultDatLegitimacy(boolean isLegitimacy) {
-        this.mIsResultLegitimacy = isLegitimacy;
-    }
 }
