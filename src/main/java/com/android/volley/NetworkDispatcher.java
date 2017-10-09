@@ -124,8 +124,7 @@ public class NetworkDispatcher extends Thread {
         // 如果结果可用就写入缓存。
         // Write to cache if applicable.
         // TODO: Only update cache metadata instead of entire record for 304s.(这里有优化的空间，对于304请求，只需要更新一下缓存的报头信息即可，不必再重新写入所有数据)
-        if (response.isResultDataLegitimacy()
-            && request.shouldCache()
+        if (request.shouldCache()
             && response.cacheEntry != null) {
           mCache.put(request.getCacheKey(), response.cacheEntry);
           request.addMarker("network-cache-written");

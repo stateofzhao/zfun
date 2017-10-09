@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
 import android.util.Log;
-import com.diagramsf.net.ExceptionWrapper;
 
 import com.google.common.base.Preconditions;
 import java.io.*;
@@ -389,7 +388,7 @@ public class FileUtil {
    * @param fileType 上传文件的类型例如：image/jpeg
    */
   public static String postUploadFile(String httpURL, String postData, String uploadFilePath,
-      String fileType, String userAgent) throws ExceptionWrapper {
+      String fileType, String userAgent) {
     HttpURLConnection httpConnection = getHttpURLConnection(httpURL, userAgent);
     if (null == httpConnection) {
       return null;
@@ -398,15 +397,13 @@ public class FileUtil {
     if (null == is) {
       return null;
     }
-    String result;
+    String result = null;
     try {
       result = new String(readInputStream(is), UTF_8);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
-      throw ExceptionWrapper.run(e);
     } catch (IOException e) {
       e.printStackTrace();
-      throw ExceptionWrapper.io(e);
     }
     return result;
   }
@@ -433,7 +430,7 @@ public class FileUtil {
 
   // 以post的形式请求服务器，上传文件
   private static InputStream http_post_upload(HttpURLConnection httpConnection, String postData,
-      String filePath, String fileType) throws ExceptionWrapper {
+      String filePath, String fileType) {
 
     if (null == httpConnection) {
       return null;
@@ -525,20 +522,18 @@ public class FileUtil {
       return httpConnection.getInputStream();
     } catch (ProtocolException e) {// 配置 HttpURLConnection时可能报这个异常
       e.printStackTrace();
-      throw ExceptionWrapper.http(e);
     } catch (IOException e) {// connect()和从网络上读数据的时候 可能报这个异常
       e.printStackTrace();
       httpConnection.disconnect();
-      throw ExceptionWrapper.io(e);
     }
+    return null;
   }
 
   // 取得HttpURLConnection
-  private static HttpURLConnection getHttpURLConnection(String url, String userAgent)
-      throws ExceptionWrapper {
+  private static HttpURLConnection getHttpURLConnection(String url, String userAgent) {
     URL httpURL;
     URLConnection connection;
-    HttpURLConnection httpConnection;
+    HttpURLConnection httpConnection = null;
     try {
       httpURL = new URL(url);
       connection = httpURL.openConnection();
@@ -554,10 +549,8 @@ public class FileUtil {
       httpConnection.setUseCaches(false);
     } catch (MalformedURLException e) { // String 转换成URL时可能会报这个错误
       e.printStackTrace();
-      throw ExceptionWrapper.run(e);
     } catch (IOException e) { // 当 openConnection()时可能会报这个异常
       e.printStackTrace();
-      throw ExceptionWrapper.io(e);
     }
     return httpConnection;
   }//=============================================================================向服务器上传文件---end
