@@ -30,7 +30,7 @@ public class TestView extends TextView implements RefreshHeader {
 	}
 
 	@Override
-	public int onCreateTrigRefreshHeight() {
+	public int createTrigRefreshHeight() {
 		return getMeasuredHeight();
 	}
 

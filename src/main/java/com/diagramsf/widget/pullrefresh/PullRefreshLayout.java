@@ -3,6 +3,8 @@ package com.diagramsf.widget.pullrefresh;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,7 +25,6 @@ import android.view.animation.Interpolator;
 import android.view.animation.Transformation;
 import android.widget.AbsListView;
 import android.widget.Scroller;
-import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.view.ViewHelper;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,8 +47,12 @@ import java.util.Set;
   protected static final int REGISTERED_VIEW_TRANSLATION_Y =
       "PullRefreshLayout_registered_view_ty".hashCode();
   private final static String TAG = "PullRefreshLayout";
-  private final static boolean DEBUG = false;
+  private final static boolean DEBUG = true;
 
+    private final static boolean USE_SCROLLER = false;
+    private final static boolean USE_SUPER_HEADER = true;
+
+  private final static int DEFAULT_REFRESH_HEIGHT = 80;//默认触发刷新的下拉距离.dp
   /** 最小子View个数 */
   private final static int MIN_CHILD_VIEW_COUNT = 2;
   /** 在Y轴滑动的距离 *本值 > 在X轴上滑动的距离就 触发本View的滚动事件 */
@@ -67,7 +73,7 @@ import java.util.Set;
   protected State mState = State.NORMAL;
   /** 下拉后顶部露出的 提示刷新的View */
   protected View mRefreshHeaderView;
-  protected RefreshHeader mRefreshRefreshHeader;
+  protected RefreshHeader mRefreshHeader;
   /** 显示的具体View，能够触发下拉刷新 */
   protected View mContentView;
   /** 滚动实现方式 */
@@ -102,8 +108,8 @@ import java.util.Set;
   private int mCanTrigRefreshHeight = 0;
   /** 顶部刷新header的高度 */
   private int mRefreshHeaderViewHeight = -1;
-  /** 顶部刷新header 的布局缩放 */
-  private float mRefreshHeaderViewLayoutScale;
+  /** 顶部刷新header 的剪切区域 */
+  private Rect mRefreshHeaderClipBound;
   /** 手指拖动距离的阻尼系数 */
   private float mDragOffset = INIT_DRAG_OFFSET;
   /** 用来判断滑动的距离是否能够触发 本View跟随手指滚动 */
@@ -135,7 +141,7 @@ import java.util.Set;
   /**
    * 是否使用让顶部刷新HeaderView悬浮在ContentView上
    */
-  private boolean mUserSuperRefreshHeaderView = false;
+  private boolean mUseSuperRefreshHeaderView = false;
   /** 添加的额外的需要显示的 具体View，也能够触发下拉刷新 */
   private Set<View> mOtherContentViews;
   private List<OnContentViewScrollListener> mContentViewScrollListeners;
@@ -185,12 +191,12 @@ import java.util.Set;
   }
 
   /**
-   * 是否使用让顶部刷新HeaderView悬浮在ContentView上
+   * 是否使用让顶部刷新HeaderView悬浮在ContentView上，默认是不使用
    *
    * @param use true使用；false不使用
    */
-  public void setUserSuperHeaderView(boolean use) {
-    mUserSuperRefreshHeaderView = use;
+  private void setUseSuperHeaderView(boolean use) {
+    mUseSuperRefreshHeaderView = use;
   }
 
   private void init() {
@@ -210,86 +216,78 @@ import java.util.Set;
 
     mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
 
-    mRefreshHeaderViewLayoutScale = 0;//首先让刷新HeaderView不可见
-    setUseScroller(false);
-    setUserSuperHeaderView(false);
+    setUseScroller(USE_SCROLLER);
+    setUseSuperHeaderView(USE_SUPER_HEADER);
+
+    final DisplayMetrics metrics = getResources().getDisplayMetrics();
+    mCanTrigRefreshHeight = (int) (DEFAULT_REFRESH_HEIGHT * metrics.density);
+
+    ensureTargetView();
   }
 
   /**
    * 是否开启超级 刷新HeaderView 模式，开启后，刷新HeaderView会布局到本ViewGroup所有子View上面，
    */
-  private boolean useSuperHeaderViewMode() {
-    return mUserSuperRefreshHeaderView;
+  private boolean isSuperHeaderViewMode() {
+    return mUseSuperRefreshHeaderView;
+  }
+
+  private void ensureTargetView() {
+    if (null == mContentView) {
+      mContentView = getChildAt(1);
+      if (null != mContentView) {
+        onInitContentView(mContentView);
+      }
+    }
+    if (null == mRefreshHeaderView) {
+      mRefreshHeaderView = getChildAt(0);
+      if (null != mRefreshHeaderView) {
+        if (isSuperHeaderViewMode()) {
+          bringChildToFront(mRefreshHeaderView);//把顶部刷新headerView放置到所有子View之前
+          ViewCompat.setClipBounds(mRefreshHeaderView, new Rect(0, 0, 0, 0));//让其不可见
+        }
+
+        LayoutParams lp = (LayoutParams) mRefreshHeaderView.getLayoutParams();
+        lp.isHeaderRefresh = true;
+        if (mRefreshHeaderView instanceof RefreshHeader) {
+          mRefreshHeader = (RefreshHeader) mRefreshHeaderView;
+          mCanTrigRefreshHeight = mRefreshHeader.createTrigRefreshHeight();
+
+          //由于RefreshHeader也是OnRefreshContentViewScrollListener的子类，所以需要添加到监听集合中
+          mContentViewScrollListeners.add(mRefreshHeader);
+        }
+      }
+    }
   }
 
   //先执行这个方法，在执行 onMeasure()方法
   @Override protected void onFinishInflate() {
     super.onFinishInflate();
-
-    final int childCount = getChildCount();
-    if (checkChildCount(childCount)) {
-      throw new RuntimeException("必须有大于"
-          + MIN_CHILD_VIEW_COUNT
-          + "个的子View,第一个子View是下拉时顶部漏出的提示刷新的View，其它的子View是显示的View（能够下拉刷新的View）");
-    }
-
-    for (int i = 0; i < childCount; i++) {
-      final View child = getChildAt(i);
-      LayoutParams lp = (LayoutParams) child.getLayoutParams();
-      //这个设置成顶部漏出的提示刷新的View
-      lp.isHeaderRefresh = i == 0;
-      if (i > 1) {
-        mOtherContentViews.add(child);//存储非默认的ContentView
-      }
-    }
-
-    if (null == mRefreshHeaderView) {
-      mRefreshHeaderView = getChildAt(0);
-      mContentView = getChildAt(1);
-    }
-
-    if (mRefreshHeaderView instanceof RefreshHeader) {
-      mRefreshRefreshHeader = (RefreshHeader) mRefreshHeaderView;
-      mCanTrigRefreshHeight = mRefreshRefreshHeader.onCreateTrigRefreshHeight();
-
-      //由于RefreshHeader也是OnRefreshContentViewScrollListener的子类，所以需要添加到监听集合中
-      mContentViewScrollListeners.add(mRefreshRefreshHeader);
-    }
-
-    if (useSuperHeaderViewMode()) {
-      //把顶部刷新headerView放置到所有子View之前
-      removeView(mRefreshHeaderView);
-      addView(mRefreshHeaderView, getChildCount() - 1);
-    }
-
-    onInitContentView(mContentView);
   }
 
   @TargetApi(Build.VERSION_CODES.GINGERBREAD) @Override
   protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    checkChildCount();
+
+    mInLayout = true;//表示正处于布局中，当确定了子View个数后，就正式进入测量，这时候再添加View，就需要重新调用oMeasure()方法了
+    final int childCount = getChildCount();
+    ensureTargetView();
+      if(null == mRefreshHeaderView || null == mContentView){
+          return;
+      }
 
     final int selfPaddingLeft = getPaddingLeft();
     final int selfPaddingRight = getPaddingRight();
     final int selfPaddingTop = getPaddingTop();
     final int selfPaddingBom = getPaddingBottom();
 
-    mInLayout = true;//在确定有多少个子View前，表示正处于布局中，当确定了子View个数后，就正式进入测量，这时候再添加View，就需要重新调用oMeasure()方法了
-    final int childCount = getChildCount();
-    mInLayout = false;
-    if (checkChildCount(childCount)) {
-      throw new RuntimeException("必须有大于"
-          + MIN_CHILD_VIEW_COUNT
-          + "个的子View,第一个子View是下拉时顶部漏出的提示刷新的View，其它的子View是显示的View（能够下拉刷新的View）");
-    }
+    int maxHeight = 0;
+    int maxWidth = 0;
 
     for (int i = 0; i < childCount; i++) {
       final View child = getChildAt(i);
       LayoutParams lp = (LayoutParams) child.getLayoutParams();
-      //这个设置成顶部漏出的提示刷新的View
-      lp.isHeaderRefresh = i == 0;
-
-      if (i > 1) {
+      if (i > 1) {//将第三个及以后的子View设置成“其它子View”
         mOtherContentViews.add(child);//存储非默认的ContentView
       }
 
@@ -307,19 +305,41 @@ import java.util.Set;
         // 可以看看这个方法的源码，它在计算子View尺寸时，减去了子View的margin值
         // measureChildWithMargins(child, widthMeasureSpec, 0,
         // heightMeasureSpec, 0);
+
+        maxWidth = Math.max(maxWidth, child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin);
+        maxHeight = Math.max(maxHeight, child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
       }
     }
 
-    //防止在onFinishInflate()方法中获取到的mCanTrigRefreshHeight为0
-    if (null != mRefreshRefreshHeader) {
-      mCanTrigRefreshHeight = mRefreshRefreshHeader.onCreateTrigRefreshHeight();
+    //加上自身的padding值
+    maxWidth += selfPaddingLeft + selfPaddingRight;
+    maxHeight += selfPaddingTop + selfPaddingBom;
+
+    //不能让自身尺寸小于android系统建议的最小尺寸
+    maxWidth = Math.max(maxWidth, getSuggestedMinimumWidth());
+    maxHeight = Math.max(maxHeight, getSuggestedMinimumHeight());
+
+    // Check against our foreground's minimum height and width
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+      final Drawable drawable = getForeground();
+      if (drawable != null) {
+        maxHeight = Math.max(maxHeight, drawable.getMinimumHeight());
+        maxWidth = Math.max(maxWidth, drawable.getMinimumWidth());
+      }
     }
+    setMeasuredDimension(maxWidth, maxHeight); //设置自身尺寸
 
     mRefreshHeaderViewHeight = mRefreshHeaderView.getMeasuredHeight();//获取顶部headerView的高度
+    if(mCanTrigRefreshHeight == ViewGroup.LayoutParams.MATCH_PARENT){
+      mCanTrigRefreshHeight = getMeasuredHeight();
+    }else if(mCanTrigRefreshHeight == ViewGroup.LayoutParams.WRAP_CONTENT){
+      mCanTrigRefreshHeight = mRefreshHeaderViewHeight;
+    }
+
+    mInLayout = false;
   }
 
   @Override protected void onLayout(boolean changed, int l, int t, int r, int b) {
-
     final int selfWidth = r
         - l; // 这个与getMeasuredWidth()的区别是，这个是最终显示的宽度，如果它上层布局不做特殊处理(比如说它上层ViewGroup在onLayout()方法中不根据它的getMeasuredWidth()来布局)的话，两者相等
     final int selfHeight = b - t;
@@ -336,13 +356,10 @@ import java.util.Set;
     }
 
     final int childCounts = getChildCount();
-
     for (int i = 0; i < childCounts; i++) {
-
       final View childView = getChildAt(i);
       final int visible = childView.getVisibility();
       final LayoutParams layoutParams = (LayoutParams) childView.getLayoutParams();
-
       if (visible != GONE) {
         if (layoutParams.needsMeasure) {//由于这个并没有在 onMeasure()方法中测量到,需要重新测量尺寸
           layoutParams.needsMeasure = false;
@@ -385,14 +402,7 @@ import java.util.Set;
           top += scrollY;
         }
         int right = left + childWidth;
-        int bom;
-
-        if (useSuperHeaderViewMode() && childView == mRefreshHeaderView) {
-          bom = top + (int) (childHeight * mRefreshHeaderViewLayoutScale);
-        } else {
-          bom = top + childHeight;
-        }
-
+        int bom = top + childHeight;
         childView.layout(left, top, right, bom);
       }
     }// for end
@@ -593,7 +603,7 @@ import java.util.Set;
   }
 
   /**
-   * 是否不使用{@link Scroller}作为滚动动画
+   * 是否使用{@link Scroller}作为滚动动画
    *
    * @return true 使用Scroller，false 不使用
    */
@@ -602,9 +612,9 @@ import java.util.Set;
   }
 
   /**
-   * 设置是否启用{@link Animator}来执行滚动动画
+   * 设置是否启用{@link Scroller}来执行滚动动画
    *
-   * @param use true 使用Animator，false 不使用Animator
+   * @param use true 使用Scroller，false 不使用Scroller，使用Animator
    */
   public void setUseScroller(boolean use) {
     mUseScroller = use;
@@ -990,11 +1000,14 @@ import java.util.Set;
 
   /**
    * 检测子View个数是否符合规则
-   *
-   * @return true 符合规则，false不符合规则
    */
-  private boolean checkChildCount(int childCount) {
-    return childCount < MIN_CHILD_VIEW_COUNT;
+  private void checkChildCount() {
+      final int childCount = getChildCount();
+      if (childCount < MIN_CHILD_VIEW_COUNT) {
+          throw new RuntimeException("必须有大于"
+                  + MIN_CHILD_VIEW_COUNT
+                  + "个的子View,第一个子View是下拉时顶部漏出的提示刷新的View，其它的子View是显示的View（能够下拉刷新的View）");
+      }
   }
 
   // 执行刷新
@@ -1007,8 +1020,8 @@ import java.util.Set;
     }
     mState = State.REFRESHING;
 
-    if (null != mRefreshRefreshHeader) {
-      mRefreshRefreshHeader.onBeginRefresh();
+    if (null != mRefreshHeader) {
+      mRefreshHeader.onBeginRefresh();
     }
 
     if (!just) {
@@ -1181,6 +1194,10 @@ import java.util.Set;
       super.addView(view, layoutParams);
     }
     mOtherContentViews.add(view);
+    if (isSuperHeaderViewMode()) {
+      //把顶部刷新headerView放置到所有子View之前
+      bringChildToFront(mRefreshHeaderView);
+    }
   }
 
   /**
@@ -1348,7 +1365,7 @@ import java.util.Set;
     return false;
   }
 
-  /** 在这里初始化ContentView，可以重写 来自己实现初始化 ,比如启用ContentView的默写特殊属性等 */
+  /** 在这里初始化ContentView，可以重写 来自己实现初始化 ,比如启用ContentView的特殊属性 */
   protected void onInitContentView(View contentView) {
 
   }
@@ -1359,7 +1376,7 @@ import java.util.Set;
   }
 
   @Override protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-    return generateDefaultLayoutParams();
+    return new LayoutParams(p);
   }
 
   @Override protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
@@ -1404,12 +1421,16 @@ import java.util.Set;
 
   public static class LayoutParams extends MarginLayoutParams {
     /** 是否需要重新测量 */
-    private boolean needsMeasure;
+    private boolean needsMeasure = false;
     /** 是否是下拉后漏出的顶部提示刷新的View */
-    private boolean isHeaderRefresh;
+    private boolean isHeaderRefresh = false;
 
     public LayoutParams() {
-      super(MATCH_PARENT, MATCH_PARENT);
+      super(MATCH_PARENT, WRAP_CONTENT);
+    }
+
+    public LayoutParams(ViewGroup.LayoutParams source){
+        super(source);
     }
 
     public LayoutParams(Context c, AttributeSet attrs) {
@@ -1436,8 +1457,8 @@ import java.util.Set;
   private class StopRefreshTask implements Runnable {
     @Override public void run() {
       mState = State.REFRESH_FINISH_SCROLL_TO_NORMAL;
-      if (null != mRefreshRefreshHeader) {
-        mRefreshRefreshHeader.onStopRefresh();
+      if (null != mRefreshHeader) {
+        mRefreshHeader.onStopRefresh();
       }
       final int sy = getContentViewOffsetFromTop();
       if (sy == 0) {// 不需要滚动
@@ -1461,11 +1482,17 @@ import java.util.Set;
       contentViewScrollToPosition(isRefreshToNormal, yDirection, x, y);
 
       //更新顶部刷新HeaderView的布局，使之露出来
-      if (useSuperHeaderViewMode()) {
-        mRefreshHeaderViewLayoutScale = -y / (float) mRefreshHeaderViewHeight;
-        if (mRefreshHeaderViewLayoutScale <= 1) {
-          mRefreshHeaderView.requestLayout();
+      if (isSuperHeaderViewMode()) {
+        if (null == mRefreshHeaderClipBound) {
+          mRefreshHeaderClipBound = new Rect();
         }
+        float bom = Math.abs(y);
+        if (bom > mRefreshHeaderViewHeight) {
+          bom = mRefreshHeaderViewHeight;
+        }
+        mRefreshHeaderClipBound.set(mRefreshHeaderView.getLeft(), mRefreshHeaderView.getTop(),
+                mRefreshHeaderView.getRight(), (int) bom);
+        ViewCompat.setClipBounds(mRefreshHeaderView, mRefreshHeaderClipBound);
       }
       // 执行回调
       callbackContentViewScrollDistance(Math.abs(y));

@@ -58,6 +58,7 @@ public class AbsListPullRefreshLayout extends PullRefreshLayout {
       av.setPadding(mInitPaddingLeft, mInitPaddingTop + Math.abs(y), mInitPaddingRight,
           mInitPaddingBom);
       if (!isRefreshToNormal) {
+        av.forceLayout();
         av.setSelection(0);
       }
     } else {

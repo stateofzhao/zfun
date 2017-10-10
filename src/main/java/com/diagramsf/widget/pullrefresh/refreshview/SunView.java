@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import com.diagramsf.util.AndroidUtil;
 import com.diagramsf.widget.pullrefresh.PullRefreshLayout;
 import com.diagramsf.widget.pullrefresh.RefreshHeader;
@@ -64,27 +65,26 @@ public class SunView extends View implements RefreshHeader {
     }
   }
 
-  @Override public int onCreateTrigRefreshHeight() {
-    return getMeasuredHeight();
+  @Override public int createTrigRefreshHeight() {
+    return ViewGroup.LayoutParams.WRAP_CONTENT;
   }
 
   @Override public void onBeginRefresh() {
     mDrawable.start();
-    mHasDoRefresh = true;
+    //mHasDoRefresh = true;
   }
 
   @Override public void onStopRefresh() {
+  }
+
+  @Override public void onStopRefreshComplete() {
     mDrawable.stop();
     invalidate();
   }
 
-  @Override public void onStopRefreshComplete() {
-
-  }
-
   @Override public void onContentViewScrollDistance(int distance, PullRefreshLayout.State state) {
     if (!mHasDoRefresh) {
-      float percent = (float) distance / onCreateTrigRefreshHeight();
+      float percent = (float) distance / getHeight();
       mDrawable.setPercent(percent);
       invalidate();
     }
