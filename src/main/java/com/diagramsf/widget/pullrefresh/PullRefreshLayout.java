@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.view.MotionEventCompat;
+import android.support.v4.view.NestedScrollingParent;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -43,7 +44,8 @@ import java.util.Set;
  *
  * @version 0.2 重新实现了下顶部刷新HeaderView的布局，把顶部刷新HeaderView放到了布局的最上层，这样就不限制给ContentView设置背景等问题了
  */
-@SuppressLint("ClickableViewAccessibility") public class PullRefreshLayout extends ViewGroup {
+@SuppressLint("ClickableViewAccessibility") public class PullRefreshLayout extends ViewGroup implements
+        NestedScrollingParent{
   protected static final int REGISTERED_VIEW_TRANSLATION_Y =
       "PullRefreshLayout_registered_view_ty".hashCode();
   private final static String TAG = "PullRefreshLayout";
@@ -181,7 +183,6 @@ import java.util.Set;
 
   public PullRefreshLayout(Context context, AttributeSet attrs, int defStyleAttr) {
     this(context, attrs, defStyleAttr, 0);
-    init();
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -223,6 +224,12 @@ import java.util.Set;
     mCanTrigRefreshHeight = (int) (DEFAULT_REFRESH_HEIGHT * metrics.density);
 
     ensureTargetView();
+    ViewCompat.setNestedScrollingEnabled(this,false);//由于没有实现 NestedChild接口，所以告诉父类，我不能够执行
+
+    if (null == mFlingMeasureScroller) {
+      mFlingMeasureScroller = new Scroller(getContext());
+    }
+    mFlingScroller = new Scroller(getContext());
   }
 
   /**
@@ -237,6 +244,7 @@ import java.util.Set;
       mContentView = getChildAt(1);
       if (null != mContentView) {
         onInitContentView(mContentView);
+        ViewCompat.setNestedScrollingEnabled(mContentView,true);//只有启用子类的NestedScroll，才能让子类回调到本类的NestedScroll相关方法
       }
     }
     if (null == mRefreshHeaderView) {
@@ -303,8 +311,8 @@ import java.util.Set;
 
         // 测量子View尺寸<br>
         // 可以看看这个方法的源码，它在计算子View尺寸时，减去了子View的margin值
-        // measureChildWithMargins(child, widthMeasureSpec, 0,
-        // heightMeasureSpec, 0);
+         measureChildWithMargins(child, widthMeasureSpec, 0,
+         heightMeasureSpec, 0);
 
         maxWidth = Math.max(maxWidth, child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin);
         maxHeight = Math.max(maxHeight, child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
@@ -497,7 +505,6 @@ import java.util.Set;
         mTouchAbortScroller = !isScrollAnimationFinish();
         forceAbortScrollAnimation();
         if (!mTouchAbortScroller) {// 上次操作完整的执行完
-          // 上次操作完整的执行完
           mStartRefreshOperation = false;
           mEndRefreshOperation = false;
         }
@@ -663,6 +670,10 @@ import java.util.Set;
         mScroller.abortAnimation();
       }
     }
+
+    //中止惯性
+    mFlingMeasureScroller.abortAnimation();
+    mFlingScroller.abortAnimation();
   }
 
   /**
@@ -706,6 +717,33 @@ import java.util.Set;
   }
 
   @Override public void computeScroll() {
+    //处理计算子View惯性的Scroller
+    //if (DEBUG) {
+    //  Log.e("fling",
+    //          "mFlingMeasureScroller.getCurrVelocity  " + mFlingMeasureScroller.getCurrVelocity());
+    //}
+    ////同步计算子View当前的惯性
+    //if (justMeasureFling) {
+    //  mFlingMeasureScroller.computeScrollOffset();
+    //    return;
+    //}
+    //
+    //  //执行 延续惯性
+    //  if (mFlingScroller.computeScrollOffset()) {
+    //      int oldX = getContentViewOffsetFromLeft();
+    //      int oldY = getContentViewOffsetFromTop();
+    //      int currentX = mFlingScroller.getCurrX();
+    //      int currentY = mFlingScroller.getCurrY();
+    //      int yDirection = currentY - oldY;
+    //      if (oldX != currentX || oldY != currentY) {
+    //          setScrollToPosition(mState == State.REFRESH_FINISH_SCROLL_TO_NORMAL, yDirection,
+    //                  currentX, currentY);
+    //      }
+    //      ViewCompat.postInvalidateOnAnimation(this);
+    //      return;
+    //  }
+
+    //如果不是使用Scroller来执行滚动动画
     if (!isUseScroller()) {
       super.computeScroll();
       return;
@@ -723,8 +761,8 @@ import java.util.Set;
 
       int yDirection = currentY - oldY;
 
-      //使用消息的形式自动滚动，貌似没啥提升
-      //            post(new ScrollFrameTask(oldX,oldY,currentX,currentY,yDirection));
+        //使用消息的形式自动滚动，貌似没啥提升
+        //post(new ScrollFrameTask(oldX,oldY,currentX,currentY,yDirection));
 
       if (oldX != currentX || oldY != currentY) {
         setScrollToPosition(mState == State.REFRESH_FINISH_SCROLL_TO_NORMAL, yDirection, currentX,
@@ -745,11 +783,15 @@ import java.util.Set;
   }
 
   private void sendDownEvent(MotionEvent event) {
-    // last.getY() - mTouchScrollSlop*2 :是为了防止ContentView执行ACTION_DOWN触发的click
     MotionEvent e =
         MotionEvent.obtain(event.getDownTime(), event.getEventTime(), MotionEvent.ACTION_DOWN,
-            event.getX(), event.getY() - mTouchScrollSlop * 2, event.getMetaState());
+            event.getX(), event.getY()- mTouchScrollSlop*2 , event.getMetaState());// last.getY() - mTouchScrollSlop*2 :是为了防止ContentView执行ACTION_DOWN触发的click
     super.dispatchTouchEvent(e);
+    //立即发送一个Finger down,防止ContentView执行ACTION_DOWN触发的click
+    //MotionEvent finger_e =
+    //        MotionEvent.obtain(event.getDownTime(), event.getEventTime(), MotionEvent.ACTION_POINTER_DOWN,
+    //                event.getX(), event.getY() - mTouchScrollSlop * 2, event.getMetaState());
+    //super.dispatchTouchEvent(finger_e);
     if (DEBUG) {
       Log.v(TAG, "子View接收到ACTION_DOWN");
     }
@@ -1306,7 +1348,6 @@ import java.util.Set;
    * @ return 偏移顶部的距离， 负数证明向下偏移，正数证明向上偏移
    */
   @TargetApi(Build.VERSION_CODES.HONEYCOMB) protected int getContentViewOffsetFromTop() {
-
     if (mScrollMode == TranslationMode.SCROLL_TO) {
       return getScrollY();
     } else if (mScrollMode == TranslationMode.SET_TRANSLATION && null != mContentView) {
@@ -1498,4 +1539,93 @@ import java.util.Set;
       callbackContentViewScrollDistance(Math.abs(y));
     }
   }//class UpdateScrollToPositionTask end
+
+    //=======处理嵌套fling
+    private Scroller mFlingMeasureScroller;//用来计算子View 惯性剩余的速度
+    private Scroller mFlingScroller;//延续惯性的Scroller
+  private boolean justMeasureFling;
+
+  @Override
+    public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
+        if (DEBUG) {
+            Log.v("fling", "onStartNestedScroll --  child : "
+                    + child
+                    + " target : "
+                    + target
+                    + " nestedScrollAxes : "
+                    + nestedScrollAxes);
+        }
+        return nestedScrollAxes
+                == ViewCompat.SCROLL_AXIS_VERTICAL;//如果要监听到后续一系列回调，这里必须返回true，返回false的话后续所有回调都不会执行了
+    }
+
+    //会在target不消耗滚动事件时，来回调此方法
+    @Override
+    public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed,
+            int dyUnconsumed) {
+        if (DEBUG) {
+            Log.w("fling", "onNestedScroll -- "
+                    + " dyConsumed : "
+                    + dyConsumed
+                    + " dyUnconsumed : "
+                    + dyUnconsumed);
+        }
+    }
+
+    //在子View开始执行Fling前回调，在整个Fling期间只会回调一次
+    @Override
+    public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
+        if (DEBUG) {
+            Log.i("fling", "onNestedPreFling --  "
+                    + " velocityX : "
+                    + velocityX
+                    + " velocityY : "
+                    + velocityY +" target.getScrollX() " + target.getScrollX()+" target.getScrollY() "+getScrollY());
+        }
+        if(mState == State.REFRESHING && velocityY<0){//只有【正在刷新】才需要延续惯性,此时是向下滚动的惯性， velocityY> 0 是向上滚动的惯性
+          mFlingMeasureScroller.abortAnimation();
+          mFlingMeasureScroller.fling(target.getScrollX(), target.getScrollY(), (int) velocityX,
+                    (int) velocityY, 0, 0, 0, Integer.MAX_VALUE);
+        }
+        //fixme 阻住让子View回调本View的computeScroll()方法
+      justMeasureFling = true;
+        return false;
+    }
+
+    //子View执行Fling时回调，在整个Fling期间只会回调一次
+    @Override
+    public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
+      if (DEBUG) {
+        Log.i("fling", "onNestedFling --  "
+                + " velocityX : "
+                + velocityX
+                + "\nvelocityY : "
+                + velocityY
+                + "\nconsumed : "
+                + consumed);
+      }
+      return false;
+    }
+
+    //只要滚动停止就会回调，包括fling停止
+    @Override
+    public void onStopNestedScroll(View target) {
+      justMeasureFling = false;
+      Log.e("fling", "onStopNestedScroll --  mFlingMeasureScroller.finish" + mFlingMeasureScroller.isFinished());
+        //开始让本View延续子View（target）的惯性
+      float needExtendsFlingVelocity = mFlingMeasureScroller.getCurrVelocity();
+        mFlingMeasureScroller.abortAnimation();
+        mFlingScroller.abortAnimation();
+        mFlingScroller.fling(getScrollX(), getScrollY(), 0, (int) needExtendsFlingVelocity, 0, 0,
+                0, mRefreshHeaderView.getHeight());
+        if (needExtendsFlingVelocity > 0) {
+            ViewCompat.postInvalidateOnAnimation(PullRefreshLayout.this);//触发本View的computeScroll()方法
+        }
+
+        if (DEBUG) {
+            Log.e("fling", "onStopNestedScroll --  mNeedExtendsFlingVelocity" + needExtendsFlingVelocity);
+
+        }
+        //fixme 可以让子View触发本View的computeScroll()方法
+    }
 }
