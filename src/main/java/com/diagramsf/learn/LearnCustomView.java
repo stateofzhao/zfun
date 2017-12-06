@@ -62,8 +62,8 @@ public class LearnCustomView extends View {
   @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);//调用这个父方法，能够实现设置ViewGroup自身所需的尺寸。
 
-    // 1.方法中的参数怎么来的-----由父View中的layout_width，layout_height和padding以及View自身的LayoutParams共同决定。
-    // 参见ViewGroup的getChildMeasureSpec()方法<P>
+    // 1.方法中的参数怎么来的-----由本View的父View中的layout_width，layout_height和padding以及本View的LayoutParams共同决定。
+    // 参见ViewGroup的getChildMeasureSpec()方法（所以在本View的此方法中，无需解析本View的LayoutParas中的layout_height和layout_width属性）<P>
 
     // 2. 参数 widthMeasureSpec
     // 这个值由高32位和低16位组成，高32位保存的值叫specMode，可以通过如代码中所示的MeasureSpec.getMode()获取；
