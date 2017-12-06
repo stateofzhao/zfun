@@ -83,6 +83,9 @@ public class SunView extends View implements RefreshHeader {
   }
 
   @Override public void onContentViewScrollDistance(int distance, PullRefreshLayout.State state) {
+    if(state == PullRefreshLayout.State.REFRESHING){
+      return;
+    }
     if (!mHasDoRefresh) {
       float percent = (float) distance / getHeight();
       mDrawable.setPercent(percent);
