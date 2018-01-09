@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+
+
+android {
+  compileSdkVersion rootProject.ext.compileSdkVersion
+  buildToolsVersion rootProject.ext.buildToolsVersion
+
+  defaultConfig {
+    proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard-project.txt')
+    applicationId "com.diagramsf"
+    versionCode Integer.valueOf("" + appVersionCode).intValue()
+    versionName "${appVersionName}"
+    minSdkVersion rootProject.ext.minSdkVersion
+    targetSdkVersion 25
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+  }
+}
+
+
+dependencies {
+  compile project(':simple')
+}
+

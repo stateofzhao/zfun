@@ -1,0 +1,2 @@
+可以再额外定义个Manifest.xml出来，用来展示想展示的Activities。
+然后再定义apk Module下的build.gradle的编译类型，来让此Manifest.xml生效（替换掉默认的main下的Manifest.xml）。
