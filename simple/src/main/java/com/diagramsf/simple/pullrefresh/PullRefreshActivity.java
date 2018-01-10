@@ -8,7 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import com.diagramsf.core.widget.pullrefresh.PullRefreshLayout;
+import com.diagramsf.lib.widget.pullrefresh.PullRefreshLayout;
 import com.diagramsf.simple.R;
 
 public class PullRefreshActivity extends AppCompatActivity {

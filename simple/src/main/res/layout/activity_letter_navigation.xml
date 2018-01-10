@@ -10,7 +10,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.diagramsf.simple.letternavigation.LetterNavigationActivity">
 
-    <com.diagramsf.core.widget.LetterNavigation
+    <com.diagramsf.lib.widget.LetterNavigation
         android:id="@+id/ln"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

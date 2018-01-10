@@ -8,8 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.diagramsf.core.util.AndroidUtil;
-import com.diagramsf.core.util.StringUtil;
+import com.diagramsf.lib.util.AndroidUtil;
+import com.diagramsf.lib.util.StringUtil;
 import com.diagramsf.simple.R;
 
 public class BinaryActivity extends AppCompatActivity {
