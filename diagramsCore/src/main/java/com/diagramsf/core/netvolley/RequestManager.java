@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2012 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.diagramsf.core.netvolley;
 
 import android.content.Context;
@@ -26,6 +10,13 @@ import com.android.volley.toolbox.*;
 import java.io.File;
 import java.util.Map;
 
+
+/*
+ * RequestManager manager = RequestManager.with(context);
+ * manager.load(url).postData(map).cancelTag(string).type().errorListener(errorListener).listener(listener).into(factory);
+ * manager.cancel(string);
+ */
+
 /**
  * 调用{@link RequestManager#with(Context)}来获取Volley，调用{@link RequestManager#load(Request)}来执行请求
  * <p>
@@ -34,246 +25,246 @@ import java.util.Map;
  * <p>
  * 仿照Picasso的API方式（采用Build模式）来实现
  */
-@Deprecated
-public class RequestManager {
-  private static volatile RequestManager singleton;
+@Deprecated public class RequestManager {
+    private static volatile RequestManager singleton;
 
-  private RequestQueue requestQueue;
+    private RequestQueue requestQueue;
 
-  private RequestManager(RequestQueue requestQueue) {
-    this.requestQueue = requestQueue;
-  }
+    private RequestManager(RequestQueue requestQueue) {
+        this.requestQueue = requestQueue;
+    }
 
-  public static RequestManager with(Context context) {
-    if (singleton == null) {
-      synchronized (RequestManager.class) {
+    public static RequestManager with(Context context) {
         if (singleton == null) {
-          singleton = new Builder(context).build();
+            synchronized (RequestManager.class) {
+                if (singleton == null) {
+                    singleton = new Builder(context).build();
+                }
+            }
         }
-      }
-    }
-    return singleton;
-  }
-
-  /** 取消请求 */
-  public void cancel(Object tag) {
-    requestQueue.cancelAll(tag);
-  }
-
-  /**
-   * @param url 请求的网址
-   * @param method {@link com.android.volley.Request.Method}中的一种
-   */
-  public <T> RequestCreator<T> load(String url, int method) {
-    return new RequestCreator<>(this, url, method);
-  }
-
-  /**
-   * @param url 请求的网址
-   */
-  public <T> RequestCreator<T> load(String url) {
-    return new RequestCreator<>(this, url, Request.Method.DEPRECATED_GET_OR_POST);
-  }
-
-  public void load(Request request) {
-    requestQueue.add(request);
-  }
-
-  /** 用来定义{@link RequestManager}配置参数 */
-  private static class Builder {
-    /** Default on-disk cache directory. */
-    private static final String DEFAULT_CACHE_DIR = "volleyRequestManager";
-    /** 磁盘缓存最大大小 */
-    private static final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
-
-    private final Context context;
-    /** 用户代理，会写入到Http报头中 */
-    private String userAgent;
-    private Cache cache;
-    private HttpStack httpStack;
-
-    private Builder(Context context) {
-      if (context == null) {
-        throw new IllegalArgumentException("Context must not be null");
-      }
-      this.context = context;
+        return singleton;
     }
 
-    public Builder userAgent(String userAgent) {
-      this.userAgent = userAgent;
-      return this;
+    /** 取消请求 */
+    public void cancel(Object tag) {
+        requestQueue.cancelAll(tag);
     }
 
-    public Builder cache(Cache cache) {
-      this.cache = cache;
-      return this;
+    /**
+     * @param url 请求的网址
+     * @param method {@link com.android.volley.Request.Method}中的一种
+     */
+    public <T> RequestCreator<T> load(String url, int method) {
+        return new RequestCreator<>(this, url, method);
     }
 
-    public Builder httpStack(HttpStack httpStack) {
-      this.httpStack = httpStack;
-      return this;
+    /**
+     * @param url 请求的网址
+     */
+    public <T> RequestCreator<T> load(String url) {
+        return new RequestCreator<>(this, url, Request.Method.DEPRECATED_GET_OR_POST);
     }
 
-    public RequestManager build() {
-      if (null == userAgent || "".equals(userAgent)) {
-        this.userAgent = Utils.createUserAgent(context);
-      }
-
-      if (null == cache) {
-        File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
-        cache = new DiskBasedCache(cacheDir, DEFAULT_SIZE_EXTERNAL_CACHE);
-      }
-
-      if (null == httpStack) {
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
-        //  httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
-        //} else {
-        //  // Prior to Gingerbread, HttpUrlConnection was unreliable.
-        //  // See:
-        //  // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
-        //  httpStack =
-        //      new HttpClientStack(AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
-        //}
-        httpStack = new OkHttpStack();
-      }
-
-      Network network = new BasicNetwork(httpStack);
-      RequestQueue queue = new RequestQueue(cache, network);
-      queue.start();
-      return new RequestManager(queue);
-    }
-  }// class Builder end
-
-  public static class RequestCreator<T> {
-    private String url;
-    private int method = -1;
-    private Map<String, String> postData;
-    private Map<String, String> header;
-    private RetryPolicy retryPolicy;
-    private Request.Priority priority;
-    private Object cancelTag;
-    private Response.ErrorListener errorListener;
-    private Response.Listener<T> listener;
-    private int type;
-    private String cacheKey;
-
-    private RequestManager volleyRequestManager;
-
-    /** @param method 是{@link Request.Method}中的一种 */
-    private RequestCreator(RequestManager volleyRequestManager, String url, int method) {
-      this.volleyRequestManager = volleyRequestManager;
-      this.url = url;
-      this.method = method;
+    public void load(Request request) {
+        requestQueue.add(request);
     }
 
-    /** post传递的参数 */
-    public RequestCreator<T> postData(Map<String, String> postData) {
-      this.postData = postData;
-      return this;
-    }
+    /** 用来定义{@link RequestManager}配置参数 */
+    private static class Builder {
+        /** Default on-disk cache directory. */
+        private static final String DEFAULT_CACHE_DIR = "volleyRequestManager";
+        /** 磁盘缓存最大大小 */
+        private static final int DEFAULT_SIZE_EXTERNAL_CACHE = 500 * 1024 * 1024;
 
-    /** 加载失败回调接口 */
-    public RequestCreator<T> errorListener(Response.ErrorListener listener) {
-      errorListener = listener;
-      return this;
-    }
+        private final Context context;
+        /** 用户代理，会写入到Http报头中 */
+        private String userAgent;
+        private Cache cache;
+        private HttpStack httpStack;
 
-    /** 加载成功回调接口 */
-    public RequestCreator<T> listener(Response.Listener<T> listener) {
-      this.listener = listener;
-      return this;
-    }
+        private Builder(Context context) {
+            if (context == null) {
+                throw new IllegalArgumentException("Context must not be null");
+            }
+            this.context = context;
+        }
 
-    /** 加载失败重试策略 */
-    public RequestCreator<T> retryPolicy(RetryPolicy retryPolicy) {
-      this.retryPolicy = retryPolicy;
-      return this;
-    }
+        public Builder userAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
 
-    /** 优先级 */
-    public RequestCreator<T> Priority(Request.Priority priority) {
-      this.priority = priority;
-      return this;
-    }
+        public Builder cache(Cache cache) {
+            this.cache = cache;
+            return this;
+        }
 
-    /** 自定义包头信息 */
-    public RequestCreator<T> header(Map<String, String> header) {
-      this.header = header;
-      return this;
-    }
+        public Builder httpStack(HttpStack httpStack) {
+            this.httpStack = httpStack;
+            return this;
+        }
 
-    /** 请求的tag，可以用来取消请求 */
-    public RequestCreator<T> cancelTag(Object cancelTag) {
-      this.cancelTag = cancelTag;
-      return this;
-    }
+        public RequestManager build() {
+            if (null == userAgent || "".equals(userAgent)) {
+                this.userAgent = Utils.createUserAgent(context);
+            }
 
-    /** 请求类型，参见 {@link JsonToClassRequest#ONLY_CACHE}等 */
-    public RequestCreator<T> type(int type) {
-      this.type = type;
-      return this;
-    }
+            if (null == cache) {
+                File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
+                cache = new DiskBasedCache(cacheDir, DEFAULT_SIZE_EXTERNAL_CACHE);
+            }
 
-    public RequestCreator<T> cacheKey(String cacheKey) {
-      this.cacheKey = cacheKey;
-      return this;
-    }
+            if (null == httpStack) {
+                //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {//2.3 API 9
+                //  httpStack = new HurlStack();// 使用HttpURLConnection实现的HttpStack
+                //} else {
+                //  // Prior to Gingerbread, HttpUrlConnection was unreliable.
+                //  // See:
+                //  // http://android-developers.blogspot.com/2011/09/androids-http-clients.html
+                //  httpStack =
+                //      new HttpClientStack(AndroidHttpClient.newInstance(userAgent)); // 使用HttpClient客户端
+                //}
+                httpStack = new OkHttpStack();
+            }
 
-    /** 使用结果解析器开始请求网络 */
-    public void into(JsonToClassRequest.ResultFactory<T> factory) {
-      volleyRequestManager.load(createRequest(factory));
-    }
+            Network network = new BasicNetwork(httpStack);
+            RequestQueue queue = new RequestQueue(cache, network);
+            queue.start();
+            return new RequestManager(queue);
+        }
+    }// class Builder end
 
-    private Request<T> createRequest(JsonToClassRequest.ResultFactory<T> factory) {
-      if (null == url || "".equals(url)) {
-        throw new IllegalArgumentException("URL must not be empty!");
-      }
+    public static class RequestCreator<T> {
+        private String url;
+        private int method = -1;
+        private Map<String, String> postData;
+        private Map<String, String> header;
+        private RetryPolicy retryPolicy;
+        private Request.Priority priority;
+        private Object cancelTag;
+        private Response.ErrorListener errorListener;
+        private Response.Listener<T> listener;
+        private int type;
+        private String cacheKey;
 
-      if (-1 == method) {
-        method = Request.Method.DEPRECATED_GET_OR_POST;
-      }
+        private RequestManager volleyRequestManager;
 
-      JsonToClassRequest<T> request =
-          new JsonToClassRequest<>(method, url, postData, header, priority, factory);
-      if (null != retryPolicy) {
-        request.setRetryPolicy(retryPolicy);
-      }
-      request.setTag(cancelTag);
-      request.setErrorListener(errorListener);
-      request.setListener(listener);
-      request.requestType(type);
-      request.setCacheKey(cacheKey);
-      return request;
-    }
-  }// class RequestCreator end
+        /** @param method 是{@link Request.Method}中的一种 */
+        private RequestCreator(RequestManager volleyRequestManager, String url, int method) {
+            this.volleyRequestManager = volleyRequestManager;
+            this.url = url;
+            this.method = method;
+        }
 
-  private static class Utils {
-    private static String createUserAgent(Context context) {
-      // 定义用户代理
-      String userAgent = "volleyRequestManager/0";
-      try {
-        String packageName = context.getPackageName();
-        PackageInfo info = context.getPackageManager().getPackageInfo(packageName, 0);
-        String appName = info.applicationInfo.loadLabel(context.getPackageManager()).toString();
-        String deviceName = Build.MANUFACTURER;
-        String os_version = Build.VERSION.RELEASE;//系统版本
-        //            String app_version = info.versionName;
-        String able = context.getResources().getConfiguration().locale.getCountry();
-        //将appName修改为packageName，防止出现中文无法解析
-        userAgent = packageName
-            + " ("
-            + deviceName
-            + "; android "
-            + os_version
-            + "; "
-            + able
-            + "; appName "
-            + appName
-            + ")";
-      } catch (NameNotFoundException e) {
-        e.printStackTrace();
-      }
-      return userAgent;
-    }
-  }// class Util end
+        /** post传递的参数 */
+        public RequestCreator<T> postData(Map<String, String> postData) {
+            this.postData = postData;
+            return this;
+        }
+
+        /** 加载失败回调接口 */
+        public RequestCreator<T> errorListener(Response.ErrorListener listener) {
+            errorListener = listener;
+            return this;
+        }
+
+        /** 加载成功回调接口 */
+        public RequestCreator<T> listener(Response.Listener<T> listener) {
+            this.listener = listener;
+            return this;
+        }
+
+        /** 加载失败重试策略 */
+        public RequestCreator<T> retryPolicy(RetryPolicy retryPolicy) {
+            this.retryPolicy = retryPolicy;
+            return this;
+        }
+
+        /** 优先级 */
+        public RequestCreator<T> Priority(Request.Priority priority) {
+            this.priority = priority;
+            return this;
+        }
+
+        /** 自定义包头信息 */
+        public RequestCreator<T> header(Map<String, String> header) {
+            this.header = header;
+            return this;
+        }
+
+        /** 请求的tag，可以用来取消请求 */
+        public RequestCreator<T> cancelTag(Object cancelTag) {
+            this.cancelTag = cancelTag;
+            return this;
+        }
+
+        /** 请求类型，参见 {@link JsonToClassRequest#ONLY_CACHE}等 */
+        public RequestCreator<T> type(int type) {
+            this.type = type;
+            return this;
+        }
+
+        public RequestCreator<T> cacheKey(String cacheKey) {
+            this.cacheKey = cacheKey;
+            return this;
+        }
+
+        /** 使用结果解析器开始请求网络 */
+        public void into(JsonToClassRequest.ResultFactory<T> factory) {
+            volleyRequestManager.load(createRequest(factory));
+        }
+
+        private Request<T> createRequest(JsonToClassRequest.ResultFactory<T> factory) {
+            if (null == url || "".equals(url)) {
+                throw new IllegalArgumentException("URL must not be empty!");
+            }
+
+            if (-1 == method) {
+                method = Request.Method.DEPRECATED_GET_OR_POST;
+            }
+
+            JsonToClassRequest<T> request =
+                    new JsonToClassRequest<>(method, url, postData, header, priority, factory);
+            if (null != retryPolicy) {
+                request.setRetryPolicy(retryPolicy);
+            }
+            request.setTag(cancelTag);
+            request.setErrorListener(errorListener);
+            request.setListener(listener);
+            request.requestType(type);
+            request.setCacheKey(cacheKey);
+            return request;
+        }
+    }// class RequestCreator end
+
+    private static class Utils {
+        private static String createUserAgent(Context context) {
+            // 定义用户代理
+            String userAgent = "volleyRequestManager/0";
+            try {
+                String packageName = context.getPackageName();
+                PackageInfo info = context.getPackageManager().getPackageInfo(packageName, 0);
+                String appName =
+                        info.applicationInfo.loadLabel(context.getPackageManager()).toString();
+                String deviceName = Build.MANUFACTURER;
+                String os_version = Build.VERSION.RELEASE;//系统版本
+                //            String app_version = info.versionName;
+                String able = context.getResources().getConfiguration().locale.getCountry();
+                //将appName修改为packageName，防止出现中文无法解析
+                userAgent = packageName
+                        + " ("
+                        + deviceName
+                        + "; android "
+                        + os_version
+                        + "; "
+                        + able
+                        + "; appName "
+                        + appName
+                        + ")";
+            } catch (NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            return userAgent;
+        }
+    }// class Util end
 }// class RequestManager end
