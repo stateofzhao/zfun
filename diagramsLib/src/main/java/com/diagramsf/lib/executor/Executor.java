@@ -1,4 +1,4 @@
-package com.diagramsf.core.executor;
+package com.diagramsf.lib.executor;
 
 /**
  * 执行所有实现了{@link Task}接口的任务(use case / interactor)。

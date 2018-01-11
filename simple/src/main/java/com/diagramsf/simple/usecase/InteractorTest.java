@@ -1,6 +1,6 @@
 package com.diagramsf.simple.usecase;
 
-import com.diagramsf.core.executor.BaseTask;
+import com.diagramsf.lib.executor.BaseTask;
 
 /**
  * Created by Diagrams on 2016/8/12 11:34

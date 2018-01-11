@@ -1,4 +1,4 @@
-package com.diagramsf.core.executor;
+package com.diagramsf.lib.executor;
 
 import android.support.annotation.IntDef;
 import java.lang.annotation.Retention;

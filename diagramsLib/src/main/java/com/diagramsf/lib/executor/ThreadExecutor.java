@@ -1,4 +1,4 @@
-package com.diagramsf.core.executor;
+package com.diagramsf.lib.executor;
 
 import android.os.Handler;
 import android.os.Looper;

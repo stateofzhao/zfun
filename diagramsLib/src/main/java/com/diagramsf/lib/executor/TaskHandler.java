@@ -1,4 +1,4 @@
-package com.diagramsf.core.executor;
+package com.diagramsf.lib.executor;
 
 import com.google.common.base.Preconditions;
 
