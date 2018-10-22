@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.4.1)
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-             ObserverUninstall
+             observerUninstall
 
              # Sets the library as a shared library.
              SHARED
@@ -37,13 +37,25 @@ find_library( # Sets the name of the path variable.
               # you want CMake to locate.
               log )
 
+
+# 设置关联库给自己写的源码，比如在自己写的observerUninstall模块中用到了一些NDK中提供的代码log，需要将log导入到observerUninstall中
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in the
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-                       ObserverUninstall
+                       observerUninstall
 
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )
+
+# 使用此命令设置目标ABI，如果要配置仅支持特定的ABI只能在 gradle中配置（可以是模块级的gradle），这里有个疑问：难道不能直接在cmake中配置吗？
+#set_target_properties( # Specifies the target library.
+#                       imported-lib
+#
+#                       # Specifies the parameter you want to define.
+#                       PROPERTIES IMPORTED_LOCATION
+#
+#                       # Provides the path to the library you want to import.
+#                       imported-lib/src/${ANDROID_ABI}/libimported-lib.so )

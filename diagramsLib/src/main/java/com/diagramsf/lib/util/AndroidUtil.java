@@ -288,8 +288,17 @@ public class AndroidUtil {
   public static void hideSoftInput(Context context, View paramEditText) {
     InputMethodManager inputManager =
         (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-    inputManager.hideSoftInputFromWindow(paramEditText.getWindowToken(),
-        InputMethodManager.HIDE_NOT_ALWAYS);
+    inputManager.hideSoftInputFromWindow(paramEditText.getWindowToken(),0);
+  }
+
+  /** 隐藏键盘 */
+  public static void hideSoftInput(Activity activity) {
+    final View nowServiceView = activity.getCurrentFocus();
+    if(null != nowServiceView){
+      InputMethodManager inputManager =
+              (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+      inputManager.hideSoftInputFromWindow(nowServiceView.getWindowToken(),0);
+    }
   }
 
   /** 显示键盘 */

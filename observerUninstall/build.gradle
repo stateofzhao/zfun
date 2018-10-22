@@ -1,58 +1,70 @@
 apply plugin: 'com.android.library'
 
 android {
-  compileSdkVersion rootProject.ext.compileSdkVersion
-  buildToolsVersion rootProject.ext.buildToolsVersion
-  defaultConfig {
-    minSdkVersion 14
-    targetSdkVersion 25
-    versionCode 1
-    versionName "1.0"
-    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-    externalNativeBuild {
-      cmake {
-        cppFlags "-frtti -fexceptions"
-      }
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        //配置使用哪种方式编译c/c++源文件
+        externalNativeBuild {
+            //使用cmake形式编译
+            cmake {
+                cppFlags "-frtti -fexceptions"//编译参数
+            }
+            // or ndkBuild {...}
+        }
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'x86', 'x86_64','armeabi-v7a','arm64-v8a'
+        }
     }
-  }
 
-  buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
     }
-  }
-  externalNativeBuild {
-    cmake {
-      path "CMakeLists.txt"
+
+    //制定cmake全名
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
     }
-  }
 }
 
 dependencies {
-  compile fileTree(dir: 'libs', include: ['*.jar'])
-  androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-    exclude group: 'com.android.support', module: 'support-annotations'
-  })
-  compile 'com.android.support:appcompat-v7:25.0.0'
-  testCompile 'junit:junit:4.12'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:28.0.0'
+    testCompile 'junit:junit:4.12'
 }
 
 buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    // NOTE: Do not place your application dependencies here; they belong
-    // in the individual module build.gradle files
-    // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
+    repositories {
+        google() // and here
+        jcenter()
+    }
+    dependencies {
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+        // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
 
-    classpath 'com.android.tools.build:gradle:2.2.2'
-  }
+        classpath 'com.android.tools.build:gradle:3.2.1'
+    }
 }
 
 allprojects {
-  repositories {
-    jcenter()
-  }
+    repositories {
+        google() // and here
+        jcenter()
+    }
 }

@@ -11,7 +11,7 @@ android {
     versionCode Integer.valueOf("" + appVersionCode).intValue()
     versionName "${appVersionName}"
     minSdkVersion rootProject.ext.minSdkVersion
-    targetSdkVersion 25
+    targetSdkVersion rootProject.ext.targetSdkVersion
   }
 
   buildTypes {
