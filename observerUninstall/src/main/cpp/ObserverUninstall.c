@@ -15,6 +15,7 @@
 #include <netdb.h>
 
 #include <android/log.h>
+#include <string.h>
 
 /* 包含的文件 end */
 
@@ -193,8 +194,9 @@ JNIEXPORT jint JNICALL Java_com_diagramsj_test_jniclass_ObserverUninstall_init
         // 创建锁文件，通过检测加锁状态来保证只有一个卸载监听进程
         int lockFileDescriptor = open(APP_LOCK_FILE, O_RDONLY);
         if (-1 == lockFileDescriptor) {//如果文件不存在
-            lockFileDescriptor = open(APP_LOCK_FILE, O_CREAT);//创建文件
+            lockFileDescriptor = open(APP_LOCK_FILE, O_CREAT,0666);//创建文件
         }
+
         int lockRet = flock(lockFileDescriptor, LOCK_EX | LOCK_NB);
 //        LOGD("检测是否有其他线程锁住了文件： %d", lockRet);
         if (-1 == lockRet) {
@@ -308,7 +310,7 @@ JNIEXPORT jint JNICALL Java_com_diagramsj_test_jniclass_ObserverUninstall_init
                     //所以这里需要重新创建文件锁，防止重复创建子进程
                     int lockFileDescriptor = open(APP_LOCK_FILE, O_RDONLY);
                     if (-1 == lockFileDescriptor) {//如果文件不存在
-                        lockFileDescriptor = open(APP_LOCK_FILE, O_CREAT);//创建文件
+                        lockFileDescriptor = open(APP_LOCK_FILE, O_CREAT,0666);//创建文件
 
                         lockRet = flock(lockFileDescriptor, LOCK_EX | LOCK_NB);
 //                        LOGD("用户清除数据后，重新创建文件锁:检测是否有其他线程锁住了文件： %d", lockRet);

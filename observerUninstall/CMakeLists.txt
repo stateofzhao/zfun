@@ -2,7 +2,15 @@
 # library. You should either keep the default value or only pass a
 # value of 3.4.0 or lower.
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.10.2)
+
+# 定义常量
+set(SRC_DIR src/main/cpp)
+
+# com.android.tools.build:gradle:4.0.0 及以上版本不需要这个，否则会报错 More than one file was found with OS independent path
+# 因为在4.0及以上版本中 会自动给你生成.so文件并打包到apk中。
+# 设置 *.so 文件输出路径，要放在在add_library之前，不然不会起作用
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI})
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -19,10 +27,6 @@ add_library( # Sets the name of the library.
              # Associated headers in the same location as their source
              # file are automatically included.
              src/main/cpp/ObserverUninstall.c )
-
-# Specifies a path to native header files.
-
-include_directories(src/main/cpp/include/)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because system libraries are included in the search path by
