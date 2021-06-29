@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.diagramsf.learn"
+    package="com.zfun.learn"
     >
   <application
       android:allowBackup="true"

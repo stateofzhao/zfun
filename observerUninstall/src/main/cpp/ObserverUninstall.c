@@ -164,12 +164,12 @@ void ndkRequestHttp() {
 }
 
 /*
- *Class:     com_diagramsj_test_jniclass_ObserverUninstall
+ *Class:     com_zfun_test_jniclass_ObserverUninstall
  *Method:    init
  *
  * return: 子进程的pid
  * */
-JNIEXPORT jint JNICALL Java_com_diagramsj_test_jniclass_ObserverUninstall_init
+JNIEXPORT jint JNICALL Java_com_zfun_test_jniclass_ObserverUninstall_init
         (JNIEnv *env, jobject obj, jstring userSerial, jstring url, jstring host) {
 
 //    LOGD("init observer初始化卸载监听");
@@ -389,7 +389,7 @@ JNIEXPORT jint JNICALL Java_com_diagramsj_test_jniclass_ObserverUninstall_init
 
 }
 
-JNIEXPORT jint JNICALL Java_com_diagramsj_test_jniclass_ObserverUninstall_updateData
+JNIEXPORT jint JNICALL Java_com_zfun_test_jniclass_ObserverUninstall_updateData
         (JNIEnv *env, jobject obj, jstring userSerial, jstring url, jstring host) {
     hostName = (char *) (*env)->GetStringUTFChars(env, host, &isCopy);
     hostFile = (char *) (*env)->GetStringUTFChars(env, url, &isCopy);

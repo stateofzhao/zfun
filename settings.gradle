@@ -1,1 +1,1 @@
-include ':apk', ':diagramsLib', ':observerUninstall', ':learn', ':diagramsCore', 'simple'
+include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'simple'

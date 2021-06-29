@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.core.test.jniclass">
+    package="com.zfun.test.jniclass">
 
     <application
         android:allowBackup="true"
