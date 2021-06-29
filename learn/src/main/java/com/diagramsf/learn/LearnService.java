@@ -14,19 +14,21 @@ import android.support.annotation.Nullable;
  * 学习{@link Service}。关于Service的Manifest声明参见：http://developer.android.com/intl/zh-cn/guide/topics/manifest/service-element.html
  * <p>
  * 注意以下几点知识点：<br>
- * 1.通过调用 {@link android.content.ContextWrapper#startService(Intent)}启动服务（会导致对{@link #onStartCommand(Intent, int, int)}的调用），
- * 则服务将一直运行（即使启动服务的组件已被销毁也不受影响），直到服务使用{@link #stopSelf()}自行停止运行，
+ * 1.每次通过调用 {@link android.content.ContextWrapper#startService(Intent)}启动服务时，都会调用{@link #onStartCommand(Intent, int, int)}方法，
+ * 服务将一直运行（即使启动服务的组件已被销毁也不受影响），直到服务使用{@link #stopSelf()}自行停止运行，
  * 或由其他组件通过调用{@link android.content.ContextWrapper#stopService(Intent)}停止它为止。
  * <p>
- * 2.如果组件是通过调用 {@link android.content.ContextWrapper#bindService(Intent, ServiceConnection, int)}来创建服务（且未调用onStartCommand()），
- * 则服务只会在该组件与其绑定时运行（组件destroy后会自动取消与服务的绑定）。一旦该服务与所有客户端之间的绑定全部取消，系统便会销毁它。
+ * 2.如果组件是通过调用 {@link android.content.ContextWrapper#bindService(Intent, ServiceConnection, int)}来创建服务
+ * （不会回调onStartCommand()生命周期方法，但是可以再次通过调用 {@link android.content.ContextWrapper#startService(Intent)} 方法来让系统回调onStartCommand()方法），
+ * 则服务只会在该组件与其绑定时运行（组件destroy后会自动取消与服务的绑定）。一旦该服务与所有客户端之间的绑定全部取消，系统便会销毁它
+ * （注意，如果通过bind方式启动服务后，又调用了{@link android.content.ContextWrapper#startService(Intent)}方法，则不会在解除绑定后销毁它 ）。
  * <p>
- * 3.{@link #onCreate()}在Service的一次生命周期中只执行一次，{@link #onStartCommand(Intent, int, int)}会在每次请求启动服务（调用
- * {@link android.content.ContextWrapper#startService(Intent)}）时调用，但是要停止服务，只需一个服务停止请求（使用{@link #stopSelf()}
+ * 3.{@link #onCreate()}在Service的一次生命周期中只执行一次，但是{@link #onStartCommand(Intent, int, int)}会在每次请求启动服务（调用
+ * {@link android.content.ContextWrapper#startService(Intent)}）时调用；但是要停止服务，只需一个服务停止请求（使用{@link #stopSelf()}
  * 或{@link android.content.ContextWrapper#stopService(Intent)}）。
  * <p>
- * 4.由于调用{@link #stopSelf()}或{@link android.content.ContextWrapper#stopService(Intent)}会停止服务，但是如果服务同时处理
- * 多个{@link #onStartCommand(Intent, int, int)}请求，则您不应该在处理完一个启动请求之后停止服务，此时应该使用
+ * 4.调用{@link #stopSelf()}或{@link android.content.ContextWrapper#stopService(Intent)}会粗暴的停止服务，假如服务同时处理
+ * 多个{@link #onStartCommand(Intent, int, int)}请求，则您不应该在处理完一个启动请求之后就粗暴的停止服务，此时应该使用
  * {@link #stopSelf(int)}方法，来把 onStartCommand(Intent,int,int) 方法的第三个参数传递进来，这样系统会根据最近的
  * onStartCommand(Intent,int,int)中的第三个参数是否与 stopSelf(int) 参数匹配，如果匹配就销毁服务，否则不销毁服务。
  * <p>

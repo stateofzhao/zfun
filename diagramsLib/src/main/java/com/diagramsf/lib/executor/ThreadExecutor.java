@@ -69,18 +69,23 @@ class ThreadExecutor implements Executor {
   }// end PriorityRunnable class
 
   //一个FutureTask 有七中状态，分别为：
-  // NEW(0)、COMPLETING(1)、NORMAL(2)、EXCEPTIONAL(3)、CANCELLED(4)、INTERRUPTING(5)、INTERRUPTED(6)；
+  // NEW(0)：表示这是一个新的任务，或者还没有执行完的任务，是初始状态。
+  // COMPLETING(1)：表示任务执行结束（正常执行结束，或者发生异常结束），但是还没有将结果保存到outcome中，是一个中间状态。
+  // NORMAL(2)：表示任务正常执行结束，并且已经把执行结果保存到outcome字段中，是一个最终状态。
+  // EXCEPTIONAL(3)：表示任务发生异常结束，异常信息已经保存到outcome中，这是一个最终状态。
+  // CANCELLED(4)、
+  // INTERRUPTING(5)、
+  // INTERRUPTED(6)；
   //当调用FutureTask的cancel(boolean)方法时，会根据 FutureTask当前状态的不同而触发不同的行为：
   //1.如果当前state不是NEW（当任务正在正常执行时，状态是NEW） 那么就退出方法，返回false，
-  // 这时的任务状态是 完成了 或是被取消了 或是被中断了。
+  // 这时的任务状态是 完成了 或是 被取消了 或是 被中断了。
   //2.如果当前state是NEW,那么如果cancel(boolean)中传递的是true（任务可中断），那么就会把状态置为INTERRUPTING
   // 并且在调用Thread.interrupt()方法后，把状态置为INTERRUPTED(NEW->INTERRUPTING->INTERRUPTED)；
   // 如果传递的是false，那么直接将状态置为CANCELLED（NEW->CANCELLED）。
   //
   //上述第一种情况是不会回调 FutureTask的 done()方法的，第二种情况一定会立即回调 FutureTask的 done()方法的（无论
   // 任务是否仍然正在执行！一个 FutureTask只会回调一次done()方法，所以执行完后不会再回调done()方法了）。
-  private static class PriorityFuture extends FutureTask<Object>
-      implements Comparable<PriorityFuture> {
+  private static class PriorityFuture extends FutureTask<Object> implements Comparable<PriorityFuture> {
     HolderRunnable holderRunnable;
     Task task;
     ThreadExecutor scheduler;
@@ -96,12 +101,15 @@ class ThreadExecutor implements Executor {
       return task.getPriority();
     }
 
-    //这个方法，不是在固定线程中执行的，如果是在主线程调用了cancel()方法，如果任务被取消掉，
-    // 那么执行任务的此方法就是在主线程中执行；
+    //这个方法无论如何都会被调用到的，我们在这个方法中发送任务执行结果通知。
+    //这个方法不是在固定线程中执行的：
+    //如果是在主线程调用了cancel()方法，如果任务被取消掉，那么执行任务的此方法就是在主线程中执行；
     //如果任务正常执行完毕，那么这个方法就是在执行任务的那个线程中调用。
     @Override protected void done() {
       try {
         //fixme 此处以后要直接有结果，可以通过修改Task类的run方法来实现返回结果，然后把Task封装成Callable即可
+        //虽然是阻塞方法，但是无需担心，因为done()方法被调用的时机决定了此时FutureTask一定已经执行完毕或者被取消，
+        // 所以get()方法一定是瞬间返回的。
         get();
         scheduler.dispatcher.dispatchFinish(holderRunnable);
       } catch (InterruptedException e) {
@@ -113,7 +121,7 @@ class ThreadExecutor implements Executor {
       } catch (CancellationException e) {//如果被取消掉了，（会在调用cancel()方法的同一个线程中执行）
         e.printStackTrace();
         //用户直接取消了任务执行，此时任务应该还在队列中，没有被执行到，此时不必通过dispatcher来通知删除引用，
-        // 因为在掉cancel(tag)方法是，已经直接通过dispatcher进行了操作
+        // 因为在调cancel(tag)方法时，已经直接通过dispatcher进行了操作
 
         //在android系统AsyncTask中的实现是，在这里仍然会传递一个null结果到onResult()方法中
       }

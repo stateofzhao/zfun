@@ -13,7 +13,6 @@ import com.diagramsf.lib.util.StringUtil;
 import com.diagramsf.simple.R;
 
 public class BinaryActivity extends AppCompatActivity {
-
   LinearLayout ll;
   TextView tv1, tv2, tv3, tv4;
   TextView tv5, tv6, tv7, tv8;

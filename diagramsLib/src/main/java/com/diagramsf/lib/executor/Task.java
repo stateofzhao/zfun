@@ -5,11 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * 能够被{@link Executor}执行的任务，domain层的所有 interactor(use case)都需要实现此接口，
- * 以便让{@link Executor}来执行。
- *
- * //这个接口也可以命名为UseCase，看个人喜好了
- *
+ * 能够被{@link Executor}执行的任务
+ * <p>
  * Created by Diagrams on 2016/8/5 18:09
  */
 public interface Task {

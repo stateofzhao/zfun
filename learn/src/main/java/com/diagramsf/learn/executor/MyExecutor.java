@@ -31,7 +31,7 @@ import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
  * 调用 {@link #submitTaskForMainThreadCallback(Priority, Callable, ResultCallback)} 添加任务
  * <p>
  *
- * @deprecated 使用{@link UseCaseThreadPoolScheduler}代替，此类存在的用途就是用来学习线程池的~
+ * @deprecated 使用 diagramsLib-Executor 代替，此类存在的用途就是用来学习线程池的~
  */
 public class MyExecutor {
   private final static String TAG = "MyExecutor";
@@ -95,9 +95,8 @@ public class MyExecutor {
     //线程池的阻塞队列
     PriorityBlockingQueue<Runnable> queue = new PriorityBlockingQueue<>();
     //实例化线程池
-    mExecutor =
-        new MyExecutorService(CORE_THREAD, MAX_THREAD, KEEP_TIME, TimeUnit.MILLISECONDS, queue,
-            new Util.MyThreadFactory(), defaultHandler);
+    mExecutor = new MyExecutorService(CORE_THREAD, MAX_THREAD, KEEP_TIME, TimeUnit.MILLISECONDS,
+            queue, new Util.MyThreadFactory(), defaultHandler);
 
     mReferenceQueue = new ReferenceQueue<>();
 
@@ -227,12 +226,27 @@ public class MyExecutor {
   }
 
   /**
+   * 通过这个 FutureTask 可以实现一个很好的"功能"：
+   * 模拟实现精确的网络超时，例如，设置5秒超时，超过5秒后如果仍然没有获取网络结果那么方法也需要直接返回，如果提前获取到了网络结果那么也直接返回。
+   * 代码如下：
+   * <code>
+   * public Result sycHttp(long timeOut){
+   *    Callable<Result> online = new Callable<>(){
+   *        //...执行http请求，获取到result
+   *        return result;
+   *    };
+   *    FutureTask<Result> task = new FutureTask<>(online);
+   *    new Thread(task).start();
+   *
+   *    return task.get(5000,TimeUnit.MILLISECONDS);
+   * }
+   *</code>
+   *<p/>
    * 提交到 线程池的PriorityBlockingQueue 中的任务, 泛型 T 表示任务执行完 生成的结果类型<br>
    * 实现了 Comparable接口 为了在 线程池的PriorityBlockingQueue(优先级队列) 中来比较优先级，
-   * 并且重写了 done()方法来传递任务执行的结果
+   * 并且重写了 done()方法来传递任务执行的结果。
    */
-  private static class MyFutureTask<T> extends FutureTask<T>
-      implements Comparable<MyFutureTask<T>> {
+  private static class MyFutureTask<T> extends FutureTask<T> implements Comparable<MyFutureTask<T>> {
     private MyCallable<T> myCallable;// 引用 MyCallable 是为了进行优先级比较
 
     public MyFutureTask(MyCallable<T> callable) {
@@ -244,7 +258,8 @@ public class MyExecutor {
 
     // 在这里需要注意下，当futureTask 标记为isDone状态时会调用这个方法，
     // cancel(boolean)掉FutureTask也会把FutureTask标记为isDone状态，
-    // 也就是也会回调这个方法
+    // 也就是也会回调这个方法。
+    //可以理解为，这个方法无论如何都会被调用到的，我们在这个方法中发送任务执行结果通知。
     @Override protected void done() {
       ResultCallbackWeakReference callback_ref = myCallable.callback_ref;
       if (null == callback_ref) {// 没有回调接口，直接返回
@@ -262,6 +277,8 @@ public class MyExecutor {
         return;
       }
       try {
+          //虽然是阻塞方法，但是无需担心，因为done()方法被调用的时机决定了此时FutureTask一定已经执行完毕或者被取消，
+          // 所以get()方法一定是瞬间返回的。
         myCallable.result = get();
         postResult(myCallable);
       } catch (InterruptedException e) {

@@ -1,10 +1,8 @@
 package com.diagramsf.lib.executor;
 
 /**
- * 执行所有实现了{@link Task}接口的任务(use case / interactor)。
- *
- * //也可以命名为UseCaseScheduler，看个人喜好。
- *
+ * 执行所有实现了{@link Task}接口的任务。
+ * <p>
  * Created by Diagrams on 2016/8/5 18:29
  */
 interface Executor {
