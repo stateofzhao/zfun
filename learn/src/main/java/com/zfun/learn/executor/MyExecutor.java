@@ -226,6 +226,8 @@ public class MyExecutor {
   }
 
   /**
+   * FutureTask在自己的run()方法里面实现了自己的功能，所以直接将它传递给线程或者线程池来执行即可。
+   *
    * 通过这个 FutureTask 可以实现一个很好的"功能"：
    * 模拟实现精确的网络超时，例如，设置5秒超时，超过5秒后如果仍然没有获取网络结果那么方法也需要直接返回，如果提前获取到了网络结果那么也直接返回。
    * 代码如下：
@@ -277,6 +279,8 @@ public class MyExecutor {
         return;
       }
       try {
+          //在这里调用这个get()方法很重要，它能够实现很多功能，包括：检测是否执行run()方法时出现了异常；是否有结果了；是否被中断了；是否被取消了
+
           //虽然是阻塞方法，但是无需担心，因为done()方法被调用的时机决定了此时FutureTask一定已经执行完毕或者被取消，
           // 所以get()方法一定是瞬间返回的。
         myCallable.result = get();
@@ -285,8 +289,9 @@ public class MyExecutor {
         e.printStackTrace();
         myCallable.isInterruptCancel = true;
         postCancel(myCallable);
-      } catch (ExecutionException e) {
-        e.printStackTrace();
+      } catch (ExecutionException e) {//这里是执行run()方法时出异常了，一般是业务逻辑调用线程池来跑时，业务逻辑的run()方法里面出现了异常
+        //为了便于调试（定位异常代码），这里直接将异常抛出去
+        throw new RuntimeException("An error occurred while executing thread", e.getCause());
       } catch (CancellationException e) { // 当指定时长执行任务时，如果指定的时间到了，但是任务还没有执行完的话，会抛出这个异常
         Log.d(TAG, "something is wrong reason: " + e.getCause());
         postResult(null);
