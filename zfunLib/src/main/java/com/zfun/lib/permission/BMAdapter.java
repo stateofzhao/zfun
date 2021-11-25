@@ -2,9 +2,9 @@ package com.zfun.lib.permission;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 import com.zfun.lib.permission.core.Callback;
 import com.zfun.lib.permission.core.IamUI;
 import com.zfun.lib.permission.core.ManagerPermissions;

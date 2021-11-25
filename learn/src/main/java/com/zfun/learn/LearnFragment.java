@@ -2,11 +2,12 @@ package com.zfun.learn;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import androidx.fragment.app.FragmentTransaction;
 
 public class LearnFragment extends Fragment {
 
@@ -60,7 +61,7 @@ public class LearnFragment extends Fragment {
      * 注意：无论如何会在 {@link #onDestroy()}之前调用此方法。
      * Fragment中没有 onRestoreInstanceState(Bundle) 方法！
      * <p/>
-     * 注意：调用{@link android.support.v4.app.FragmentTransaction#detach(Fragment)}方法把{@link Fragment}detach掉后，
+     * 注意：调用{@link FragmentTransaction#detach(Fragment)}方法把{@link Fragment}detach掉后，
      * 不会触发这个回调！
      */
     @Override

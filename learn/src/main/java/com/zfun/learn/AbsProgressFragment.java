@@ -1,7 +1,7 @@
 package com.zfun.learn;
 
 
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 
 //不再推荐像这样采用继承结构来处理UI层逻辑了，继承结构处理UI层逻辑太恶心了，经常使用者找不到View在哪里。
 //现在推荐使用组合形式（采用装饰着模式来实现）来装配需要的封装好的UI逻辑。

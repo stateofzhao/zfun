@@ -3,7 +3,7 @@ package com.zfun.learn.executor;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;

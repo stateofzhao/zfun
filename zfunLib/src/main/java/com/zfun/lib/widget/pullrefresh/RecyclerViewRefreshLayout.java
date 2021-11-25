@@ -3,13 +3,13 @@ package com.zfun.lib.widget.pullrefresh;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 
 /**
- * 专门针对{@link android.support.v7.widget.RecyclerView} 优化的下拉刷新 .
+ * 专门针对{@link RecyclerView} 优化的下拉刷新 .
  * <p/>
  * 注意：1. ContentView (也就是第二个ChildView)必须是RecyclerView，并且RecyclerView的背景必须是透明的.
  */
