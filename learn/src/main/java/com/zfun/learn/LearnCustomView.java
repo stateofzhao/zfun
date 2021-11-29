@@ -5,7 +5,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.view.View;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
 
 /**
  * 自定义View 需要注意的重写方法！<P>
@@ -16,7 +17,7 @@ import android.view.View;
  * onSizeChanged(),onDraw()即可，如果你需要更好地控制你的视图的布局参数需要实现onMeasure()方法； 自定义ViewGroup
  * 需要实现 onMeasure()和 onLayout()即可。
  */
-public class LearnCustomView extends View {
+public class LearnCustomView extends ViewGroup {
 
   public LearnCustomView(Context context) {
     super(context);
@@ -36,12 +37,14 @@ public class LearnCustomView extends View {
   }
 
   //这个方法获取建议的最小高度
-  @Override protected int getSuggestedMinimumHeight() {
+  @Override
+  protected int getSuggestedMinimumHeight() {
     return super.getSuggestedMinimumHeight();
   }
 
   //这个方法获取建议的最小宽度
-  @Override protected int getSuggestedMinimumWidth() {
+  @Override
+  protected int getSuggestedMinimumWidth() {
     return super.getSuggestedMinimumWidth();
   }
 
@@ -52,13 +55,14 @@ public class LearnCustomView extends View {
   // 虽然此方法不是必须的，但是一般ViewGroup还是要重写此方法，来给子View设置measureWidth和measureHeight（通过measureChildren()、
   // measureChild()或者measureChildWithMargin()来设置）<P>
 
-  /** 可以参见{@link StackLayout}的用法 */
+  /** 可以参见{@link com.zfun.lib.widget.StackLayout}的用法 */
   // 这个方法是有两个作用：
   // 1. 通过调用setMeasuredDimension()设置自身尺寸;
   // 2. 读取子View的LayoutParams中的layout_width和layout_height 分别结合 widthMeasureSpec 和 heightMeasureSpec
   // 来设置子View的尺寸（这个过程被封装到了 View的measureChild()、measureChildren()和measureChildWithMargin()方法中，
   // 具体怎么计算的可以看在measureChild()、measureChildren()、measureChildWidthMargin()中调用的getChildMeasureSpec()方法）；
-  @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+  @Override
+  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);//调用这个父方法，能够实现设置ViewGroup自身所需的尺寸。
 
     // 1.方法中的参数怎么来的-----由本View的父View中的layout_width，layout_height和padding以及本View的LayoutParams共同决定。
@@ -96,13 +100,11 @@ public class LearnCustomView extends View {
   // 这个方法是确定怎么放置**子View**的，其实ViewGroup根据这个方法来确定把子View画到画布的什么位置上。
   //（具体逻辑应该是这样的，一个画布对应一个Activity，ViewGroup负责确定子View在画布上的位置而View只专注负责绘制具体内容）。<P>
   // 关于 本ViewGroup 如何放置（布局），是 本ViewGroup 的父View来确定的。<P>
-  @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-    super.onLayout(changed, left, top, right, bottom);
-
+  @Override
+  protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
     // 1.ViewGroup在这个方法中遍历调用子View的layout()方法来实现布局子View。<P>
     // 2.子View通过调用setFrame()方法用来设置自身相对于父容器（本ViewGroup）的位置的。但是这个方法是一个隐藏方法！
     // 因为在View.layout()方法中系统会自动调用这个方法。<P>
-
   }
 
   // 一般只有自定义View（非ViewGroup）重写这个方法，如果不需要根据布局属性来计算自身尺寸的话，简单重写这个方法直接用系统确定的
@@ -112,13 +114,42 @@ public class LearnCustomView extends View {
   // 当Android确定了View的大小后，会回调这个方法，通知你View的确切尺寸。所以这个方法一般在onMeasure()方法之后调用，
   // 有时候也不调用（View的尺寸没有变化时不调用）<P>
   // 这个方法传递进来的参数是View的确切尺寸，用来计算onDraw()方法需要绘制的尺寸。<p>
-  @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+  @Override
+  protected void onSizeChanged(int w, int h, int oldw, int oldh) {
     super.onSizeChanged(w, h, oldw, oldh);
     // 1.View(非ViewGroup)如果不是特别关心布局属性的话直接拿 w和h（都包含着padding值）来确定绘制尺寸就可以了。
   }
 
   // 一般只有自定义View（非ViewGroup）的时候重写
-  @Override protected void onDraw(Canvas canvas) {
+  @Override
+  protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
+  }
+
+  //一次touch事件的起点是ACTION_DOWN，终点是ACTION_UP或者ACTION_CANCEL。
+  //
+  //在 ACTION_DOWN 事件返回true表示仍然需要后续touch事件。
+  //
+  //View只有在 ACTION_DOWN 时返回了true，才有机会接收到后续TOUCH事件。例如，本View在此方法中ACTION_DOWN返回了true，在自己没有接收到
+  // ACTION_CANCEL之前即使 ACTION_MOVE 返回false，它仍然可以一直接收到touch事件；但是一旦ACTION_DOWN返回了false，
+  // 那么不在有机会接收到后续的touch事件了。
+  //
+  //负责分发touch事件，包括自己以及自己的子View，从自己的节点开始，所有touch事件都由此方法负责分发。
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent ev) {
+    return super.dispatchTouchEvent(ev);
+  }
+
+  //负责拦截touch事件，一旦拦截到了（在某个touch事件ACTION_MOVE等返回true），就会转而执行自己的onTouchEvent()方法，且不会在执行此方法。
+  //一旦拦截了事件，dispatchTouchEvent()方法会向 自己的子View 分发 ACTION_CANCEL 事件。
+  @Override
+  public boolean onInterceptTouchEvent(MotionEvent ev) {
+    return super.onInterceptTouchEvent(ev);
+  }
+
+  //处理自己接收到的Touch事件。
+  @Override
+  public boolean onTouchEvent(MotionEvent event) {
+    return super.onTouchEvent(event);
   }
 }
