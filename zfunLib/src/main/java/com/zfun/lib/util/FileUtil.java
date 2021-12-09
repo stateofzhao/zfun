@@ -8,8 +8,8 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
 import android.util.Log;
+import androidx.core.util.Preconditions;
 
-import com.google.common.base.Preconditions;
 import java.io.*;
 import java.net.*;
 import java.util.UUID;

@@ -18,7 +18,6 @@
 ### Dependencies
 - com.squareup.okhttp:okhttp:2.5.0
 - com.squareup.okhttp:okhttp-urlconnection:2.5.0
-- com.google.guava:guava:18.0
 - com.facebook.fresco:fresco:0.14.0
 - com.android.support:support-v4:24.2.1
 

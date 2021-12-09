@@ -1,6 +1,6 @@
 package com.zfun.lib.executor;
 
-import com.google.common.base.Preconditions;
+import androidx.core.util.Preconditions;
 
 /**
  * 衔接{@link Task}和{@link ThreadExecutor}用的，是一个帮助类，为了进一步封装，对外暴露出友好的API。

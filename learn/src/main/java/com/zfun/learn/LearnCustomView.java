@@ -140,14 +140,20 @@ public class LearnCustomView extends ViewGroup {
     return super.dispatchTouchEvent(ev);
   }
 
-  //负责拦截touch事件，一旦拦截到了（在某个touch事件ACTION_MOVE等返回true），就会转而执行自己的onTouchEvent()方法，且不会在执行此方法。
-  //一旦拦截了事件，dispatchTouchEvent()方法会向 自己的子View 分发 ACTION_CANCEL 事件。
+  //负责拦截touch事件，一旦拦截到了（在某个touch事件ACTION_MOVE等返回true），就会转而执行自己的onTouchEvent()方法，且后续不会在执行此方法。
+  //一旦拦截了事件，并且不是 ACTION_DOWN 事件，dispatchTouchEvent()方法会向 自己的子View 分发 ACTION_CANCEL 事件。
+  //如果自己是最底层View，那么自己的 onInterceptTouchEvent() 方法不会执行？这个需要验证
   @Override
   public boolean onInterceptTouchEvent(MotionEvent ev) {
     return super.onInterceptTouchEvent(ev);
   }
 
+  //touch事件是从上向下传递 dispatchTouchEvent() -> onInterceptTouchEvent() -> onTouchEvent()；
+  //一旦某层开始消费，就会阻隔再向下传递。
+  //
   //处理自己接收到的Touch事件。
+  //返回true表示消耗事件，false表示不消耗，注意它的ACTION_DOWN返回值比较重要，决定了它是否要这次touch事件，
+  // 如果它在ACTION_DOWN返回了true，其他action类型返回false，不回影响它后续touch事件的接收，唯一影响的是它所在的Activity的onTouchEvent()是否执行。
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     return super.onTouchEvent(event);
