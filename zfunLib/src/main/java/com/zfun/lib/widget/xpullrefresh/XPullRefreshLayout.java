@@ -256,7 +256,8 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     //NestedScrollingParent --- start
     @Override
     public boolean onStartNestedScroll(View child, View target, int axes, int type) {
-        return axes == ViewCompat.SCROLL_AXIS_VERTICAL;//只处理纵向滚动
+        Log.e(TAG, "onStartNestedScroll");
+        return axes == ViewCompat.SCROLL_AXIS_VERTICAL;
     }
 
     @Override
@@ -278,9 +279,9 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
 
     @Override
     public void onStopNestedScroll(View target, int type) {
+        Log.e(TAG, "onStopNestedScroll");
         mParentHelper.onStopNestedScroll(target, type);
         stopNestedScroll(type);
-        Log.e(TAG, "onStopNestedScroll");
         changeHeaderStateRefreshIfNeed();
         handleHeaderSpringBackIfNeed();
     }

@@ -280,8 +280,33 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
         return mChildHelper.dispatchNestedPreFling(velocityX, velocityY);
     }
 
-    // NestedScrollingParent2
-    //参数 axes == getNestedScrollAxes() 的返回值
+    /*//此方法是 NestedScrollingChildHelper.java 类中的，放到这里是为了便于理解 onStartNestedScroll() 和 onNestedScrollAccepted() 方法
+    public boolean startNestedScroll(@ViewCompat.ScrollAxis int axes, @ViewCompat.NestedScrollType int type) {
+        if (hasNestedScrollingParent(type)) {
+            // Already in progress
+            return true;
+        }
+        if (isNestedScrollingEnabled()) {
+            ViewParent p = mView.getParent();
+            View child = mView;
+            while (p != null) {
+                if (ViewParentCompat.onStartNestedScroll(p, child, mView, axes, type)) {
+                    setNestedScrollingParentForType(type, p);
+                    ViewParentCompat.onNestedScrollAccepted(p, child, mView, axes, type);
+                    return true;
+                }
+                if (p instanceof View) {
+                    child = (View) p;
+                }
+                p = p.getParent();
+            }
+        }
+        return false;
+    }*/
+    //NestedScrollingParent2 的方法；
+    //子View调用 startNestedScroll() 方法时会触发；
+    //参数 axes == getNestedScrollAxes() 的返回值；
+    //返回true表示本ViewGroup会处理 子View的后续嵌套滚动事件，返回false表示本ViewGroup对子View的后续滚动"不感兴趣"；
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int axes, int type) {
         //如果子View不是 NestedScrollingChild 自己在 onTouchEvent()#ACTION_MOVE 事件中进行了处理，所以无需再接收后续的 NestedScrollingParent 回调了
@@ -300,7 +325,7 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
 
     @Override
     public void onStopNestedScroll(@NonNull View target, int type) {
-        mParentHelper.onStopNestedScroll(target, type);
+        mParentHelper.onStopNestedScroll(target, type);//此方法会执行后 getNestedScrollAxes() 为0;
         stopNestedScroll(type);
     }
 
