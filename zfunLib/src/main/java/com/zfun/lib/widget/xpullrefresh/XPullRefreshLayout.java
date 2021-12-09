@@ -36,6 +36,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     private OnRefreshListener mOnRefreshListener;
 
     private boolean mIsBeingDragged = false;
+    private boolean mIsInTouchMotion = false;
 
     private OverScroller mScroller;
     private VelocityTracker mVelocityTracker;
@@ -70,7 +71,27 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         }
         mScroller.abortAnimation();
         mCurHeaderState = HEADER_STATE_NORMAL;
-        handleHeaderSpringBackIfNeed();
+        //方案一,结束刷新时，如果有头View漏出来了且在TOUCH中，不强制回滚：
+        if(!mIsInTouchMotion){
+            handleHeaderSpringBackIfNeed();
+        }
+
+        //方案二，结束刷新时，如果有头View漏出来了，且在TOUCH，强制回滚：
+        //如果触发了回滚，向子View发送 ACTION_CANCEL 事件，下面这种逻辑暂时有点问题，待以后完善吧
+        /*final boolean isNeedSpringBack = handleHeaderSpringBackIfNeed();
+        if (isNeedSpringBack) {
+            final int childCount = getChildCount();
+            if (childCount > 0) {
+                final long now = SystemClock.uptimeMillis();
+                final MotionEvent event = MotionEvent.obtain(now, now, MotionEvent.ACTION_CANCEL, 0.0f, 0.0f, 0);
+                event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+                for (int i = 0; i < childCount; i++) {
+                    final View child = getChildAt(i);
+                    child.dispatchTouchEvent(event);
+                }
+                event.recycle();
+            }
+        }*/
     }
 
     public void setParams(int pullRefreshLimit, int springBackAnimTimeMs) {
@@ -102,6 +123,22 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         super.scrollTo(0, scrollY);//scrollY 为正，自己向上滚动；为负，自己向下滚动
     }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        final int action = ev.getAction() & MotionEvent.ACTION_MASK;
+        if (action == MotionEvent.ACTION_DOWN) {
+            mIsInTouchMotion = true;
+        } else if (action == MotionEvent.ACTION_UP) {
+            changeHeaderStateRefreshIfNeed();
+            handleHeaderSpringBackIfNeed();
+            mIsInTouchMotion = false;
+        } else if (action == MotionEvent.ACTION_CANCEL) {
+            handleHeaderSpringBackIfNeed();
+            mIsInTouchMotion = false;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
     //touch事件只是为了实现 NestedScrollingChild 功能
     //只负责何时进行拦截
     @Override
@@ -110,17 +147,22 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mLastY = (int) ev.getY();
+
                 mScroller.computeScrollOffset();
+                Log.e("XPull-SCROLLER", "onInterceptTouchEvent = ACTION_DOWN = "+mScroller.isFinished());
+                if(!mScroller.isFinished()){
+                    mScroller.abortAnimation();
+                }
+                /*mScroller.computeScrollOffset();
                 Log.e(TAG, "onInterceptTouchEvent = ACTION_DOWN = "+mScroller.isFinished());
                 if (mScroller.isFinished()) {
                     mIsBeingDragged = false;
                 } else {
                     mIsBeingDragged = true;
-                }
+                }*/
                 startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH);
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.e(TAG, "onInterceptTouchEvent = ACTION_MOVE");
                 Log.e(TAG, "onInterceptTouchEvent = ACTION_MOVE == getNestedScrollAxes() = " + getNestedScrollAxes());
                 int y = (int) ev.getY();
                 int yDiff = Math.abs(y - mLastY);
@@ -129,6 +171,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 if (yDiff > mTouchSlop && (getNestedScrollAxes() & ViewCompat.SCROLL_AXIS_VERTICAL) == ViewCompat.SCROLL_AXIS_NONE) {
                     mLastY = y;
                     mIsBeingDragged = true;
+                    mNestedYOffset = 0;
 
                     //其实这个也可以放到 onTouchEvent() 的 MotionEvent.ACTION_MOVE 中，但是为了不频繁调用，就需要再用个变量判断，
                     // 放到这里没问题，因为一旦 mIsBeingDragged==true，就 return true了，那么就会转而执行 onTouchEvent() 方法，不再执行此方法了。
@@ -160,12 +203,19 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 Log.e(TAG, "onTouchEvent - ACTION_DOWN = " + mIsBeingDragged);
-                mIsBeingDragged = !mScroller.isFinished();
+                /*mIsBeingDragged = !mScroller.isFinished();
                 if (mIsBeingDragged) {
                     mScroller.abortAnimation();
                     disAllowParentIntercept(true);
                     startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH);
+                }*/
+                mNestedYOffset = 0;
+                mIsBeingDragged = true;
+                if(!mScroller.isFinished()){
+                    mScroller.abortAnimation();
                 }
+                disAllowParentIntercept(true);
+                startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH);
                 mLastY = (int) event.getY();
                 initOrClearTracker();
                 break;
@@ -211,8 +261,9 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                changeHeaderStateRefreshIfNeed();
-                handleHeaderSpringBackIfNeed();
+                //放到 dispatchTouchEvent() 中处理了
+                /*changeHeaderStateRefreshIfNeed();
+                handleHeaderSpringBackIfNeed();*/
                 if (isCanFling()) {
                     mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
                     final int velocityY = (int) mVelocityTracker.getYVelocity();
@@ -221,7 +272,8 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 endDrag();
                 break;
             case MotionEvent.ACTION_CANCEL:
-                handleHeaderSpringBackIfNeed();
+                //放到 dispatchTouchEvent() 中处理了
+                /*handleHeaderSpringBackIfNeed();*/
                 endDrag();
                 break;
         }
@@ -240,6 +292,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
             }
             return;
         }
+        Log.e("XPull-SCROLLER", "computeScroll");
         final int oldScrollY = getScrollY();
         final int scrollY = mScroller.getCurrY();
         int yDelta = scrollY - oldScrollY;
@@ -282,8 +335,6 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         Log.e(TAG, "onStopNestedScroll");
         mParentHelper.onStopNestedScroll(target, type);
         stopNestedScroll(type);
-        changeHeaderStateRefreshIfNeed();
-        handleHeaderSpringBackIfNeed();
     }
 
     @Override
@@ -447,14 +498,16 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     }
 
     //这个纯粹是自己的滚动业务，无需nestScroll调用
-    private void handleHeaderSpringBackIfNeed() {
+    private boolean handleHeaderSpringBackIfNeed() {
         if (mCurHeaderState == HEADER_STATE_NORMAL) {
             final int scrollY = getScrollY();//<0 手指下拉，view发生了向下滚动
             if (scrollY < 0) {//需要回弹headerView
                 mScroller.startScroll(0, scrollY, 0, -scrollY, mHeaderSpringBackAnimTimeMs);
                 ViewCompat.postInvalidateOnAnimation(this);
+                return true;
             }
         }
+        return false;
     }
 
     private void handleFlingWithNestedScroll(int velocityY) {

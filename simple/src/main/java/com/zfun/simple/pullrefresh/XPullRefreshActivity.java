@@ -54,7 +54,7 @@ public class XPullRefreshActivity extends AppCompatActivity {
         pullRefreshLayout.setOnRefreshListener(new XPullRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                handler.postDelayed(new RefreshTask(), 20000);//延迟两秒，模拟网络操作
+                handler.postDelayed(new RefreshTask(), 5000);//延迟两秒，模拟网络操作
             }
         });
     }
@@ -75,7 +75,6 @@ public class XPullRefreshActivity extends AppCompatActivity {
                 recyclerView.setAdapter(new RecyclerAdapter(data));
             }
         }
-
     }
 
     public class RefreshTask implements Runnable {
