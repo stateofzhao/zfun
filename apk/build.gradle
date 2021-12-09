@@ -7,7 +7,7 @@ android {
 
   defaultConfig {
     proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard-project.txt')
-    applicationId "com.zfun"
+    applicationId "com.zfun.apk"
     versionCode Integer.valueOf("" + appVersionCode).intValue()//在根目录的 gradle.properties中定义了
     versionName "${appVersionName}"//在根目录的 gradle.properties中定义了
     minSdkVersion rootProject.ext.minSdkVersion
