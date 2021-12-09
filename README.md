@@ -1,6 +1,6 @@
 # zfun
 用来学习，积累工具。
-下面时各个module介绍
+下面是各个module介绍
 
 ## zfunLib
 包含：
