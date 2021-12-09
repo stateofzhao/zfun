@@ -7,7 +7,8 @@
 1. 基于Volley的网络框架。  
 2. Effective Android UI 实践。
 3. 自定义View（在widget包下）包括：
-   - 下拉刷新通用Layout - PullRefreshlayout
+   - 通用下拉刷新Layout - PullRefreshLayout
+   - 采用NestedScrolling框架的通用下拉刷新Layout - XPullRefreshLayout
    - 字母导航（继承自View完全自己实现）- LetterNavigation
    - 无限循环ViewPager - LoopViewPager
    - 滑动菜单Layout - MyMenuLayout
