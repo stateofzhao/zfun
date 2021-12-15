@@ -1,32 +1,51 @@
 apply plugin: 'com.android.library'
 
+//Gradle 会根据您的buildType{}和productFlavors自动创建构建变体，
+// 并按照 <product-flavor><Build-Type> 的格式命名这些变体
 android {
-  compileSdkVersion rootProject.ext.compileSdkVersion
-  buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    flavorDimensions "learn"//com.android.tools.build:gradle 版本3.0+的时候 配置了 productFlavors 时必须配置这个
 
-  defaultConfig {
-    minSdkVersion 15
-    targetSdkVersion rootProject.ext.targetSdkVersion
-    versionCode 1
-    versionName "1.0"
+    //所有 productFlavor 的基类
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
-    testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-  }
-  buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
-  }
+
+    //Android Build Variants = productFlavor + buildType；
+    // 比如 learnDebug 就表示采用 productFlavors.learn + buildTypes+debug 的配置来构建.
+    productFlavors {
+        learn {
+            dimension "learn"
+        }
+
+        Full {
+            dimension "learn"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            minifyEnabled false
+        }
+    }
 }
 
 dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar'])
-  androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
-    exclude group: 'com.android.support', module: 'support-annotations'
-  })
-  implementation project(":zfunLib")
-  implementation 'androidx.appcompat:appcompat:1.0.0'
-  implementation 'androidx.recyclerview:recyclerview:1.0.0'
-  testImplementation 'junit:junit:4.12'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    implementation project(":zfunLib")
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    testImplementation 'junit:junit:4.12'
 }
