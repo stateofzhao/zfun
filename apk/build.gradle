@@ -4,6 +4,7 @@ apply plugin: 'com.android.application'
 android {
   compileSdkVersion rootProject.ext.compileSdkVersion
   buildToolsVersion rootProject.ext.buildToolsVersion
+  flavorDimensions "apk"
 
   defaultConfig {
     proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard-project.txt')
@@ -12,12 +13,34 @@ android {
     versionName "${appVersionName}"//在根目录的 gradle.properties中定义了
     minSdkVersion rootProject.ext.minSdkVersion
     targetSdkVersion rootProject.ext.targetSdkVersion
+
+    versionCode = 1
+  }
+
+  signingConfigs{
+    debug{
+//      v2SigningEnabled false
+    }
+
+    release{
+//      v2SigningEnabled false
+    }
+  }
+
+  productFlavors{
+    Full{
+    }
+    AB{}
   }
 
   buildTypes {
     release {
       minifyEnabled false
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+
+    debug{
+      minifyEnabled false
     }
   }
 }

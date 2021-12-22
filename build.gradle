@@ -4,11 +4,38 @@ buildscript {
     repositories {
         google() // and here
         jcenter()
+
+        maven {
+            url uri('./repo')
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.0'
+        classpath 'com.zfun.funmodule:GradleMoudlePlugin:1.0.0'
     }
 }
+
+apply plugin: 'com.zfun.funmodule'
+def readChannelFromFile = { String path ->
+    def channelList = []
+    file(path).eachLine {
+        channelList.add(it)
+    }
+    return channelList
+}
+multiChannel{
+    buildType = 1
+    prefix = "zfun_"
+    subfix = "_test"
+    channelConfig{
+        Full{
+            childFlavors = readChannelFromFile('./channel_arm_list.txt').unique()
+            lowMemory = false
+            extraInfo = ["key1":"value1","key2":"value2"]
+        }
+    }
+}
+
 
 allprojects {
     repositories {

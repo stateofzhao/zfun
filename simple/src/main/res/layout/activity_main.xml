@@ -24,11 +24,19 @@
                 android:text="zfun 示例"
                 android:textSize="20dp" />
 
+            <TextView
+                android:id="@+id/tv_channel_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_info"
+                android:text="tv_channel_info"
+                android:textSize="20dp" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/tv_info"
+                android:layout_below="@id/tv_channel_info"
                 android:layout_marginTop="20dp" />
         </RelativeLayout>
 

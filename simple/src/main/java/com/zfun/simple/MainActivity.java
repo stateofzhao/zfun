@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.zfun.lib.util.ChannelUtil;
 import com.zfun.simple.binary.BinaryActivity;
 import com.zfun.simple.letternavigation.LetterNavigationActivity;
 import com.zfun.simple.pullrefresh.PullRefreshActivity;
@@ -20,6 +21,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     final String[] mActionData = new String[]{"字母导航控件示例", "UseCase层测试", "二进制学习", "下拉刷新布局","X下拉刷新布局"};
 
     RecyclerView mListView;
+    TextView mChannelTV;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +55,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void findView() {
         mListView = (RecyclerView) findViewById(R.id.list);
+        mChannelTV = findViewById(R.id.tv_channel_info);
     }
 
     private void fillView() {
         mListView.setLayoutManager(new LinearLayoutManager(this));
         mListView.setAdapter(new ItemAdapter());
+
+        mChannelTV.setText(ChannelUtil.readChannel(this));
+
     }
 
     private class ItemAdapter extends RecyclerView.Adapter<ViewHolder> {
