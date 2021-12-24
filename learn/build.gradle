@@ -1,15 +1,18 @@
 apply plugin: 'com.android.library'
 
+// module 有 productFlavors 时，引用它的 module 也必须有同名的 productFlavors，并且要有同名的 flavorDimensions！
+// 所以如果 module 作为 library 的话一般不写 productFlavors。
+//
 //Gradle 会根据您的buildType{}和productFlavors自动创建构建变体，
 // 并按照 <product-flavor><Build-Type> 的格式命名这些变体
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    flavorDimensions "learn"//com.android.tools.build:gradle 版本3.0+的时候 配置了 productFlavors 时必须配置这个
+    //flavorDimensions "learn"//com.android.tools.build:gradle 版本3.0+的时候 配置了 productFlavors 时必须配置这个
 
     //所有 productFlavor 的基类
     defaultConfig {
-        minSdkVersion 15
+        minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -17,7 +20,7 @@ android {
 
     //Android Build Variants = productFlavor + buildType；
     // 比如 learnDebug 就表示采用 productFlavors.learn + buildTypes+debug 的配置来构建.
-    productFlavors {
+    /*productFlavors {
         learn {
             dimension "learn"
         }
@@ -25,7 +28,7 @@ android {
         Full {
             dimension "learn"
         }
-    }
+    }*/
 
     buildTypes {
         release {
