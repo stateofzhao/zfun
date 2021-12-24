@@ -11,7 +11,9 @@ import com.zfun.lib.permission.core.ManagerPermissions;
 import java.util.List;
 
 /**
- * android系统权限管理工具。
+ * android系统权限管理工具。<br/>
+ * 动态申请的权限也必须在Manifest中进行注册，否则申请时会出现无法弹出系统授权弹窗。
+ *
  *
  * 下列权限使用必须动态申请，但是目前来看，只需要获取一组中的一个权限，那么android系统会给你整个组的权限（无需申请）：
  * <ul>
