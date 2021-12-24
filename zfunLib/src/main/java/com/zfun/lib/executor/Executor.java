@@ -19,4 +19,9 @@ interface Executor {
    * @param tag {@link #execute(Task, Object)}的第二个参数
    */
   void cancel(Object tag);
+
+  /**
+   * tag对应的任务是否已经存在
+   * */
+  boolean isRunningOrWaiting(Object tag);
 }

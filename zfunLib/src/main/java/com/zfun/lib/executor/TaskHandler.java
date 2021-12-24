@@ -10,10 +10,10 @@ import androidx.core.util.Preconditions;
 public class TaskHandler {
   private static volatile TaskHandler singleton;
 
-  private Executor executor;
+  private final Executor executor;
 
   interface Callback {
-    /** @like {@link Task#onStateChange(int)} */
+    /**  {@link Task#onStateChange(int)} */
     void onStateChange(@Task.State int state);
   }
 
@@ -44,13 +44,17 @@ public class TaskHandler {
     prepare().tag(tag).execute(task);
   }
 
+  public boolean isContainer(Object tag){
+    return executor.isRunningOrWaiting(tag);
+  }
+
   public TaskBuilder prepare() {
     return new TaskBuilder(this);
   }
 
   //builder
   private static class TaskBuilder {
-    private TaskHandler taskHandler;
+    private final TaskHandler taskHandler;
 
     private Object tag;
     private Callback callback;
@@ -84,8 +88,8 @@ public class TaskHandler {
         priority = Task.NORMAL;
       }
 
-      Task task = new Task() {
-        private Callback callback = TaskBuilder.this.callback;
+      final Task task = new Task() {
+        private final Callback callback = TaskBuilder.this.callback;
         @Override public void run() {
           runnable.run();
         }
