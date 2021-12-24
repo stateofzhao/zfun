@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.zfun.lib.util.ChannelUtil;
 import com.zfun.simple.binary.BinaryActivity;
+import com.zfun.simple.io.IOActivity;
 import com.zfun.simple.letternavigation.LetterNavigationActivity;
 import com.zfun.simple.pullrefresh.PullRefreshActivity;
 import com.zfun.simple.pullrefresh.XPullRefreshActivity;
@@ -18,7 +19,12 @@ import com.zfun.simple.usecase.InteractorTestActivity;
 import com.zfun.test.jniclass.ObserverUninstall;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    final String[] mActionData = new String[]{"字母导航控件示例", "UseCase层测试", "二进制学习", "下拉刷新布局","X下拉刷新布局"};
+    final String[] mActionData = new String[]{"字母导航控件示例",
+            "UseCase层测试",
+            "二进制学习",
+            "下拉刷新布局",
+            "X下拉刷新布局",
+            "IO学习"};
 
     RecyclerView mListView;
     TextView mChannelTV;
@@ -50,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             PullRefreshActivity.open(this);
         } else if (position == 4) {
             XPullRefreshActivity.open(this);
+        } else if (position == 5) {
+            IOActivity.open(this);
         }
     }
 
@@ -93,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }// end class ViewHolder
 
     static class NormalItemHolder extends ViewHolder {
-        public NormalItemHolder(LayoutInflater inflater, ViewGroup parent,View.OnClickListener listener) {
+        public NormalItemHolder(LayoutInflater inflater, ViewGroup parent, View.OnClickListener listener) {
             super(inflater.inflate(android.R.layout.simple_list_item_1, parent, false));
             itemView.setOnClickListener(listener);
         }

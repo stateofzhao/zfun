@@ -62,6 +62,17 @@ public class FileUtil {
   // =============================================================================手机外部存储---start
 
   /**
+   * 获取外部存储根目录，结尾不带"/"
+   * */
+  public static String getExternalStorageRootPath() {
+      try {
+          return Environment.getExternalStorageDirectory().getAbsolutePath();
+      } catch (Exception e) {
+          return "";
+      }
+  }
+
+  /**
    * 外部存储是否可以读写
    */
   public static boolean isExternalStorageWritable() {

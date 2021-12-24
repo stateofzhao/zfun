@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+
+    <TextView android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:id="@+id/tv_sec"
+              android:padding="8dp"
+              android:text="LearnWriteByte"
+              android:textSize="18dp"/>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center_vertical"
+                  android:orientation="horizontal">
+        <Button android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_write_int_byte_1"
+                android:layout_weight="1"
+                android:text="【写入】Int型数据 - byte 【大端】写入"/>
+        <EditText android:id="@+id/ed_write_int_byte_1"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center_vertical"
+                  android:orientation="horizontal">
+        <Button android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_write_int_byte_2"
+                android:layout_weight="1"
+                android:text="【写入】Int型数据 - byte 【小端】写入"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center_vertical"
+                  android:orientation="horizontal">
+        <Button android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_read_int_byte_1"
+                android:layout_weight="1"
+                android:text="【读取】Int型数据 - byte 【大端】读取"/>
+        <TextView android:id="@+id/tv_read_int_byte_1"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center_vertical"
+                  android:orientation="horizontal">
+        <Button android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_read_int_byte_2"
+                android:layout_weight="1"
+                android:text="【读取】Int型数据 - byte 【小端】读取"/>
+        <TextView android:id="@+id/tv_read_int_byte_2"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:gravity="center_vertical"
+                  android:orientation="horizontal">
+        <Button android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_read_int_byte_android"
+                android:layout_weight="1"
+                android:text="【读取】Int型数据 - 【Android平台高级API】读取"/>
+        <TextView android:id="@+id/tv_read_int_byte_android"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"/>
+    </LinearLayout>
+
+</LinearLayout>
