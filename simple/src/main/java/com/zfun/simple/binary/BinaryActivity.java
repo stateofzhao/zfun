@@ -8,10 +8,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import com.zfun.learn.binary.BinaryUtils;
 import com.zfun.lib.util.AndroidUtil;
-import com.zfun.lib.util.StringUtil;
 import com.zfun.simple.R;
 
+/**
+ * {@link BinaryUtils}
+ * */
 public class BinaryActivity extends AppCompatActivity {
   LinearLayout ll;
   TextView tv1, tv2, tv3, tv4;
@@ -43,14 +46,14 @@ public class BinaryActivity extends AppCompatActivity {
     ll.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE);
     cd.invalidateSelf();
 
-    tv1.append(StringUtil.intToBinaryStrComplement(-10));
-    tv2.append(StringUtil.intToBinaryStrComplement(10));
-    tv3.append(StringUtil.binaryToIntStrComplement("11111111111111111111111111110110"));
-    tv4.append(StringUtil.binaryToIntStrComplement("00001010"));
-    tv5.append(StringUtil.intToBinaryStr("-10"));
-    tv6.append(StringUtil.intToBinaryStr("10"));
-    tv7.append(StringUtil.binaryToIntStr("11111111111111111111111111110110"));
-    tv8.append(StringUtil.binaryToIntStr("00001010"));
+    tv1.append(BinaryUtils.intToBinaryStrComplement(-10));
+    tv2.append(BinaryUtils.intToBinaryStrComplement(10));
+    tv3.append(BinaryUtils.binaryToIntStrComplement("11111111111111111111111111110110"));
+    tv4.append(BinaryUtils.binaryToIntStrComplement("00001010"));
+    tv5.append(BinaryUtils.intToBinaryStr("-10"));
+    tv6.append(BinaryUtils.intToBinaryStr("10"));
+    tv7.append(BinaryUtils.binaryToIntStr("11111111111111111111111111110110"));
+    tv8.append(BinaryUtils.binaryToIntStr("00001010"));
   }
 
   class MyDivider extends ColorDrawable {
