@@ -5,7 +5,7 @@ import com.zfun.lib.permission.core.Callback;
 /**
  * 缩放一下{@link Callback}
  * <p/>
- * Created by lizhaofei on 2018/3/14 11:47
+ * Created by zfun on 2018/3/14 11:47
  */
 public abstract class SimpleCallback implements Callback {
 

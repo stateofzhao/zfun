@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Android M(6.0) 以下版本使用。
  * <p/>
- * Created by lizhaofei on 2018/3/19 17:14
+ * Created by zfun on 2018/3/19 17:14
  */
 public class BMAdapter implements ManagerPermissions.PlatformAdapter {
     private ManagerPermissions managerPermissions;

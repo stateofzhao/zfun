@@ -4,7 +4,7 @@ package com.zfun.lib.permission.core;
 /**
  * 权限请求结果回调
  * <p/>
- * Created by lizhaofei on 2018/3/14 11:42
+ * Created by zfun on 2018/3/14 11:42
  */
 public interface Callback {
     //申请的全部权限都通过

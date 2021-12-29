@@ -3,7 +3,7 @@ package com.zfun.lib.permission.core;
 /**
  * 提供每次权限请求的自定义显示。
  * <p/>
- * Created by lizhaofei on 2018/3/22 14:44
+ * Created by zfun on 2018/3/22 14:44
  */
 public interface IamUI {
 

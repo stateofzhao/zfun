@@ -27,7 +27,7 @@ import static com.zfun.lib.permission.Permission.REQUEST_PERMISSION_SETTING;
  * 2.必需在Activity/Fragment的销毁方法中调用{@link #onActivityOrFragmentDestroy(Object)}方法，否则可能造成Activity/Fragment泄露。
  *
  * <p/>
- * Created by lizhaofei on 2018/3/19 16:23
+ * Created by zfun on 2018/3/19 16:23
  */
 public class ManagerPermissions {
 

@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 将{@link Manifest.permission}转换成用户识别的文字描述。
  * <p/>
- * Created by lizhaofei on 2018/3/22 11:04
+ * Created by zfun on 2018/3/22 11:04
  */
 public class TransformText {
     //这里应该写全部的权限

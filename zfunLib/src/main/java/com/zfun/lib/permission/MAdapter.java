@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Android M(6.0)及以上版本使用。
  * <p/>
- * Created by lizhaofei on 2018/3/19 17:13
+ * Created by zfun on 2018/3/19 17:13
  */
 public class MAdapter implements ManagerPermissions.PlatformAdapter {
     private ManagerPermissions managerPermissions;

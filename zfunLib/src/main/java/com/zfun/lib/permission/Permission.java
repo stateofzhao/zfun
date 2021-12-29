@@ -61,7 +61,7 @@ import java.util.List;
  * permission:android.permission.READ_CELL_BROADCASTS
  * </ul>
  * <p/>
- * Created by lizhaofei on 2018/3/12 15:14
+ * Created by zfun on 2018/3/12 15:14
  */
 public class Permission {
     public static final int REQUEST_PERMISSION_SETTING = 65535;//打开设置页必须用这个 作为 RequestCode （不能大于65536，也不能为负数）
