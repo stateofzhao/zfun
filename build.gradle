@@ -10,7 +10,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.0'
+        classpath 'com.android.tools.build:gradle:7.0.0'
         classpath 'com.zfun.funmodule:GradleMoudlePlugin:1.0.0'
     }
 }

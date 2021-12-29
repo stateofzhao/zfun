@@ -7,8 +7,6 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
     } // end defaultConfig
 
     buildTypes {
@@ -50,7 +48,7 @@ buildscript {
         // in the individual module build.gradle files
         // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
 
-        classpath 'com.android.tools.build:gradle:4.2.0'
+        classpath 'com.android.tools.build:gradle:7.0.0'
     }
 }
 

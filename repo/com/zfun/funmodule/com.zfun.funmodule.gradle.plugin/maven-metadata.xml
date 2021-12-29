@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadata>
   <groupId>com.zfun.funmodule</groupId>
-  <artifactId>GradleMoudlePlugin</artifactId>
+  <artifactId>com.zfun.funmodule.gradle.plugin</artifactId>
   <versioning>
     <latest>unspecified</latest>
     <release>unspecified</release>
     <versions>
-      <version>1.0.0</version>
       <version>unspecified</version>
     </versions>
-    <lastUpdated>20211228101309</lastUpdated>
+    <lastUpdated>20211228101308</lastUpdated>
   </versioning>
 </metadata>
