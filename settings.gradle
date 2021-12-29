@@ -1,2 +1,3 @@
 include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'simple'
 include ':audio'
+include ':sharelib'
