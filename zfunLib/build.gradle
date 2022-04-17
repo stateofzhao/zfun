@@ -1,4 +1,6 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library' apply true
+}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -15,46 +17,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     } // end buildTypes
-
-    // `return void` removes the lint error: `Not all execution paths return a value`.
-    return void
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.squareup.okhttp:okhttp:2.5.0'
-    implementation 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
-    implementation 'com.google.code.gson:gson:2.7'
-    implementation 'com.facebook.fresco:fresco:0.14.0'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.nineoldandroids:library:2.4.0'
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'org.greenrobot:eventbus:3.0.0'
-}
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
-buildscript {
-    repositories {
-        google() // here
-        jcenter()
-    }
-    dependencies {
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-        // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
-
-        classpath 'com.android.tools.build:gradle:7.0.0'
-    }
-}
-
-allprojects {
-    repositories {
-        google() // and here
-        jcenter()
-    }
+    implementation "com.squareup.okhttp:okhttp:$okhttpVersion"
+    implementation "com.squareup.okhttp:okhttp-urlconnection:$okhttpUrlConnectionVersion"
+    implementation "com.google.code.gson:gson:$gsonVersion"
+    implementation "com.facebook.fresco:fresco:$frescoVersion"
+    implementation "androidx.legacy:legacy-support-v4:$androidxSupportV4"
+    implementation "com.nineoldandroids:library:$nineoldandroidsVersion"
+    implementation "androidx.appcompat:appcompat:$androidXAppCompat"
+    implementation "androidx.recyclerview:recyclerview:$androidXRecyclerView"
+    implementation "org.greenrobot:eventbus:$eventBusVersion"
 }

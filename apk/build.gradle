@@ -1,52 +1,67 @@
-apply plugin: 'com.android.application'
-
+plugins {
+    id 'com.android.application'
+}
 
 android {
-  compileSdkVersion rootProject.ext.compileSdkVersion
-  buildToolsVersion rootProject.ext.buildToolsVersion
-  flavorDimensions "apk"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    flavorDimensions "apk"
 
-  defaultConfig {
-    proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard-project.txt')
-    applicationId "com.zfun.apk"
-    versionCode Integer.valueOf("" + appVersionCode).intValue()//在根目录的 gradle.properties中定义了
-    versionName "${appVersionName}"//在根目录的 gradle.properties中定义了
-    minSdkVersion rootProject.ext.minSdkVersion
-    targetSdkVersion rootProject.ext.targetSdkVersion
+    defaultConfig {
+        applicationId "com.zfun.apk"
+        versionCode Integer.valueOf("${appVersionCode}").intValue()
+        versionName "${appVersionName}"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
-    versionCode = 1
-  }
-
-  signingConfigs{
-    debug{
-//      v2SigningEnabled false
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard-project.txt')
     }
 
-    release{
-//      v2SigningEnabled false
-    }
-  }
+    signingConfigs {
+        debug {
+        }
 
-  productFlavors{
-    Full{
-    }
-    AB{}
-  }
-
-  buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        release {
+        }
     }
 
-    debug{
-      minifyEnabled false
+    productFlavors {
+        Full {}
+        AB {}
     }
-  }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            minifyEnabled true
+        }
+    }
 }
 
 
 dependencies {
-  implementation project(':simple')
+    implementation project(':simple')
 }
 
+def readChannelFromFile = { String path ->
+    def channelList = []
+    file(path).eachLine {
+        channelList.add(it)
+    }
+    return channelList
+}
+multiChannel {
+    prefix = "zfun_"
+    subfix = "_test"
+    channelConfig {
+        Full {
+            childFlavors = readChannelFromFile('./channel_arm_list.txt').unique()
+            lowMemory = false
+            extraInfo = ["key1": "value1", "key2": "value2"]
+        }
+    }
+}

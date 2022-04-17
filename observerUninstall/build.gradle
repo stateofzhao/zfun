@@ -1,12 +1,13 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library' apply true
+}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         //配置使用哪种方式编译c/c++源文件
         externalNativeBuild {
             //使用cmake形式编译
@@ -46,27 +47,6 @@ dependencies {
     androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'androidx.appcompat:appcompat:1.0.0'
-    testImplementation 'junit:junit:4.12'
-}
-
-buildscript {
-    repositories {
-        google() // and here
-        jcenter()
-    }
-    dependencies {
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-        // 注意：不要把你的应用程序的依赖放在这里；它们属于单独的模块的build.gradle文件
-
-        classpath 'com.android.tools.build:gradle:7.0.0'
-    }
-}
-
-allprojects {
-    repositories {
-        google() // and here
-        jcenter()
-    }
+    implementation "androidx.appcompat:appcompat:$androidXAppCompat"
+    testImplementation "junit:junit:$junitVersion"
 }

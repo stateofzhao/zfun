@@ -1,3 +1,56 @@
+//整个项目的插件管理配置，有两个功能：
+//1，配置插件依赖库仓库，类似之前的 buildscript{repositories{...}}。
+//2，统一声明整个项目需要的插件（当然你也可以按照以前的方式在给子 module 中声明）。
+//【注意：只有明确的发布 xxx.gradle.plugin 插件文件到这些仓库中时，
+// 才可以直接通过 plugins{...}访问到，如果不是通过上述方式发布的插件，必须通过 resolutionStrategy{...}来"转译"下】
+pluginManagement{
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots' }
+        jcenter()
+        /*maven {
+            url uri('./repo')
+        }*/
+    }
+
+    //与之前的 buildscript{dependencies{...}} 功能相同
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'io.github.stateofzhao') {
+                useModule("io.github.stateofzhao:GradleMoudlePlugin:${requested.version}")
+                //如果这里写死版本号，则外部plugins{id 'io.github.stateofzhao'}即可，无需传递版本号
+                /*useModule("io.github.stateofzhao:GradleMoudlePlugin:1.0.0-SNAPSHOT")*/
+            }
+        }
+    }
+
+    //下面这个可以省略，放到这里只是为了方便看到项目中总共应用了多少插件
+    plugins{
+        id 'com.android.application' version '7.1.2' apply false
+        id 'com.android.library' version '7.1.2' apply false
+        id 'io.github.stateofzhao' version '1.1.0-SNAPSHOT' apply false
+    }
+}
+
+//项目开发依赖库配置，同样有两个功能：
+//1，配置依赖库仓库，类似之前的 allprojects{repositories{...}}。
+//2，统一声明整个项目的依赖项，但是不推荐在这里做，因为有的子 module 不需要其中的某些依赖，还是放到各自的子module来声明依赖比较好。
+dependencyResolutionManagement{
+//    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories{
+        google()
+        mavenCentral()
+        jcenter()
+
+        //本地aar依赖
+        flatDir {
+            dirs 'sharelib/libs'
+        }
+    }
+}
+
 include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'simple'
 include ':audio'
 include ':sharelib'
