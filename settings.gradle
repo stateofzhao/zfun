@@ -9,7 +9,6 @@ pluginManagement{
         google()
         mavenCentral()
         maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots' }
-        jcenter()
         /*maven {
             url uri('./repo')
         }*/
@@ -42,7 +41,6 @@ dependencyResolutionManagement{
     repositories{
         google()
         mavenCentral()
-        jcenter()
 
         //本地aar依赖
         flatDir {
