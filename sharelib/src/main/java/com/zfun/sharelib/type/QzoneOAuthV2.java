@@ -1,4 +1,4 @@
-package com.zfun.sharelib.pojo;
+package com.zfun.sharelib.type;
 
 /**
  * Created by lzf on 2021/12/22 10:28 上午

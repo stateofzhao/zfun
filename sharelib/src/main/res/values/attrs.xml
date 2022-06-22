@@ -1,0 +1,9 @@
+<resources>
+    <declare-styleable name="RoundCornerLayout">
+        <attr name="round_layout_radius" format="dimension" />
+        <attr name="round_top_left" format="dimension" />
+        <attr name="round_top_right" format="dimension" />
+        <attr name="round_bottom_left" format="dimension" />
+        <attr name="round_bottom_right" format="dimension" />
+    </declare-styleable>
+</resources>

@@ -6,14 +6,14 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.tencent.connect.share.QQShare;
 import com.tencent.tauth.Tencent;
 
 /**
  * QQ有关的分享。
  * <p/>
- * Created by zfun on 2017/8/4.
+ * Created by lizhaofei on 2017/8/4.
  */
 abstract class QQShareAbsHandler implements IShareHandler {
     protected Activity mActivity;
@@ -66,16 +66,16 @@ abstract class QQShareAbsHandler implements IShareHandler {
     /**
      * 获取纯图片分享的参数
      *
-     * @param localUrl 必选，需要分享的本地图片路径
+     * @param imageURLorFilePath 必选，需要分享的图片本地路径或者URL
      * @param appName 可选，手Q客户端顶部，替换“返回”按钮文字，如果为空，用返回代替
      * @param ext 可选，分享额外选项，两种类型可选（默认是不隐藏分享到QZone按钮且不自动打开分享到QZone的对话框）：
      * QQShare.SHARE_TO_QQ_FLAG_QZONE_AUTO_OPEN，分享时自动打开分享到QZone的对话框。
      * QQShare.SHARE_TO_QQ_FLAG_QZONE_ITEM_HIDE，分享时隐藏分享到QZone按钮
      */
-    Bundle getImageParams(String localUrl, String appName, int ext) {
+    Bundle getImageParams(String imageURLorFilePath, String appName, int ext) {
         Bundle params = new Bundle();
         params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_IMAGE);
-        params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, localUrl);
+        params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, imageURLorFilePath);
 
         if (!TextUtils.isEmpty(appName)) {
             params.putString(QQShare.SHARE_TO_QQ_APP_NAME, appName);
@@ -146,7 +146,7 @@ abstract class QQShareAbsHandler implements IShareHandler {
 
     @Override
     public void init() {
-        mActivity = InitContext.getInstance().getHostActivity();
+        mActivity = InternalShareInitBridge.getInstance().getHostActivity();
         isRelease = false;
     }
 

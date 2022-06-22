@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.zfun.sharelib.core.ShareConstant;
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.tencent.mm.opensdk.modelbase.BaseReq;
 import com.tencent.mm.opensdk.modelbase.BaseResp;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
@@ -18,7 +18,6 @@ import com.tencent.mm.opensdk.openapi.WXAPIFactory;
  * Created by lzf on 2021/12/22 2:47 下午
  */
 public class WxCallbackActivity extends Activity implements IWXAPIEventHandler {
-    private IWXAPI mIWXAPI;
     @Nullable
     private final Activity mOutWxEntryActivity;
 
@@ -31,25 +30,25 @@ public class WxCallbackActivity extends Activity implements IWXAPIEventHandler {
     }
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mIWXAPI = WXAPIFactory.createWXAPI(this, ShareConstant.WX_APP_ID, true);
-        mIWXAPI.registerApp(ShareConstant.WX_APP_ID);
-        mIWXAPI.handleIntent(getIntent(), this);
+        IWXAPI api = WXAPIFactory.createWXAPI(this, ShareConstant.WX_APP_ID, true);
+        api.registerApp(ShareConstant.WX_APP_ID);
+        api.handleIntent(getIntent(), this);
     }
 
-    //微信打开酷我
+    //微信打开调用方App
     @Override
     public void onReq(BaseReq baseReq) {
         Activity realActivity = null == mOutWxEntryActivity?this:mOutWxEntryActivity;
-        InitContext.getInstance().getOptWxCallback(realActivity).onOptWxReq(baseReq);
+        InternalShareInitBridge.getInstance().getOptWxCallback(realActivity).onOptWxReq(baseReq);
     }
 
     //调用微信api的回调，例如分享
     @Override
     public void onResp(BaseResp baseResp) {
         Activity realActivity = null == mOutWxEntryActivity?this:mOutWxEntryActivity;
-        InitContext.getInstance().getOptWxCallback(realActivity).onOptWxResp(baseResp);
+        InternalShareInitBridge.getInstance().getOptWxCallback(realActivity).onOptWxResp(baseResp);
     }
 }

@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * 执行具体的分享功能。
  * <p/>
- * Created by zfun on 2017/8/4.
+ * Created by lizhaofei on 2017/8/4.
  */
 public interface IShareHandler {
 

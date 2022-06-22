@@ -20,27 +20,67 @@ import java.lang.ref.WeakReference;
 
 /**
  * 初始化API。<br/>
- * 一定要调用{@link #init(Activity, boolean)}方法，否则无法正常运行，并且要对其返回值 {@link InitParams}进行设置。
+ * 一定要调用{@link #init(Activity, boolean,com.zfun.sharelib.ShareMgrImpl.ShareTypeBuilder)}方法，否则无法正常运行，并且要对其返回值 {@link InitParams}进行设置。
  * <br/>
  * {@link #configDebug(IDebugCheck)}configxxx()方法可以设置一些个性化的东西。
  * <br/>
- * 在{@link #init(Activity, boolean)}方法中传入的Activity的{@link Activity#onActivityResult(int, int, Intent)}方法中调用
+ * 在{@link #init(Activity, boolean,com.zfun.sharelib.ShareMgrImpl.ShareTypeBuilder)}方法中传入的Activity的{@link Activity#onActivityResult(int, int, Intent)}方法中调用
  * {@link #onActivityResult(Activity,int, int, Intent)}方法。
  * <br/>
- * 如果自己不需要实现微信回调Activity，就直接使用{@link com.zfun.sharelib.WxCallbackActivity}，
- * 否则就实例化{@link com.zfun.sharelib.WxCallbackActivity#WxCallbackActivity(Activity)}并且调用
+ * 微信回调需要WxEntryActivity承接，如果自己不需要监听就写一个自己【xxx.WxEntryActivity】继承{@link com.zfun.sharelib.WxCallbackActivity}并声明到Manifest中（xxx为自己app的包名），
+ * 否则就在你的【微信回调Activity】中实例化{@link com.zfun.sharelib.WxCallbackActivity#WxCallbackActivity(Activity)}并且调用
  * {@link com.zfun.sharelib.WxCallbackActivity#onCreate(Bundle)
  *
  * <P>
  * Created by lzf on 2021/12/21 2:18 下午
  */
-public class InitContext {
+public class InternalShareInitBridge {
+    private IHttpPicDownloader iHttpPicDownloader;
+    private final InitParams initParams;
+    private WeakReference<Activity> hostActivity;
+    private IDebugCheck debugCheck;
+    private IMessageHandler messageHandler;
+    private IOptWxCallback optWxCallback;
+    private ShareMgrImpl.ShareTypeBuilder supportShareTypeShareTypeBuilder;
+    private Class<?> appEntryActivityClass;
+    private boolean isPrivacyPolicyAgreed;
+    private IToast tipToast;
 
-    public InitParams init(Activity mainActivity, boolean isPrivacyPolicyAgreed) {
-        checkInit();
+    public InitParams init(Activity mainActivity, boolean isPrivacyPolicyAgreed, ShareMgrImpl.ShareTypeBuilder shareTypeBuilder) {
+        /*checkInit();*/
         hostActivity = new WeakReference<>(mainActivity);
+        this.supportShareTypeShareTypeBuilder = shareTypeBuilder;
         this.isPrivacyPolicyAgreed = isPrivacyPolicyAgreed;
         return initParams;
+    }
+
+    public InternalShareInitBridge configDebug(IDebugCheck debugCheck) {
+        this.debugCheck = debugCheck;
+        return this;
+    }
+
+    public InternalShareInitBridge configMessageHandler(IMessageHandler messageHandler) {
+        this.messageHandler = messageHandler;
+        return this;
+    }
+
+    /**
+     * @param appEntryActivityClass app的入口Activity
+     * */
+    public InternalShareInitBridge configWxCallbackOpt(@Nullable IOptWxCallback wxCallback, @NonNull Class<?> appEntryActivityClass){
+        this.optWxCallback = wxCallback;
+        this.appEntryActivityClass = appEntryActivityClass;
+        return this;
+    }
+
+    public InternalShareInitBridge configPicDownloader(IHttpPicDownloader httpGet){
+        this.iHttpPicDownloader = httpGet;
+        return this;
+    }
+
+    public InternalShareInitBridge configTipToast(@Nullable IToast toast){
+        this.tipToast = toast;
+        return this;
     }
 
     public boolean onActivityResult(final Activity activity,final int requestCode, int resultCode, Intent data){
@@ -95,22 +135,6 @@ public class InitContext {
         return false;
     }
 
-    public InitContext configDebug(IDebugCheck debugCheck) {
-        this.debugCheck = debugCheck;
-        return this;
-    }
-
-    public InitContext configMessageHandler(IMessageHandler messageHandler) {
-        this.messageHandler = messageHandler;
-        return this;
-    }
-
-    public InitContext configWxCallbackOpt(@Nullable IOptWxCallback wxCallback, @NonNull Class<?> appEntryActivityClass){
-        optWxCallback = wxCallback;
-        this.appEntryActivityClass = appEntryActivityClass;
-        return this;
-    }
-
     public void release() {
         SsoFactory.destroyKugouLoginWBAPI();
     }
@@ -139,6 +163,7 @@ public class InitContext {
         return debugCheck;
     }
 
+    @NonNull
     public IMessageHandler getMessageHandler() {
         if (null == messageHandler) {
             return NullableMessageHandler.get();
@@ -146,6 +171,16 @@ public class InitContext {
         return messageHandler;
     }
 
+    @Nullable
+    public IToast getTipToast() {
+        return tipToast;
+    }
+
+    public ShareMgrImpl.ShareTypeBuilder getSupportShareTypeBuilder() {
+        return supportShareTypeShareTypeBuilder;
+    }
+
+    @NonNull
     public IOptWxCallback getOptWxCallback(@NonNull Activity WxCallbackActivity){
         if(null == optWxCallback){
             return NullableOptWxCallback.get(WxCallbackActivity, appEntryActivityClass);
@@ -153,34 +188,25 @@ public class InitContext {
         return optWxCallback;
     }
 
-    private void checkInit() {
-        if (null != hostActivity && null != hostActivity.get()) {
-            throw new RuntimeException("sharelib：重复初始化");
-        }
+    @Nullable
+    public IHttpPicDownloader getPicDownloader(){
+        return iHttpPicDownloader;
     }
 
-    private static volatile InitContext sInitContext;
+    //single instance
+    private static volatile InternalShareInitBridge sInternalShareInitBridge;
+    private InternalShareInitBridge() {
+        initParams = new InitParams();
+    }
 
-    public static InitContext getInstance() {
-        if (null == sInitContext) {
-            synchronized (InitContext.class) {
-                if (null == sInitContext) {
-                    sInitContext = new InitContext();
+    public static InternalShareInitBridge getInstance() {
+        if (null == sInternalShareInitBridge) {
+            synchronized (InternalShareInitBridge.class) {
+                if (null == sInternalShareInitBridge) {
+                    sInternalShareInitBridge = new InternalShareInitBridge();
                 }
             }
         }
-        return sInitContext;
-    }
-
-    private final InitParams initParams;
-    private WeakReference<Activity> hostActivity;
-    private IDebugCheck debugCheck;
-    private IMessageHandler messageHandler;
-    private IOptWxCallback optWxCallback;
-    private Class<?> appEntryActivityClass;
-    private boolean isPrivacyPolicyAgreed;
-
-    private InitContext() {
-        initParams = new InitParams();
+        return sInternalShareInitBridge;
     }
 }

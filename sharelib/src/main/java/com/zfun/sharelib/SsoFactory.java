@@ -1,10 +1,9 @@
 package com.zfun.sharelib;
 
-import android.app.Activity;
 import android.content.Context;
 
 import com.zfun.sharelib.core.ShareConstant;
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.sina.weibo.sdk.auth.AuthInfo;
 import com.sina.weibo.sdk.openapi.IWBAPI;
 import com.sina.weibo.sdk.openapi.WBAPIFactory;
@@ -28,13 +27,13 @@ public class SsoFactory {
             synchronized (SsoFactory.class) {
                 try {
                     if(null == mTencent){
-                        if(InitContext.getInstance().getHostActivity().getApplicationContext() !=null){
+                        if(InternalShareInitBridge.getInstance().getHostActivity().getApplicationContext() !=null){
                             mTencent = Tencent.createInstance(ShareConstant.QQ_APP_ID,
-                                    InitContext.getInstance().getHostActivity().getApplicationContext());
+                                    InternalShareInitBridge.getInstance().getHostActivity().getApplicationContext());
                         }
                     }
                 } catch (Throwable e) {
-                    InitContext.getInstance().getDebugCheck().classicAssert(false, e);
+                    InternalShareInitBridge.getInstance().getDebugCheck().classicAssert(false, e);
                 }
             }
         }
@@ -42,35 +41,35 @@ public class SsoFactory {
     }
 
     public static IWBAPI getWBAPI() {
-        return getWBAPI(InitContext.getInstance().getHostActivity());
+        return getWBAPI(InternalShareInitBridge.getInstance().getHostActivity());
     }
 
-    public static IWBAPI getWBAPI(Activity activity) {
-        if (!InitContext.getInstance().isPrivacyPolicyAgreed()) {
+    public static IWBAPI getWBAPI(Context context) {
+        if (!InternalShareInitBridge.getInstance().isPrivacyPolicyAgreed()) {
             return null;
         }
         if (mWBAPI == null) {
             try {
-                mWBAPI = WBAPIFactory.createWBAPI(activity);
-                mWBAPI.registerApp(activity, new AuthInfo(activity, ShareConstant.SINA_APP_KEY, ShareConstant.SINA_REDIRECT_URL, ShareConstant.SINA_SCOPE));
+                mWBAPI = WBAPIFactory.createWBAPI(context);
+                mWBAPI.registerApp(context, new AuthInfo(context, ShareConstant.SINA_APP_KEY, ShareConstant.SINA_REDIRECT_URL, ShareConstant.SINA_SCOPE));
 //                mSsoHandler = new SsoHandler(activity);
             } catch (Throwable e) {
-                InitContext.getInstance().getDebugCheck().classicAssert(false, e);
+                InternalShareInitBridge.getInstance().getDebugCheck().classicAssert(false, e);
             }
         }
         return mWBAPI;
     }
 
-    public static IWBAPI getAloneWBAPI(Activity activity){
-        if (!InitContext.getInstance().isPrivacyPolicyAgreed()) {
+    public static IWBAPI getAloneWBAPI(Context context){
+        if (!InternalShareInitBridge.getInstance().isPrivacyPolicyAgreed()) {
             return null;
         }
         IWBAPI result = null;
         try {
-            result = WBAPIFactory.createWBAPI(activity);
-            result.registerApp(activity, new AuthInfo(activity, ShareConstant.SINA_APP_KEY, ShareConstant.SINA_REDIRECT_URL, ShareConstant.SINA_SCOPE));
+            result = WBAPIFactory.createWBAPI(context);
+            result.registerApp(context, new AuthInfo(context, ShareConstant.SINA_APP_KEY, ShareConstant.SINA_REDIRECT_URL, ShareConstant.SINA_SCOPE));
         } catch (Throwable e) {
-            InitContext.getInstance().getDebugCheck().classicAssert(false, e);
+            InternalShareInitBridge.getInstance().getDebugCheck().classicAssert(false, e);
         }
         return result;
     }
@@ -82,7 +81,7 @@ public class SsoFactory {
      */
     private static IWBAPI loginBridgeWBAPI = null;
     public static IWBAPI getKugouLoginWBAPI(Context activity) {
-        if (!InitContext.getInstance().isPrivacyPolicyAgreed()) {
+        if (!InternalShareInitBridge.getInstance().isPrivacyPolicyAgreed()) {
             return null;
         }
         if (loginBridgeWBAPI == null) {
@@ -90,7 +89,7 @@ public class SsoFactory {
                 loginBridgeWBAPI = WBAPIFactory.createWBAPI(activity);
                 loginBridgeWBAPI.registerApp(activity, new AuthInfo(activity, ShareConstant.SINA_APP_KEY, ShareConstant.SINA_REDIRECT_URL, ShareConstant.SINA_SCOPE));
             } catch (Throwable e) {
-                InitContext.getInstance().getDebugCheck().classicAssert(false, e);
+                InternalShareInitBridge.getInstance().getDebugCheck().classicAssert(false, e);
             }
         }
         return loginBridgeWBAPI;

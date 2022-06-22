@@ -3,7 +3,8 @@ package com.zfun.sharelib.core;
 import android.content.Context;
 import androidx.annotation.Nullable;
 
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InitParams;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.modelmsg.WXImageObject;
 import com.tencent.mm.opensdk.modelmsg.WXMediaMessage;
@@ -21,7 +22,7 @@ import java.net.URLEncoder;
 /**
  * 微信分享基类，注意微信分享回调在{@link com.zfun.sharelib.WxCallbackActivity}中实现。
  * <p/>
- * Created by zfun on 2017/8/8 14:23
+ * Created by lizhaofei on 2017/8/8 14:23
  */
 public abstract class WeixinAbsShareHandler implements IShareHandler {
     private static final String TAG = "WeixinAbsShareHandler";
@@ -51,11 +52,15 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
     }
 
     public void postShareSuccess() {
-        if (null != mNowShareData && null != mNowShareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
+        if(null == mNowShareData){
+            return;
+        }
+        final ShareData.OnShareListener listener = mNowShareData.mShareListener;
+        if(null != listener){
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    mNowShareData.mShareListener.onSuccess();
+                    listener.onSuccess();
                     mNowShareData.mShareListener = null;
                     mNowShareData = null;
                 }
@@ -66,11 +71,15 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
     }
 
     public void postShareError() {
-        if (null != mNowShareData && null != mNowShareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
+        if(null == mNowShareData){
+            return;
+        }
+        final ShareData.OnShareListener listener = mNowShareData.mShareListener;
+        if(null != listener){
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    mNowShareData.mShareListener.onFail();
+                    listener.onFail();
                     mNowShareData.mShareListener = null;
                     mNowShareData = null;
                 }
@@ -81,11 +90,15 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
     }
 
     public void postShareCancel() {
-        if (null != mNowShareData && null != mNowShareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
+        if(null == mNowShareData){
+            return;
+        }
+        final ShareData.OnShareListener listener = mNowShareData.mShareListener;
+        if(null != listener){
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    mNowShareData.mShareListener.onCancel();
+                    listener.onCancel();
                     mNowShareData.mShareListener = null;
                     mNowShareData = null;
                 }
@@ -100,8 +113,8 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
             return;
         }
         mNowShareData = shareData;
-        ShareData.Wx wx = shareData.getWxShareData();
-        int type = wx.type;
+        final ShareData.Wx wx = shareData.getWxShareData();
+        final int type = wx.type;
         boolean result = false;
         if (type == ShareData.Wx.TYPE_IMAGE) {
             WXImageObject imgObj = new WXImageObject(wx.bmp);
@@ -184,8 +197,10 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
         } else if (type == ShareData.Wx.TYPE_SMALL_APP) {
             WXMiniProgramObject miniProgramObj = new WXMiniProgramObject();
             miniProgramObj.webpageUrl = wx.webpageUrl; // 兼容低版本的网页链接
-            int miniProgramType = InitContext.getInstance().getInitParams().getMINIPTOGRAM_TYPE_RELEASE();
-            miniProgramObj.miniprogramType = miniProgramType;// 正式版:0，测试版:1，体验版:2
+            int miniProgramType = InternalShareInitBridge.getInstance().getInitParams().getMINIPTOGRAM_TYPE_RELEASE();
+            if(miniProgramType != InitParams.UN_MINIPTOGRAM_TYPE){
+                miniProgramObj.miniprogramType = miniProgramType;// 正式版:0，测试版:1，体验版:2
+            }
             miniProgramObj.userName = wx.userName;     // 小程序原始id
             miniProgramObj.path = wx.path;            //小程序页面路径；对于小游戏，可以只传入 query 部分，来实现传参效果，如：传入 "?foo=bar"
             WXMediaMessage msg = new WXMediaMessage(miniProgramObj);
@@ -243,7 +258,7 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
     @Override
     public void init() {
         isRelease = false;
-        mContext = InitContext.getInstance().getHostActivity();
+        mContext = InternalShareInitBridge.getInstance().getHostActivity();
     }
 
     @Override

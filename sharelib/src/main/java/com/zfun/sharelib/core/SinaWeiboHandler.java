@@ -10,7 +10,7 @@ import android.text.TextUtils;
 import com.zfun.sharelib.AccessTokenUtils;
 import com.zfun.sharelib.LiveState;
 import com.zfun.sharelib.SsoFactory;
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.sina.weibo.sdk.api.ImageObject;
 import com.sina.weibo.sdk.api.TextObject;
@@ -21,10 +21,10 @@ import com.sina.weibo.sdk.common.UiError;
 import com.sina.weibo.sdk.openapi.IWBAPI;
 
 /**
- * 新浪微博分享，注意微博分享结果的回调在{@link InitContext#getHostActivity()} 或者是 {@link ShareData#setCompelContext(Activity)}
+ * 新浪微博分享，注意微博分享结果的回调在{@link InternalShareInitBridge#getHostActivity()} 或者是 {@link ShareData#setCompelContext(Activity)}
  * 对应的Activity中。
  * <p/>
- * Created by zfun on 2017/8/8 16:41
+ * Created by lizhaofei on 2017/8/8 16:41
  */
 public class SinaWeiboHandler implements IShareHandler {
     private Activity mActivity;
@@ -34,11 +34,16 @@ public class SinaWeiboHandler implements IShareHandler {
     private ShareData mNowShareData;//注意内存泄漏，这个handler是单例
 
     public void postShareSuccess() {
-        if (null != mNowShareData && null != mNowShareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
+        if(null == mNowShareData){
+            NullableToast.showSysToast("分享成功");
+            return;
+        }
+        final ShareData.OnShareListener listener = mNowShareData.mShareListener;
+        if(null != listener){
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    mNowShareData.mShareListener.onSuccess();
+                    listener.onSuccess();
                     mNowShareData.mShareListener = null;
                     mNowShareData = null;
                 }
@@ -50,32 +55,42 @@ public class SinaWeiboHandler implements IShareHandler {
     }
 
     public void postShareError() {
-        if (null != mNowShareData && null != mNowShareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
+        if(null == mNowShareData){
+            NullableToast.showSysToast("发送失败");
+            return;
+        }
+        final ShareData.OnShareListener listener = mNowShareData.mShareListener;
+        if(null != listener){
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    mNowShareData.mShareListener.onFail();
+                    listener.onFail();
                     mNowShareData.mShareListener = null;
                     mNowShareData = null;
                 }
             });
-        } else {
+        }else {
             mNowShareData = null;
         }
         NullableToast.showSysToast("发送失败");
     }
 
     public void postShareCancel() {
-        if (null != mNowShareData && null != mNowShareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
+        if(null == mNowShareData){
+            NullableToast.showSysToast("发送取消");
+            return;
+        }
+        final ShareData.OnShareListener listener = mNowShareData.mShareListener;
+        if(null != listener){
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
                 @Override
                 public void run() {
-                    mNowShareData.mShareListener.onCancel();
+                    listener.onCancel();
                     mNowShareData.mShareListener = null;
                     mNowShareData = null;
                 }
             });
-        } else {
+        }else {
             mNowShareData = null;
         }
         NullableToast.showSysToast("发送取消");
@@ -86,7 +101,7 @@ public class SinaWeiboHandler implements IShareHandler {
         if (isRelease) {
             return;
         }
-        if (!InitContext.getInstance().isPrivacyPolicyAgreed()) {
+        if (!InternalShareInitBridge.getInstance().isPrivacyPolicyAgreed()) {
             return;
         }
         final Activity compelActivity = shareData.getCompelContext();//注意，不能设为全局属性，因为SinaWeiboHandler是app运行期间一直存在的，会引起Activity泄露
@@ -170,7 +185,7 @@ public class SinaWeiboHandler implements IShareHandler {
     @Override
     public void init() {
         isRelease = false;
-        mActivity = InitContext.getInstance().getHostActivity();
+        mActivity = InternalShareInitBridge.getInstance().getHostActivity();
     }
 
     @Override

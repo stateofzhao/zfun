@@ -14,7 +14,7 @@ import androidx.annotation.NonNull;
 /**
  * 微信小程序
  * <p/>
- * Created by zfun on 2021/2/22 15:30
+ * Created by lizhaofei on 2021/2/22 15:30
  */
 public class WeixinMiniProgramHandler extends WeixinAbsShareHandler{
     @Override
@@ -35,12 +35,13 @@ public class WeixinMiniProgramHandler extends WeixinAbsShareHandler{
         final IWXAPI api = ShareMgrImpl.getInstance().getWxApi();
         if (api != null && api.isWXAppInstalled()) {
             if (isSupport()) {
+                /*smallImage(shareData);*/
                 doShare(shareData, api);
             } else {
-                NullableToast.showDialogTip(realContext, "update");
+                NullableToast.showDialogTip(realContext, "微信版本过低");
             }
         } else {
-            NullableToast.showDialogTip(realContext, "install");
+            NullableToast.showDialogTip(realContext, "微信未安装");
         }
     }
 
@@ -48,4 +49,11 @@ public class WeixinMiniProgramHandler extends WeixinAbsShareHandler{
     public boolean isSupport() {
         return ShareUtils.isSupportSmallAppShare();
     }
+
+   /* private void smallImage(@NonNull ShareData shareData){
+        final ShareData.Wx wx = shareData.getWxShareData();
+        wx.thumbData = ShareUtils.imgThumbFromByte(mContext,wx.thumbData, ShareConstant.WX_SMALL_APP_THUMB_IMAGE_SIZE,
+                ShareConstant.WX_SMALL_APP_THUMB_IMAGE_SIZE,
+                ShareConstant.WX_SMALL_APP_THUMB_MAX_STORAGE_SIZE);
+    }*/
 }

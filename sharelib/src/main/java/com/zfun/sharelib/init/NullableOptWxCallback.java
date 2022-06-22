@@ -49,10 +49,10 @@ public class NullableOptWxCallback implements IOptWxCallback {
                 WxCallbackActivity.startActivity(newIntent);
                 WxCallbackActivity.finish();
                 break;
-            // 可能有其他类型的消息，默认都把音乐盒拉起来，避免这个透明Activity卡住用户操作
+            // 可能有其他类型的消息，默认都把自己app起来，避免这个透明Activity卡住用户操作
             case ConstantsAPI.COMMAND_GETMESSAGE_FROM_WX:
             default:
-                // 微信调用酷我音乐的界面
+                // 微信调用自己app的界面
                 Intent intent = new Intent(WxCallbackActivity, desActivity);
                 WxCallbackActivity.startActivity(intent);
                 WxCallbackActivity.finish();
@@ -86,7 +86,7 @@ public class NullableOptWxCallback implements IOptWxCallback {
                 break;
         }
 
-        NullableToast.showDialogTip(InitContext.getInstance().getHostActivity(), resultMsg);
+        NullableToast.showDialogTip(InternalShareInitBridge.getInstance().getHostActivity(), resultMsg);
     }
 
     private boolean isShareResp(@NonNull BaseResp baseResp) {

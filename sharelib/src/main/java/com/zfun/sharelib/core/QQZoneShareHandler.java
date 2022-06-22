@@ -10,9 +10,9 @@ import android.text.TextUtils;
 
 import com.zfun.sharelib.AccessTokenUtils;
 import com.zfun.sharelib.ShareMgrImpl;
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
-import com.zfun.sharelib.pojo.QzoneOAuthV2;
+import com.zfun.sharelib.type.QzoneOAuthV2;
 import com.tencent.connect.share.QzoneShare;
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 /**
  * QQ空间分享
  * <p/>
- * Created by zfun on 2017/8/4.
+ * Created by lizhaofei on 2017/8/4.
  */
 //这个应该有两种形式，一种是需要打开一个新的Fragment来让用户编辑 简介；一种是直接发送到QQ中。
 public class QQZoneShareHandler extends QQShareAbsHandler {
@@ -84,16 +84,16 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
         if (!TextUtils.isEmpty(qqZone.summary)) {
             params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, qqZone.summary);
         }
-        if (null != qqZone.imageUris && qqZone.imageUris.size() > 0) {
-            String first = qqZone.imageUris.get(0);
+        if (null != qqZone.imageUrlOrFilePath && qqZone.imageUrlOrFilePath.size() > 0) {
+            String first = qqZone.imageUrlOrFilePath.get(0);
             boolean isNetImages = false;
             if (!TextUtils.isEmpty(first) && first.startsWith("http")) {
                 isNetImages = true;
             }
             if (isNetImages) {
-                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, qqZone.imageUris);
+                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, qqZone.imageUrlOrFilePath);
             } else {
-                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, qqZone.imageUris);
+                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, qqZone.imageUrlOrFilePath);
             }
         } else {//qq空间分享必须带图了，这里来一个默认图
             ArrayList<String> list = new ArrayList<>();
@@ -109,39 +109,54 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
 
     //发送分享结果
     private void postShareSuccess(final ShareData shareData) {
-        if (null != shareData && null != shareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
-                @Override
-                public void run() {
-                    shareData.mShareListener.onSuccess();
-                    shareData.mShareListener = null;
-                }
-            });
+        if (null == shareData) {
+            return;
         }
+        final ShareData.OnShareListener callback = shareData.mShareListener;
+        if (null == callback) {
+            return;
+        }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                callback.onSuccess();
+                shareData.mShareListener = null;
+            }
+        });
     }
 
     private void postShareCancel(final ShareData shareData) {
-        if (null != shareData && null != shareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
-                @Override
-                public void run() {
-                    shareData.mShareListener.onCancel();
-                    shareData.mShareListener = null;
-                }
-            });
+        if (null == shareData) {
+            return;
         }
+        final ShareData.OnShareListener callback = shareData.mShareListener;
+        if (null == callback) {
+            return;
+        }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                callback.onCancel();
+                shareData.mShareListener = null;
+            }
+        });
     }
 
     private void postShareError(final ShareData shareData) {
-        if (null != shareData && null != shareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
-                @Override
-                public void run() {
-                    shareData.mShareListener.onFail();
-                    shareData.mShareListener = null;
-                }
-            });
+        if (null == shareData) {
+            return;
         }
+        final ShareData.OnShareListener callback = shareData.mShareListener;
+        if (null == callback) {
+            return;
+        }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                callback.onFail();
+                shareData.mShareListener = null;
+            }
+        });
     }
 
     //分享监听
@@ -262,7 +277,7 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
                         JSONObject jsonObject = (JSONObject) arg0;
                         String name = jsonObject.optString("nickname");
                         if (!TextUtils.isEmpty(name)) {
-                            AccessTokenUtils.doSaveUserInfoByType(mActivity, null,name, AccessTokenUtils.SOURCE_QZONE);
+                            AccessTokenUtils.doSaveUserInfoByType(mActivity, null, name, AccessTokenUtils.SOURCE_QZONE);
                         }
                     }
 

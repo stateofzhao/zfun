@@ -12,7 +12,7 @@ import com.tencent.mm.opensdk.openapi.IWXAPI;
 /**
  * 微信好友分享
  * <p/>
- * Created by zfun on 2017/8/8 16:15
+ * Created by lizhaofei on 2017/8/8 16:15
  */
 public class WeixinFriendHandler extends WeixinAbsShareHandler {
 
@@ -34,10 +34,12 @@ public class WeixinFriendHandler extends WeixinAbsShareHandler {
             if (api.getWXAppSupportAPI() >= SESSION_SUPPORTED_VERSION) {
                 doShare(shareData, api);
             } else {
-                NullableToast.showDialogTip(realContext, "update");
+                postShareError();
+                NullableToast.showDialogTip(realContext, "微信版本过低");
             }
         } else {
-            NullableToast.showDialogTip(realContext, "install");
+            postShareError();
+            NullableToast.showDialogTip(realContext, "微信未安装");
         }
     }
 

@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * 分享管理器
  * <p/>
- * Created by zfun on 2017/8/8 18:01
+ * Created by lizhaofei on 2017/8/8 18:01
  */
 public interface IShareMgr {
     /**

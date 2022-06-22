@@ -7,7 +7,7 @@ import java.lang.ref.WeakReference;
 /**
  * Created by lzf on 2021/12/21 5:18 下午
  */
-public class NullableMessageHandler implements IMessageHandler{
+public class NullableMessageHandler implements IMessageHandler {
     private static WeakReference<IMessageHandler> weakReference;
 
     public static synchronized IMessageHandler get(){
@@ -19,10 +19,15 @@ public class NullableMessageHandler implements IMessageHandler{
 
     private final Handler mainHandler;
     private NullableMessageHandler(){
-        mainHandler = new Handler(InitContext.getInstance().getHostActivity().getMainLooper());
+        mainHandler = new Handler(InternalShareInitBridge.getInstance().getHostActivity().getMainLooper());
     }
     @Override
-    public void asyncRun(Runnable runnable) {
+    public void asyncRunInMainThread(Runnable runnable) {
         mainHandler.post(runnable);
+    }
+
+    @Override
+    public void runInOtherThread(Runnable runnable) {
+        new Thread(runnable).start();
     }
 }

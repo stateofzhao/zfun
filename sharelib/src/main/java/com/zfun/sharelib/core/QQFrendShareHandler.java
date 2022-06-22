@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.ShareMgrImpl;
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.tencent.connect.share.QQShare;
 import com.tencent.tauth.IUiListener;
@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
 /**
  * QQ好友分享
  * <p/>
- * Created by zfun on 2017/8/8 11:40
+ * Created by lizhaofei on 2017/8/8 11:40
  */
 public class QQFrendShareHandler extends QQShareAbsHandler {
     private final static String TAG = "QQFrendShareHandler";
@@ -44,12 +44,12 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
         Bundle params = null;
         if (shareDataType == QQShare.SHARE_TO_QQ_TYPE_DEFAULT) {//图文分享
             params = getImageTextParams(qFrend.targetUrl, qFrend.title, qFrend.summary,
-                    qFrend.imageUri, qFrend.appName, qFrend.site, qFrend.ext);
+                    qFrend.imageURLorFilePath, qFrend.appName, qFrend.site, qFrend.ext);
         } else if (shareDataType == QQShare.SHARE_TO_QQ_TYPE_AUDIO) {//音乐分享
             params = getMusicParams(qFrend.targetUrl, qFrend.audioUrl, qFrend.title, qFrend.summary,
-                    qFrend.imageUri, qFrend.appName, qFrend.ext);
+                    qFrend.imageURLorFilePath, qFrend.appName, qFrend.ext);
         } else if (shareDataType == QQShare.SHARE_TO_QQ_TYPE_IMAGE) {//纯图片分享
-            params = getImageParams(qFrend.imageUri, qFrend.appName, qFrend.ext);
+            params = getImageParams(qFrend.imageURLorFilePath, qFrend.appName, qFrend.ext);
         }
         if (null == params) {
             return;
@@ -60,39 +60,54 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
 
     //发送分享结果
     private void postShareSuccess(final ShareData shareData) {
-        if (null != shareData && null != shareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
-                @Override
-                public void run() {
-                    shareData.mShareListener.onSuccess();
-                    shareData.mShareListener = null;
-                }
-            });
+        if (null == shareData) {
+            return;
         }
+        final ShareData.OnShareListener callback = shareData.mShareListener;
+        if (null == callback) {
+            return;
+        }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                callback.onSuccess();
+                shareData.mShareListener = null;
+            }
+        });
     }
 
     private void postShareCancel(final ShareData shareData) {
-        if (null != shareData && null != shareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
-                @Override
-                public void run() {
-                    shareData.mShareListener.onCancel();
-                    shareData.mShareListener = null;
-                }
-            });
+        if (null == shareData) {
+            return;
         }
+        final ShareData.OnShareListener callback = shareData.mShareListener;
+        if (null == callback) {
+            return;
+        }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                callback.onCancel();
+                shareData.mShareListener = null;
+            }
+        });
     }
 
     private void postShareError(final ShareData shareData) {
-        if (null != shareData && null != shareData.mShareListener) {
-            InitContext.getInstance().getMessageHandler().asyncRun(new Runnable() {
-                @Override
-                public void run() {
-                    shareData.mShareListener.onFail();
-                    shareData.mShareListener = null;
-                }
-            });
+        if (null == shareData) {
+            return;
         }
+        final ShareData.OnShareListener callback = shareData.mShareListener;
+        if (null == callback) {
+            return;
+        }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                callback.onFail();
+                shareData.mShareListener = null;
+            }
+        });
     }
 
     private class QShareUiListener implements IUiListener {
@@ -154,6 +169,7 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
 
     /**
      * 判断应用是否存在
+     *
      * @param packageName
      * @return
      */

@@ -8,13 +8,13 @@ import androidx.annotation.NonNull;
 import android.os.Build;
 import android.text.TextUtils;
 
-import com.zfun.sharelib.init.InitContext;
+import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 
 /**
  * 复制链接
  * <p/>
- * Created by zfun on 2017/8/8 17:44
+ * Created by lizhaofei on 2017/8/8 17:44
  */
 public class CopyUrlHandler implements IShareHandler {
     private Context mContext;
@@ -52,7 +52,7 @@ public class CopyUrlHandler implements IShareHandler {
     @Override
     public void init() {
         isRelease = false;
-        mContext = InitContext.getInstance().getHostActivity();
+        mContext = InternalShareInitBridge.getInstance().getHostActivity();
     }
 
     @Override

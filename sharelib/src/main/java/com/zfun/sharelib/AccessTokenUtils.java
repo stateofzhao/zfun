@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.core.ShareConstant;
-import com.zfun.sharelib.pojo.QzoneOAuthV2;
+import com.zfun.sharelib.type.QzoneOAuthV2;
 import com.sina.weibo.sdk.auth.Oauth2AccessToken;
 
 /**
@@ -43,7 +43,7 @@ public class AccessTokenUtils {
         if (context == null) {
             return;
         }
-        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_APPEND);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString("token", token.getAccessToken());
         editor.putLong("expiresTime", token.getExpiresTime());
@@ -62,7 +62,7 @@ public class AccessTokenUtils {
      * @param wbUid 新浪微博的UID
      */
     public static void keepAccessUid(Context context, String wbUid) {
-        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_APPEND);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString("friend_rec_weibo_uid", wbUid);
         editor.apply();
@@ -74,7 +74,7 @@ public class AccessTokenUtils {
      * @param context Activity 上下文环境
      */
     public static String readAccessUid(Context context) {
-        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_APPEND);
         return pref.getString("friend_rec_weibo_uid", "");
     }
 
@@ -85,7 +85,7 @@ public class AccessTokenUtils {
      * @return Oauth2AccessToken
      */
     public static Oauth2AccessToken readAccessToken(Context context) {
-        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(SINA_WEIBO_PREFERENCES, Context.MODE_APPEND);
         Bundle bundle = new Bundle();
         bundle.putString("access_token", pref.getString("token", ""));
         bundle.putString("expires_in", String.valueOf(pref.getLong("expiresTime", 0) / 1000));
@@ -100,7 +100,7 @@ public class AccessTokenUtils {
      * @param preference
      */
     public static void clear(Context context, String preference) {
-        SharedPreferences pref = context.getSharedPreferences(preference, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(preference, Context.MODE_APPEND);
         SharedPreferences.Editor editor = pref.edit();
         editor.clear();
         editor.apply();
@@ -130,7 +130,7 @@ public class AccessTokenUtils {
      * @return OAuthV2
      */
     public static QzoneOAuthV2 doReadTencentQzoneToken(Context context) {
-        SharedPreferences pref = context.getSharedPreferences(TENCENT_QZONE_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(TENCENT_QZONE_PREFERENCES, Context.MODE_APPEND);
         QzoneOAuthV2 oAuth = new QzoneOAuthV2();
         oAuth.redirectUri = ShareConstant.QZONE_REDIRECT_URL;
         oAuth.clientId =  ShareConstant.QQ_APP_ID;
@@ -148,7 +148,7 @@ public class AccessTokenUtils {
      * @param oAuth
      */
     public static void doSaveTencentQzoneToken(Context context, QzoneOAuthV2 oAuth) {
-        SharedPreferences pref = context.getSharedPreferences(TENCENT_QZONE_PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences pref = context.getSharedPreferences(TENCENT_QZONE_PREFERENCES, Context.MODE_APPEND);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString("access_token", oAuth.accessToken);
         editor.putString("expiresin", oAuth.expiresIn);

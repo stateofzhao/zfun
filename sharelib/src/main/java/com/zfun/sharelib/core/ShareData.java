@@ -1,12 +1,12 @@
 package com.zfun.sharelib.core;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import androidx.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.ShareMgrImpl;
-import com.zfun.sharelib.init.InitContext;
 import com.sina.weibo.sdk.openapi.IWBAPI;
 import com.tencent.connect.share.QQShare;
 import com.tencent.connect.share.QzoneShare;
@@ -14,10 +14,12 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import com.zfun.sharelib.SsoFactory;
+import com.zfun.sharelib.init.InternalShareInitBridge;
+
 /**
  * 分享数据
  * <p/>
- * Created by zfun on 2017/8/6 8:57
+ * Created by lizhaofei on 2017/8/6 8:57
  */
 public class ShareData {
 
@@ -40,7 +42,7 @@ public class ShareData {
     private WeakReference<Activity> mCompelContext;
     private WeakReference<IWBAPI> mWBAPI;
 
-    protected OnShareListener mShareListener;
+    public OnShareListener mShareListener;
 
     /**
      * 构建分享到QQ好友的 纯图片数据
@@ -62,7 +64,7 @@ public class ShareData {
     }
 
     /** 构建QQ空间 图文分享数据 */
-    public QZoneImageTextBuilder buildQzoneTImage() {
+    public QZoneImageTextBuilder buildQZoneTImage() {
         return new QZoneImageTextBuilder();
     }
 
@@ -96,8 +98,8 @@ public class ShareData {
 
     /**
      * 设置新浪微博授权使用的{@link IWBAPI}，
-     * 如果不设置的话会默认使用 {@link SsoFactory#getWBAPI(Activity)} 来获取{@link IWBAPI}，
-     * 这样如果发起分享的话，结果回调方法不在{@link InitContext#getHostActivity()}中，
+     * 如果不设置的话会默认使用 {@link SsoFactory#getWBAPI(Context)} 来获取{@link IWBAPI}，
+     * 这样如果发起分享的话，结果回调方法不在{@link InternalShareInitBridge#getHostActivity()}中，
      * 需要你自己来处理分享回调。
      */
     public void setWBAPI(IWBAPI wbapi) {
@@ -113,31 +115,31 @@ public class ShareData {
     }
 
     /** 获取 qq空间 分享数据 */
-    QQZone getQqZShareData() {
+    public QQZone getQqZShareData() {
         return mQQZShareData;
     }
 
     /** 获取 QQ好友 分项数据 */
-    QQ getQqFrendData() {
+    public QQ getQqFrendData() {
         return mQQShareData;
     }
 
-    Wx getWxShareData() {
+    public Wx getWxShareData() {
         return mWxShareData;
     }
 
-    SinaWeibo getSinaShareData() {
+    public SinaWeibo getSinaShareData() {
         return mSinaShareData;
     }
 
     @Nullable
-    Activity getCompelContext() {
+    public Activity getCompelContext() {
         return null != mCompelContext ? mCompelContext.get() : null;
     }
 
     /** 参见 {@link #setWBAPI(IWBAPI)} */
     @Nullable
-    IWBAPI getWBAPI() {
+    public IWBAPI getWBAPI() {
         return null != mWBAPI ? mWBAPI.get() : null;
     }
 
@@ -152,19 +154,19 @@ public class ShareData {
         public final String title;
         public final String summary;
         public final String targetUrl;
-        public final String imageUri;
+        public final String imageURLorFilePath;
         public final String appName;
         public final String site;
         public final String audioUrl;
         public final int ext;
 
-        private QQ(int shareType, String title, String targetUrl, String summary, String imageUri,
+        private QQ(int shareType, String title, String targetUrl, String summary, String imageURLorFilePath,
                 String appName, String site, String audioUrl, int ext) {
             this.shareType = shareType;
             this.title = title;
             this.targetUrl = targetUrl;
             this.summary = summary;
-            this.imageUri = imageUri;
+            this.imageURLorFilePath = imageURLorFilePath;
             this.appName = appName;
             this.site = site;
             this.audioUrl = audioUrl;
@@ -184,35 +186,38 @@ public class ShareData {
         public final String summary;
         public final String site;
         public final String targetUrl;
-        public final ArrayList<String> imageUris;
+        public final ArrayList<String> imageUrlOrFilePath;
 
+        /**
+         * @param imageUrlOrFilePath 不支持混合传递，要么全是URL，要么全是文件路径
+         * */
         private QQZone(int shareType, String title, String summary, String site,
-                       ArrayList<String> imageUris, String targetUrl) {
+                       ArrayList<String> imageUrlOrFilePath, String targetUrl) {
             this.shareType = shareType;
             this.title = title;
             this.summary = summary;
             this.site = site;
-            this.imageUris = imageUris;
+            this.imageUrlOrFilePath = imageUrlOrFilePath;
             this.targetUrl = targetUrl;
         }
 
-        private QQZone(String title, String summary, String site, ArrayList<String> imageUris, String targetUrl) {
-            this(QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT, title, summary, site, imageUris, targetUrl);
+        private QQZone(String title, String summary, String site, ArrayList<String> imageUrlOrFilePath, String targetUrl) {
+            this(QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT, title, summary, site, imageUrlOrFilePath, targetUrl);
         }
 
         public void share(){
-            ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_QQ_FRIEND, ShareData.this);
+            ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_QQ_ZONE, ShareData.this);
         }
     }//QQZone end
 
     public class Wx {
-        protected final static int TYPE_TEXT = 1;
-        protected final static int TYPE_IMAGE = 2;
-        protected final static int TYPE_MUSIC = 3;
-        protected final static int TYPE_VIDEO = 4;
-        protected final static int TYPE_WEB = 5;//网页分享
-        protected final static int TYPE_SMALL_APP = 6;//小程序类型分享，暂未实现
-        protected final static int TYPE_MUSIC_VIDEO = 7;//音乐视频类型分享
+        public final static int TYPE_TEXT = 1;
+        public final static int TYPE_IMAGE = 2;
+        public final static int TYPE_MUSIC = 3;
+        public final static int TYPE_VIDEO = 4;
+        public final static int TYPE_WEB = 5;//网页分享
+        public final static int TYPE_SMALL_APP = 6;//小程序类型分享，暂未实现
+        public final static int TYPE_MUSIC_VIDEO = 7;//音乐视频类型分享
 
         //通用
         public int type = -1;
@@ -257,14 +262,20 @@ public class ShareData {
         private Wx(){}
 
         //1 微信好友；2微信朋友圈；3微信小程序
-        public void share(int where){
-            if(1 == where){
-                ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_WX_FRIEND, ShareData.this);
-            }else if(2 == where){
-                ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_WX_CYCLE, ShareData.this);
-            }else if(3 == where){
-                ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_WX_MINI_PROGRAM, ShareData.this);
-            }
+        private void share(int where){
+            ShareMgrImpl.getInstance().share(where, ShareData.this);
+        }
+
+        public void share2Friend(){
+            share(ShareConstant.SHARE_TYPE_WX_FRIEND);
+        }
+
+        public void share2Timeline(){
+            share(ShareConstant.SHARE_TYPE_WX_CYCLE);
+        }
+
+        public void share2MiniProgram(){
+            share(ShareConstant.SHARE_TYPE_WX_MINI_PROGRAM);
         }
     }//Wx end
 
@@ -289,7 +300,7 @@ public class ShareData {
         private String title;
         private String targetUrl;
         private String summary;
-        private String imageUri;
+        private String imageURLorFilePath;
         private String appName;
         private String site;
         private int ext = -1;
@@ -313,10 +324,10 @@ public class ShareData {
         }
 
         /**
-         * @param imageUri 本地or网络
+         * @param imageURLorFilePath 本地or网络
          */
-        public QQTextImageBuilder imageUri(String imageUri) {
-            this.imageUri = imageUri;
+        public QQTextImageBuilder imageURLorFilePath(String imageURLorFilePath) {
+            this.imageURLorFilePath = imageURLorFilePath;
             return this;
         }
 
@@ -339,7 +350,7 @@ public class ShareData {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl)) {
                 throw new IllegalArgumentException("title or targetUrl must not null!");
             }
-            mQQShareData =  new QQ(QQShare.SHARE_TO_QQ_TYPE_DEFAULT, title, targetUrl, summary, imageUri,
+            mQQShareData =  new QQ(QQShare.SHARE_TO_QQ_TYPE_DEFAULT, title, targetUrl, summary, imageURLorFilePath,
                             appName, site, null, ext);
             return mQQShareData;
         }
@@ -348,7 +359,7 @@ public class ShareData {
     //构建 QQ纯图片分享 的数据
     public class QQImageBuilder {
         private String appName;
-        private String imageLocalUri;
+        private String imageLocalUri;//只能是本地图片路径
         private int ext;
 
         private QQImageBuilder() {
@@ -384,7 +395,7 @@ public class ShareData {
         private String title;
         private String targetUrl;
         private String summary;
-        private String imageUri;
+        private String imageURLorFilePath;
         private String appName;
         private String site;
         private int ext = -1;
@@ -410,10 +421,10 @@ public class ShareData {
         }
 
         /**
-         * @param imageUri 本地or网络
+         * @param imageURLorFilePath 本地or网络
          */
-        public QQAudioBuilder imageUri(String imageUri) {
-            this.imageUri = imageUri;
+        public QQAudioBuilder imageURLorFilePath(String imageURLorFilePath) {
+            this.imageURLorFilePath = imageURLorFilePath;
             return this;
         }
 
@@ -441,7 +452,7 @@ public class ShareData {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl) || TextUtils.isEmpty(audioUrl)) {
                 throw new IllegalArgumentException("title or targetUrl or audioUrl must not null!");
             }
-            mQQShareData = new QQ(QQShare.SHARE_TO_QQ_TYPE_AUDIO, title, targetUrl, summary, imageUri,
+            mQQShareData = new QQ(QQShare.SHARE_TO_QQ_TYPE_AUDIO, title, targetUrl, summary, imageURLorFilePath,
                     appName, site, audioUrl, ext);
             return mQQShareData;
         }
@@ -453,8 +464,8 @@ public class ShareData {
         private String summary;
         private String targetUrl;
         private String site;
-        private ArrayList<String> imageUrls;
-        private ArrayList<String> localImages;
+        private ArrayList<String> netImageUrls;
+        private ArrayList<String> localImagePaths;
 
         private QZoneImageTextBuilder() {
         }
@@ -480,10 +491,18 @@ public class ShareData {
         }
 
         /**
-         * @param imageUrls 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络）
+         * @param imageNetUrls 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络）
          */
-        public QZoneImageTextBuilder imageUrls(ArrayList<String> imageUrls) {
-            this.imageUrls = imageUrls;
+        public QZoneImageTextBuilder imageNetUrls(ArrayList<String> imageNetUrls) {
+            this.netImageUrls = imageNetUrls;
+            return this;
+        }
+
+        /**
+         * @param imageLocalPaths 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络）
+         */
+        public QZoneImageTextBuilder imageLocalPaths(ArrayList<String> imageLocalPaths) {
+            this.localImagePaths = imageLocalPaths;
             return this;
         }
 
@@ -491,7 +510,13 @@ public class ShareData {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl)) {
                 throw new IllegalArgumentException("title or targetUrl must not null!");
             }
-            mQQZShareData = new QQZone(title, summary, site, imageUrls, targetUrl);
+            final ArrayList<String> images;
+            if(null != netImageUrls && !netImageUrls.isEmpty()){
+                images = netImageUrls;
+            } else {
+                images = localImagePaths;
+            }
+            mQQZShareData = new QQZone(title, summary, site, images, targetUrl);
             return mQQZShareData;
         }
     }//QZoneImageTextBuilder end

@@ -5,7 +5,7 @@ import java.lang.ref.WeakReference;
 /**
  * Created by lzf on 2021/12/21 3:10 下午
  */
-public class NullableDebugCheck implements IDebugCheck{
+public class NullableDebugCheck implements IDebugCheck {
     private static WeakReference<IDebugCheck> weakReference;
 
     public static synchronized IDebugCheck get(){
