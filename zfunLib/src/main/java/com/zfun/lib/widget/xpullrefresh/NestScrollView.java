@@ -35,7 +35,7 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP;
  * NestedScrolling机制，包括两个接口 NestedScrollingParent 和 NestedScrollingChild，<br/>
  * 看看这两个接口的方法命名就可以体会出这两个接口分别是干啥用的了，<br/>
  * 在 NestedScrollingParent 中方法都是以 on 开头的，说明它们都是被动执行的；<br/>
- * 在 NestedScrollingChild 中方法都不是以 on 开头的，说明它们是需要主动触发的；<br/>
+ * 在 NestedScrollingChild 中方法都 不是以 on 开头的，说明它们是需要主动触发的；<br/>
  * 所以一次嵌套滚动注定是从 NestedScrollingChild 中开始的，流程为 子View 滚动时首先去问 父View 是否需要滚动<br/>
  * 以及 父View 需要消耗 子View 多少滚动值，在这个过程中 NestedScrollingChild 如何通知到 NestedScrollingParent<br/>
  * AndroidSDK已经给你封装好了：NestedScrollingParentHelper，NestedScrollingChildHelper。<br/>
@@ -306,7 +306,7 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
     //NestedScrollingParent2 的方法；
     //子View调用 startNestedScroll() 方法时会触发；
     //参数 axes == getNestedScrollAxes() 的返回值；
-    //返回true表示本ViewGroup会处理 子View的后续嵌套滚动事件，返回false表示本ViewGroup对子View的后续滚动"不感兴趣"；
+    //返回true表示本ViewGroup会处理 子View的后续嵌套滚动事件，返回false表示本ViewGroup对子View的后续滚动"不感兴趣"，【也就不会再接收到后续的嵌套滚动回调了】；
     @Override
     public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int axes, int type) {
         //如果子View不是 NestedScrollingChild 自己在 onTouchEvent()#ACTION_MOVE 事件中进行了处理，所以无需再接收后续的 NestedScrollingParent 回调了
@@ -329,6 +329,7 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
         stopNestedScroll(type);
     }
 
+    //子View滚动完后，自己才消耗子View不需要的滚动值
     @Override
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type) {
         final int oldScrollY = getScrollY();
@@ -338,6 +339,7 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
         dispatchNestedScroll(0, myConsumed, 0, myUnconsumed, null, type);
     }
 
+    //不优先消耗子View的滚动
     @Override
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed, int type) {
         dispatchNestedPreScroll(dx, dy, consumed, null, type);
@@ -370,7 +372,14 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
         onNestedPreScroll(target, dx, dy, consumed, ViewCompat.TYPE_TOUCH);
     }
 
-    //这个方法会和 onNestedScroll() 方法都调用的。
+    //当子View开始了Fling时，首先依次回调 onNestedPreFling() 和 onNestedFling()，
+    // 如果你需要处理fling，那么在 onNestedPreFling() 中返回true后，子View就不再处理Fling后续了，
+    // 直接回调 onStopNestedScroll() 方法结束滚动；
+    // 如果你在 onNestedPreFling() 返回false，那么会接收到 onNestedFling() 回调，
+    // 无论此方法返回true或者false子View可能都会处理自己的fling，通过参数consumed来知晓，
+    // 一旦子View fling到自己边界时，会回调 onStartNestedScroll() onNestedScroll()，从而可以在 onNestedScroll() 中来延续子View到fling，从而平滑fling。
+    //
+    //这个方法会和 onNestedScroll() 方法组合调用。
     //如果target自己会处理Fling，consumed会传递true。
     // 原则上是，如果target不自己处理，那么 onNestedScroll(ViewCompat.TYPE_NON_TOUCH) 也不会调用，
     // 因为 onNestedScroll(ViewCompat.TYPE_NON_TOUCH) 就是target自己处理fling时给的回调。
@@ -383,7 +392,9 @@ public class NestScrollView extends FrameLayout implements NestedScrollingParent
         return false;
     }
 
-    //自身不需要特殊处理，直接向上分发
+    //自身不需要特殊处理，直接向上分发。
+    //返回true，表示自己消耗掉了此次fling，则子View不再有fling了。
+    //在 onStopNestedScroll() 方法之前回调。
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
         return dispatchNestedPreFling(velocityX, velocityY);
