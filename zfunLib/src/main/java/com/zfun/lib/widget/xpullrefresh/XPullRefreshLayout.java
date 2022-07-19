@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.*;
 
+import com.zfun.lib.BuildConfig;
+
 /**
  * 采用NestedScroll结构实现的新版下拉刷新。
  * <p>
@@ -20,20 +22,37 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         void onRefresh();
     }//
 
+    public interface OnPageChangeCallback{
+        void onScrollToPage(int pos);
+        void onPageSelected(int pos);
+    }//
+
     private static final String TAG = "XPullRefreshLayout";
+    private static final int MIN_FLING_VELOCITY = 400; // dips
+    private static final int MIN_DISTANCE_FOR_FLING = 25; // dips
 
     public static final int HEADER_STATE_NORMAL = 1;
     public static final int HEADER_STATE_REFRESH = 2;
+    //
+    public static final int STYLE_PULL_REFRESH = 1;
+    public static final int STYLE_VERTICAL_PAGE = 2;
 
+    private int mStyle = STYLE_VERTICAL_PAGE;
     private int mTouchSlop;
     private int mMinimumVelocity;
     private int mMaximumVelocity;
 
+    //STYLE_VERTICAL_PAGE
+    private int mCurPagePos = 0;
+    private int mFlingDistance;
+
+    //STYLE_PULL_REFRESH
     private int mCurHeaderState = HEADER_STATE_NORMAL;//Header当前状态
     private int mHeaderPullRefreshLimit = 0;//下拉多少距离能够触发刷新状态
     private int mHeaderSpringBackAnimTimeMs = 500;
 
     private OnRefreshListener mOnRefreshListener;
+    private OnPageChangeCallback mOnPageChangeCallback;
 
     private boolean mIsBeingDragged = false;
     private boolean mIsInTouchMotion = false;
@@ -51,6 +70,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     private int mNestedYOffset;
 
     private int mLastY;
+    private int mInitTouchScrollY;
 
     public XPullRefreshLayout(@NonNull Context context) {
         this(context, null);
@@ -72,8 +92,8 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         mScroller.abortAnimation();
         mCurHeaderState = HEADER_STATE_NORMAL;
         //方案一,结束刷新时，如果有头View漏出来了且在TOUCH中，不强制回滚：
-        if(!mIsInTouchMotion){
-            handleHeaderSpringBackIfNeed();
+        if (!mIsInTouchMotion) {
+            handleSpringBackIfNeed(0);
         }
 
         //方案二，结束刷新时，如果有头View漏出来了，且在TOUCH，强制回滚：
@@ -95,7 +115,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     }
 
     public void setParams(int pullRefreshLimit, int springBackAnimTimeMs) {
-        if(mCurHeaderState == HEADER_STATE_REFRESH){//刷新状态下不能更改
+        if (mCurHeaderState == HEADER_STATE_REFRESH) {//刷新状态下不能更改
             return;
         }
         mHeaderPullRefreshLimit = pullRefreshLimit;
@@ -106,14 +126,34 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         mOnRefreshListener = listener;
     }
 
+    public void setOnPageChangeCallback(OnPageChangeCallback callback){
+        mOnPageChangeCallback = callback;
+    }
+
+    private void internalLayoutChild() {
+        if (getChildCount() > 0) {
+            if (mStyle == STYLE_PULL_REFRESH) {
+                //第一个View为headerView，调整下位置
+                View headView = getChildAt(0);
+                headView.layout(headView.getLeft(), headView.getTop() - headView.getHeight(), headView.getRight(), headView.getBottom() - headView.getHeight());
+            } else if (mStyle == STYLE_VERTICAL_PAGE) {
+                final int childCount = getChildCount();
+                final int myHeight = getMeasuredHeight();
+                int lastChildBom = 0;
+                for (int i = 0; i < childCount; i++){
+                    final View aView = getChildAt(i);
+                    final int top = aView.getTop()+lastChildBom;
+                    lastChildBom = top + myHeight;
+                    aView.layout(aView.getLeft(),top,aView.getRight(),lastChildBom);
+                }
+            }
+        }
+    }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        //第一个View为headerView，调整下位置
-        if (getChildCount() > 0) {
-            View headView = getChildAt(0);
-            headView.layout(headView.getLeft(), headView.getTop() - headView.getHeight(), headView.getRight(), headView.getBottom() - headView.getHeight());
-        }
+        internalLayoutChild();
         scrollTo(getScrollX(), getScrollY());
     }
 
@@ -127,13 +167,14 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     public boolean dispatchTouchEvent(MotionEvent ev) {
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
+            mInitTouchScrollY = getScrollY();
             mIsInTouchMotion = true;
         } else if (action == MotionEvent.ACTION_UP) {
             changeHeaderStateRefreshIfNeed();
-            handleHeaderSpringBackIfNeed();
+            handleSpringBackIfNeed(0);
             mIsInTouchMotion = false;
         } else if (action == MotionEvent.ACTION_CANCEL) {
-            handleHeaderSpringBackIfNeed();
+            handleSpringBackIfNeed(0);
             mIsInTouchMotion = false;
         }
         return super.dispatchTouchEvent(ev);
@@ -147,10 +188,9 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mLastY = (int) ev.getY();
-
                 mScroller.computeScrollOffset();
-                Log.e("XPull-SCROLLER", "onInterceptTouchEvent = ACTION_DOWN = "+mScroller.isFinished());
-                if(!mScroller.isFinished()){
+                debugLog("onInterceptTouchEvent = ACTION_DOWN = " + mScroller.isFinished());
+                if (!mScroller.isFinished()) {
                     mScroller.abortAnimation();
                 }
                 /*mScroller.computeScrollOffset();
@@ -163,11 +203,11 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_TOUCH);
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.e(TAG, "onInterceptTouchEvent = ACTION_MOVE == getNestedScrollAxes() = " + getNestedScrollAxes());
+                debugLog("onInterceptTouchEvent = ACTION_MOVE == getNestedScrollAxes() = " + getNestedScrollAxes());
                 int y = (int) ev.getY();
                 int yDiff = Math.abs(y - mLastY);
-                Log.e(TAG, "onInterceptTouchEvent = yDiff    = " + yDiff);
-                Log.e(TAG, "onInterceptTouchEvent = mTouchSlop= " + mTouchSlop);
+                debugLog("onInterceptTouchEvent = yDiff    = " + yDiff);
+                debugLog("onInterceptTouchEvent = mTouchSlop= " + mTouchSlop);
                 if (yDiff > mTouchSlop && (getNestedScrollAxes() & ViewCompat.SCROLL_AXIS_VERTICAL) == ViewCompat.SCROLL_AXIS_NONE) {
                     mLastY = y;
                     mIsBeingDragged = true;
@@ -178,7 +218,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                     disAllowParentIntercept(true);
                     recycleVelocityTracker();
                 }
-                Log.e(TAG, "onInterceptTouchEvent = ACTION_MOVE == mIsBeingDragged = " + mIsBeingDragged);
+                debugLog("onInterceptTouchEvent = ACTION_MOVE == mIsBeingDragged = " + mIsBeingDragged);
                 if (mIsBeingDragged) {
                     initVelocityTrackerNoExist();
                     mVelocityTracker.addMovement(ev);
@@ -186,7 +226,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                Log.e(TAG, "onInterceptTouchEvent = ACTION_CANCEL|ACTION_UP");
+                debugLog("onInterceptTouchEvent = ACTION_CANCEL|ACTION_UP");
                 mIsBeingDragged = false;
                 stopNestedScroll(ViewCompat.TYPE_TOUCH);
                 recycleVelocityTracker();
@@ -202,7 +242,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         final int action = event.getAction() & MotionEvent.ACTION_MASK;
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                Log.e(TAG, "onTouchEvent - ACTION_DOWN = " + mIsBeingDragged);
+                debugLog("onTouchEvent - ACTION_DOWN = " + mIsBeingDragged);
                 /*mIsBeingDragged = !mScroller.isFinished();
                 if (mIsBeingDragged) {
                     mScroller.abortAnimation();
@@ -211,7 +251,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 }*/
                 mNestedYOffset = 0;
                 mIsBeingDragged = true;
-                if(!mScroller.isFinished()){
+                if (!mScroller.isFinished()) {
                     mScroller.abortAnimation();
                 }
                 disAllowParentIntercept(true);
@@ -222,7 +262,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
             case MotionEvent.ACTION_MOVE:
                 final int y = (int) event.getY();
                 int yDelta = y - mLastY;
-                Log.e(TAG, "onTouchEvent - 手指滑动 yDelta = " + yDelta);
+                debugLog("onTouchEvent - 手指滑动 yDelta = " + yDelta);
                 //处理嵌套滚动
                 boolean dispatchScroll = dispatchNestedPreScroll(0, yDelta, mScrollConsumed, mScrollOffset, ViewCompat.TYPE_TOUCH);
                 if (dispatchScroll) {
@@ -273,7 +313,8 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
                 break;
             case MotionEvent.ACTION_CANCEL:
                 //放到 dispatchTouchEvent() 中处理了
-                /*handleHeaderSpringBackIfNeed();*/
+                /*handleHeaderSpringBackIfNeed();
+                 * handleHeaderSpringBackIfNeed();*/
                 endDrag();
                 break;
         }
@@ -287,12 +328,22 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     @Override
     public void computeScroll() {
         if (!mScroller.computeScrollOffset()) {
-            if (hasNestedScrollingParent(ViewCompat.TYPE_NON_TOUCH)) {//有可能是回弹头View触发的Scroller
-                stopNestedScroll(ViewCompat.TYPE_NON_TOUCH);
+            if (mStyle == STYLE_PULL_REFRESH) {
+                if (hasNestedScrollingParent(ViewCompat.TYPE_NON_TOUCH)) {//有可能是回弹头View触发的Scroller
+                    stopNestedScroll(ViewCompat.TYPE_NON_TOUCH);
+                }
+            } else if (mStyle == STYLE_VERTICAL_PAGE) {
+                final int scrollY = getScrollY();
+                final int pageHeight = getHeight();
+                final boolean isSopInPage = scrollY % pageHeight == 0;
+                if(isSopInPage){
+                    final int nowPos = scrollY/pageHeight;
+                    setCurrPagePos(nowPos,true);
+                }
             }
             return;
         }
-        Log.e("XPull-SCROLLER", "computeScroll");
+        debugLog("XPull-SCROLLER", "computeScroll");
         final int oldScrollY = getScrollY();
         final int scrollY = mScroller.getCurrY();
         int yDelta = scrollY - oldScrollY;
@@ -309,8 +360,16 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     //NestedScrollingParent --- start
     @Override
     public boolean onStartNestedScroll(View child, View target, int axes, int type) {
-        Log.e(TAG, "onStartNestedScroll");
-        return axes == ViewCompat.SCROLL_AXIS_VERTICAL;
+        boolean result;
+        if(mStyle == STYLE_PULL_REFRESH){
+            result = axes == ViewCompat.SCROLL_AXIS_VERTICAL;
+        } else if(mStyle == STYLE_VERTICAL_PAGE){//page类型，不处理fling引起的自身滚动
+            result = type != ViewCompat.TYPE_NON_TOUCH;
+        } else {
+            result = axes == ViewCompat.SCROLL_AXIS_VERTICAL;
+        }
+        debugLog("onStartNestedScroll == "+result);
+        return result;
     }
 
     @Override
@@ -332,7 +391,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
 
     @Override
     public void onStopNestedScroll(View target, int type) {
-        Log.e(TAG, "onStopNestedScroll");
+        debugLog("onStopNestedScroll");
         mParentHelper.onStopNestedScroll(target, type);
         stopNestedScroll(type);
     }
@@ -344,15 +403,28 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
 
     /*private int mOnNestedPreScrollConsumed = 0;*/
 
+    //优先消耗子View的滚动值
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed, int type) {
-        final int oldScrollY = getScrollY();
-        if (oldScrollY < 0) {
-            handleSelfScroll(dy, oldScrollY, getYScrollRange());
+        debugLog("onNestedPreScroll");
+        if(mStyle == STYLE_PULL_REFRESH){
+            final int oldScrollY = getScrollY();
+            if (oldScrollY < 0) {
+                handleSelfScroll(dy, oldScrollY, getYScrollRange());
+            }
+            int consumedY = getScrollY() - oldScrollY;
+            consumed[1] += consumedY;
+            dispatchNestedPreScroll(dx, dy, consumed, mScrollOffset, type);
+        } else if(mStyle == STYLE_VERTICAL_PAGE){
+            final int oldScrollY = getScrollY();
+            final int pageHeight = getHeight();
+            if((oldScrollY % pageHeight != 0 )){//未滚动到整页则需要消耗掉子View的滚动事件来让自己滚动
+                handleSelfScroll(dy, oldScrollY, getYScrollRange());
+            }
+            int consumedY = getScrollY() - oldScrollY;
+            consumed[1] += consumedY;
+            dispatchNestedPreScroll(dx, dy, consumed, mScrollOffset, type);
         }
-        int consumedY = getScrollY() - oldScrollY;
-        consumed[1] += consumedY;
-        dispatchNestedPreScroll(dx, dy, consumed, mScrollOffset, type);
     }
 
     @Override
@@ -374,14 +446,18 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
 
     @Override
     public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type, int[] consumed) {
+        debugLog("onNestedScroll = dyUnconsumed =" + dyUnconsumed);
         //处理自己的嵌套滚动逻辑
-        if (type == ViewCompat.TYPE_NON_TOUCH && mCurHeaderState == HEADER_STATE_NORMAL) {//normal时无需处理fling
-            mScrollOffsetCompat[0] = 0;
-            mScrollOffsetCompat[1] = 0;
-            dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, mScrollOffsetCompat, type, consumed);
-            return;
+        if(mStyle == STYLE_PULL_REFRESH){
+            if (type == ViewCompat.TYPE_NON_TOUCH && mCurHeaderState == HEADER_STATE_NORMAL) {//normal时无需处理子View的联合fling
+                mScrollOffsetCompat[0] = 0;
+                mScrollOffsetCompat[1] = 0;
+                dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, mScrollOffsetCompat, type, consumed);
+                return;
+            }
+        } else if(mStyle == STYLE_VERTICAL_PAGE){//总是处理子View不要的滚动事件
         }
-        Log.e(TAG, "onNestedScroll = dyUnconsumed =" + dyUnconsumed);
+
         final int oldY = getScrollY();
         final int yScrollRange = getYScrollRange();
         handleSelfScroll(dyUnconsumed, oldY, yScrollRange);
@@ -396,6 +472,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
 
     @Override
     public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
+        debugLog("onNestedFling ==consumed== "+consumed);
         if (!consumed) {
             handleFlingWithNestedScroll((int) velocityY);
             return true;
@@ -405,13 +482,20 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
+        debugLog("onNestedPreFling");
         //如果 正在/将要 回弹头View，阻止fling貌似更合理？
         mScroller.computeScrollOffset();
-        if(!mScroller.isFinished()){
+        if (!mScroller.isFinished()) {
             return true;
         }
-        if(mCurHeaderState == HEADER_STATE_NORMAL && getScrollY() != 0) {
-            return true;
+        if (mStyle == STYLE_PULL_REFRESH) {
+            if (mCurHeaderState == HEADER_STATE_NORMAL && getScrollY() != 0) {
+                //未处于刷新状态，并且自身有了滚动，则阻止子View的fling来防止自己也在滚动（手指拖动）时，子View也在滚动
+                return true;
+            }
+        } else if (mStyle == STYLE_VERTICAL_PAGE) {
+            //永远不阻止子View的fling，一旦子View自身不能在Fling时，会回调 onStartNestedScroll()方法，
+            // 我们可以根据情况在 onStartNestedScroll() 方法中阻止自身后续的子View fling引起的嵌套滚动。
         }
         return dispatchNestedPreFling(velocityX, velocityY);
     }
@@ -422,10 +506,12 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     }//NestedScrollingParent --- end
 
     private void initXPullRefreshLayout(Context context) {
+        final float density = context.getResources().getDisplayMetrics().density;
         final ViewConfiguration configuration = ViewConfiguration.get(context);
         mTouchSlop = configuration.getScaledTouchSlop();
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
+        mFlingDistance = (int) (MIN_DISTANCE_FOR_FLING * density);
 
         mScroller = new OverScroller(context);
         mChildHelper = new NestedScrollingChildHelper(this);
@@ -461,48 +547,98 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     }
 
     //不负责主动处理内容子View的滚动（就是非NestScrollView类型的contentView的高度超出了本View的高度，本View也不回处理其滚动），
-    // 但是需要主动处理拉内容子View时让 头View 露出来。
+    // 但是需要主动处理拉内容子View时让 头View 露出来 or 主动让PagerView的都能露出来，如果子View是 NestScrollView 则利用其滚动回调来让PagerView露出来
     private int getYScrollRange() {
-        if (0 != mHeaderPullRefreshLimit) {
+        if (mStyle == STYLE_PULL_REFRESH) {
+            if (0 != mHeaderPullRefreshLimit) {
+                return mHeaderPullRefreshLimit;
+            }
+            if (getChildCount() == 0) {
+                return 0;
+            }
+            View headView = getChildAt(0);
+            mHeaderPullRefreshLimit = headView.getHeight();
             return mHeaderPullRefreshLimit;
+        } else if (mStyle == STYLE_VERTICAL_PAGE) {
+            final int pageHeight = getHeight();
+            return (getChildCount()-1)*pageHeight;
         }
-        if (getChildCount() == 0) {
-            return 0;
-        }
-        View headView = getChildAt(0);
-        mHeaderPullRefreshLimit = headView.getHeight();
-        return mHeaderPullRefreshLimit;
+        return 0;
     }
 
     private boolean isCanFling() {
-        return mCurHeaderState == HEADER_STATE_REFRESH;
+        if(mStyle == STYLE_PULL_REFRESH){
+            return mCurHeaderState == HEADER_STATE_REFRESH;
+        }
+        return false;
     }
 
     //注意：如果手指向下滑动此处 yDelta 需要是负值；反之为正值。
     //返回true表示滚动到了边界
     private boolean handleSelfScroll(int yDelta, int oldScrollY, int scrollYRange) {
-        int limitTop = 0;
-        int limitBom = -scrollYRange;
-        int newScrollY = oldScrollY + yDelta;
+        if(mStyle == STYLE_PULL_REFRESH){
+            int limitTop = 0;
+            int limitBom = -scrollYRange;
+            int newScrollY = oldScrollY + yDelta;
 
-        boolean isYScroll2Limit = false;
-        if (newScrollY > limitTop) {
-            newScrollY = limitTop;
-            isYScroll2Limit = true;
-        } else if (newScrollY < limitBom) {
-            newScrollY = limitBom;
-            isYScroll2Limit = true;
+            boolean isYScroll2Limit = false;
+            if (newScrollY > limitTop) {
+                newScrollY = limitTop;
+                isYScroll2Limit = true;
+            } else if (newScrollY < limitBom) {
+                newScrollY = limitBom;
+                isYScroll2Limit = true;
+            }
+            onOverScrolled(0, newScrollY, true, isYScroll2Limit);
+            return isYScroll2Limit;
+        } else if(mStyle == STYLE_VERTICAL_PAGE){
+            int limitTop = scrollYRange;
+            int limitBom = 0;
+            int newScrollY = oldScrollY + yDelta;
+            boolean isYScroll2Limit = false;
+            if (newScrollY > limitTop) {
+                newScrollY = limitTop;
+                isYScroll2Limit = true;
+            } else if (newScrollY < limitBom) {
+                newScrollY = limitBom;
+                isYScroll2Limit = true;
+            }
+            onOverScrolled(0, newScrollY, true, isYScroll2Limit);
+            return isYScroll2Limit;
         }
-        onOverScrolled(0, newScrollY, true, isYScroll2Limit);
-        return isYScroll2Limit;
+        return true;
     }
 
     //这个纯粹是自己的滚动业务，无需nestScroll调用
-    private boolean handleHeaderSpringBackIfNeed() {
-        if (mCurHeaderState == HEADER_STATE_NORMAL) {
+    private boolean handleSpringBackIfNeed(int velocityY) {
+        if(mStyle == STYLE_PULL_REFRESH){
+            if (mCurHeaderState == HEADER_STATE_NORMAL) {
+                final int scrollY = getScrollY();//<0 手指下拉，view发生了向下滚动
+                if (scrollY < 0) {//需要回弹headerView
+                    mScroller.startScroll(0, scrollY, 0, -scrollY, mHeaderSpringBackAnimTimeMs);
+                    ViewCompat.postInvalidateOnAnimation(this);
+                    return true;
+                }
+            }
+        } else if(mStyle == STYLE_VERTICAL_PAGE){
             final int scrollY = getScrollY();//<0 手指下拉，view发生了向下滚动
-            if (scrollY < 0) {//需要回弹headerView
-                mScroller.startScroll(0, scrollY, 0, -scrollY, mHeaderSpringBackAnimTimeMs);
+            final int direction = scrollY - mInitTouchScrollY;// <0 view向下滚动了
+            final int pageHeight = getHeight();
+            final int pageOffset = (scrollY-pageHeight*mCurPagePos) % pageHeight;
+            if(velocityY == 0){
+                //fixme 这里只有自己获取了touch事件时才有速度，如果是子View嵌套滚动引起的自身fling，则没有速度
+                if(null != mVelocityTracker){
+                    mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                    velocityY = (int) mVelocityTracker.getYVelocity();
+                }
+            }
+            final int nextPagePos = determineTargetPage(mCurPagePos, pageOffset, velocityY);
+            final int dy = nextPagePos * pageHeight - scrollY;
+            if (dy == 0) {
+                setCurrPagePos(nextPagePos, true);
+            } else {
+                dispatchScrollToPage(nextPagePos);
+                mScroller.startScroll(0, scrollY, 0, dy, mHeaderSpringBackAnimTimeMs);
                 ViewCompat.postInvalidateOnAnimation(this);
                 return true;
             }
@@ -541,7 +677,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         if (getYScrollRange() == 0) {
             return;
         }
-        Log.e(TAG, "fling-velocity：" + velocityY);
+        debugLog("fling-velocity：" + velocityY);
         //注意，ViewCompat.TYPE_NON_TOUCH 相关的 startNestedScroll() 与
         // ViewCompat.TYPE_TOUCH 相关的 startNestedScroll() 互不干扰，独立调用
         startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL, ViewCompat.TYPE_NON_TOUCH);
@@ -554,8 +690,8 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     }
 
     private void changeHeaderStateRefreshIfNeed() {
-        if(0 == mHeaderPullRefreshLimit){
-            getYScrollRange();
+        if (0 == mHeaderPullRefreshLimit) {
+            mHeaderPullRefreshLimit = getYScrollRange();
         }
         final int curScrollY = getScrollY();
         final int oldState = mCurHeaderState;
@@ -573,6 +709,73 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         recycleVelocityTracker();
         stopNestedScroll(ViewCompat.TYPE_TOUCH);
         mIsBeingDragged = false;
+    }
+    //
+    //page
+    private void setCurrPagePos(int pos, boolean dispatchSelected) {
+        if (mCurPagePos == pos) {
+            return;
+        }
+        mCurPagePos = pos;
+        if (dispatchSelected) {
+            dispatchPageSelected(pos);
+        }
+    }
+
+    private int determineTargetPage(int currentPage, int pageOffset, int velocity) {
+        int targetPage;
+        final int pageHeight = getHeight();
+        final boolean boostFlipPage = Math.abs(velocity) >= mMinimumVelocity;
+        final boolean canFlipPage = boostFlipPage? (Math.abs(pageOffset) >= pageHeight / 12):(Math.abs(pageOffset) >= pageHeight / 10);
+        final int flipPageIncrease;
+        if (canFlipPage) {
+            if (getScrollY() - currentPage * pageHeight < 0) {
+                flipPageIncrease = -1;
+            } else {
+                flipPageIncrease = 1;
+            }
+        } else {
+            flipPageIncrease = 0;
+        }
+        targetPage = currentPage + flipPageIncrease;
+
+        if (getChildCount() > 0) {
+            final int first = 0;
+            final int max = getChildCount();
+            targetPage = Math.max(first, Math.min(targetPage, max));
+        }
+        return targetPage;
+
+        /*int targetPage;
+        if (Math.abs(velocity) > mMinimumVelocity) {
+            targetPage = velocity > 0 ? currentPage : currentPage + 1;
+        } else {
+            final float truncator = currentPage >= mCurPagePos ? 0.4f : 0.6f;
+            targetPage = currentPage + (int) (pageOffset + truncator);
+        }
+
+        if (getChildCount() > 0) {
+            final int first = 0;
+            final int max = getChildCount();
+
+            // Only let the user target pages we have items for
+            targetPage = Math.max(first, Math.min(targetPage, max));
+        }
+        return targetPage;*/
+    }
+
+    private void dispatchPageSelected(int pos){
+        if(null == mOnPageChangeCallback){
+            return;
+        }
+        mOnPageChangeCallback.onPageSelected(pos);
+    }
+
+    private void dispatchScrollToPage(int pos){
+        if(null == mOnPageChangeCallback){
+            return;
+        }
+        mOnPageChangeCallback.onScrollToPage(pos);
     }
 
     //NestedScrollingChild ---- start
@@ -650,4 +853,14 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     public boolean dispatchNestedPreScroll(int dx, int dy, @Nullable int[] consumed, @Nullable int[] offsetInWindow, int type) {
         return mChildHelper.dispatchNestedPreScroll(dx, dy, consumed, offsetInWindow, type);
     }//NestedScrollingChild ---- end
+
+    private void debugLog(String msg){
+        debugLog(TAG,msg);
+    }
+
+    private void debugLog(String tag,String msg){
+        if(BuildConfig.DEBUG){
+            Log.d(tag,msg);
+        }
+    }
 }
