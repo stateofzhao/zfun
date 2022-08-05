@@ -20,6 +20,16 @@ android {
         }
     }
 
+    sourceSets{
+        main{
+            if(project.hasProperty("QQ_APP_ID")){
+                manifest.srcFile "${projectDir}/src/main/useQQ/AndroidManifest.xml"
+            }else {
+                manifest.srcFile "${projectDir}/src/main/AndroidManifest.xml"
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -43,7 +53,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     //微博
-    implementation(name: 'openDefault-10.10.0', ext: 'aar')
+    compileOnly(name: 'openDefault-10.10.0', ext: 'aar')
     //微信
     compileOnly 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:6.8.0'
 }

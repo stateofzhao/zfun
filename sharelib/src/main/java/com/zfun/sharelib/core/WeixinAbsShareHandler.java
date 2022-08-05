@@ -22,7 +22,7 @@ import java.net.URLEncoder;
 /**
  * 微信分享基类，注意微信分享回调在{@link com.zfun.sharelib.WxCallbackActivity}中实现。
  * <p/>
- * Created by lizhaofei on 2017/8/8 14:23
+ * Created by zfun on 2017/8/8 14:23
  */
 public abstract class WeixinAbsShareHandler implements IShareHandler {
     private static final String TAG = "WeixinAbsShareHandler";
@@ -258,7 +258,7 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
     @Override
     public void init() {
         isRelease = false;
-        mContext = InternalShareInitBridge.getInstance().getHostActivity();
+        mContext = InternalShareInitBridge.getInstance().getApplicationContext();
     }
 
     @Override

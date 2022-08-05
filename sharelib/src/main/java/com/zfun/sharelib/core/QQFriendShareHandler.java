@@ -5,7 +5,7 @@ import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.text.TextUtils;
 
-import com.zfun.sharelib.ShareMgrImpl;
+import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.tencent.connect.share.QQShare;
@@ -21,9 +21,9 @@ import androidx.annotation.NonNull;
 /**
  * QQ好友分享
  * <p/>
- * Created by lizhaofei on 2017/8/8 11:40
+ * Created by zfun on 2017/8/8 11:40
  */
-public class QQFrendShareHandler extends QQShareAbsHandler {
+public class QQFriendShareHandler extends QQShareAbsHandler {
     private final static String TAG = "QQFrendShareHandler";
 
     @Override
@@ -31,14 +31,16 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
         if (isRelease) {//防止 由于异步任务执行完毕后，回调这里，但是ShareMgrImpl已经被relase掉了，而出现的NullPointException
             return;
         }
-        final Activity compelActivity = shareData.getCompelContext();
-        if (null == mActivity && null == compelActivity) {
+        if (null == mContext) {
             return;
         }
-        final Tencent tencent = ShareMgrImpl.getInstance().getTencent();
-        final Activity realActivity = null != compelActivity ? compelActivity : mActivity;
+        final Activity activity = shareData.getQQFriendData().activityRef.get();
+        if(null == activity){
+            return;
+        }
+        final Tencent tencent = SdkApiProvider.getTencentAPI(mContext);
 
-        final ShareData.QQ qFrend = shareData.getQqFrendData();
+        final ShareData.QQ qFrend = shareData.getQQFriendData();
         final int shareDataType = qFrend.shareType;
 
         Bundle params = null;
@@ -55,7 +57,7 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
             return;
         }
 
-        tencent.shareToQQ(realActivity, params, new QShareUiListener(shareData));
+        tencent.shareToQQ(activity, params, new QShareUiListener(shareData));
     }
 
     //发送分享结果
@@ -143,13 +145,15 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
             if (isRelease) {
                 return;
             }
-            if (!isPkgInstalled("com.tencent.mobileqq")) {
+            /*if (!isPkgInstalled("com.tencent.mobileqq")) {
                 NullableToast.showSysToast("您没有安装QQ，暂时无法分享");
                 postShareError(shareData);
             } else {
                 NullableToast.showSysToast("分享出错，请稍后再试");
                 postShareError(shareData);
-            }
+            }*/
+            NullableToast.showSysToast("分享出错，请稍后再试");
+            postShareError(shareData);
         }
 
         @Override
@@ -179,7 +183,7 @@ public class QQFrendShareHandler extends QQShareAbsHandler {
         }
         ApplicationInfo info = null;
         try {
-            info = mActivity.getPackageManager().getApplicationInfo(packageName, 0);
+            info = mContext.getPackageManager().getApplicationInfo(packageName, 0);
             return info != null;
         } catch (Exception e) {
             return false;

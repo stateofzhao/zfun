@@ -28,15 +28,16 @@ import java.util.ArrayList;
  */
 public class ShareUtils {
 
-    public static boolean isSupportSmallAppShare() {
-        IWXAPI api = ShareMgrImpl.getInstance().getWxApi();
-        return api != null && api.getWXAppSupportAPI() >= Build.MINIPROGRAM_SUPPORTED_SDK_INT;
+    public static boolean isSupportSmallAppShare(Context context) {
+        IWXAPI api = SdkApiProvider.getWXAPI(context);
+        return api.getWXAppSupportAPI() >= Build.MINIPROGRAM_SUPPORTED_SDK_INT;
     }
 
-    public static boolean isSupportMusicVideoShare() {
-        IWXAPI api = ShareMgrImpl.getInstance().getWxApi();
-        return api != null && api.getWXAppSupportAPI() >= 0x28000000;
+    public static boolean isSupportMusicVideoShare(Context context) {
+        IWXAPI api = SdkApiProvider.getWXAPI(context);
+        return api.getWXAppSupportAPI() >= 0x28000000;
     }
+
 
     public static String getShareFilePath(Context context, File file, String packageName) {
         Uri uri = getUriForFile(context, file);
@@ -161,12 +162,41 @@ public class ShareUtils {
         return cancelable;
     }
 
-    @Nullable
+    /*@Nullable
     public static byte[] imgThumbFromBimapForWx(@NonNull Bitmap originalBitmap){
         return imgThumbFromBitmap(originalBitmap,ShareConstant.WX_IMAGE_THUMB_SIZE, ShareConstant.WX_IMAGE_THUMB_SIZE,ShareConstant.MAX_WX_THUMBDATA_SIZE);
+    }*/
+
+    public static Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(image,
+                width,
+                height,
+                true);
     }
 
-    @Nullable
+    public static byte[] compressBitmap(Bitmap image,int byteMaxLength){
+        int qulity = 100;
+        byte[] result = bmpToByteArray(image, qulity, false);
+        // 不超过32k
+        while (result.length >= byteMaxLength) {
+            qulity = qulity-2;
+            result = bmpToByteArray(image, qulity, false);
+        }
+        return result;
+    }
+
+    /*@Nullable
     public static byte[] imgThumbFromBitmap(@NonNull Bitmap originalBitmap, int desWidth, int desHeight,int byteMaxLength) {
         Bitmap thumbBmp = null;
         byte[] result = null;
@@ -189,7 +219,7 @@ public class ShareUtils {
             }
         }
         return result;
-    }
+    }*/
 
     public static byte[] bmpToByteArray(final Bitmap bmp, final int qulity, final boolean needRecycle) {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -214,7 +244,7 @@ public class ShareUtils {
         public boolean isCancel = false;
     }//
 
-    @Nullable
+    /*@Nullable
     public static byte[] imgThumbFromByte(Context context, byte[] original, int desWidth, int desHeight, int maxThumbSize) {
         Bitmap thumb = null;
         Bitmap thumbBmp = null;
@@ -246,5 +276,5 @@ public class ShareUtils {
             }
         }
         return result;
-    }
+    }*/
 }

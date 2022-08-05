@@ -1,6 +1,7 @@
 package com.zfun.sharelib.init;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -11,6 +12,14 @@ import com.zfun.sharelib.ShareMgrImpl;
 import com.zfun.sharelib.WxCallbackActivity;
 
 /**
+ *
+ * 如果要启用微信分享，需要在项目的build.gradle引入微信分享SDK:
+ * com.tencent.mm.opensdk:wechat-sdk-android-without-mta:6.8.0
+ * <P/>
+ * 如果要启用微博分享，需要在项目中引入SDK：
+ * openDefault-10.10.0
+ * <P/>
+ *
  * -------微信分享注意---------- start
  * 微信回调需要WxEntryActivity承接，如果自己不需要监听就写一个自己【xxx.WxEntryActivity】继承{@link com.zfun.sharelib.WxCallbackActivity}并声明到Manifest中（xxx为自己app的包名），
  * 否则就在你的【微信回调Activity】中实例化{@link com.zfun.sharelib.WxCallbackActivity#WxCallbackActivity(Activity)}并且调用
@@ -23,7 +32,7 @@ import com.zfun.sharelib.WxCallbackActivity;
  */
 public class ShareInitBuilder {
     private InitParams mInitParams;
-    private Activity mMainActivity;
+    private Context mContext;
     private boolean mIsPrivacyPolicyAgreed;
     private IDebugCheck mDebugCheck;
     private IMessageHandler mMessageHandler;
@@ -36,10 +45,11 @@ public class ShareInitBuilder {
     private ShareInitBuilder() {
     }
 
-    public static ShareInitBuilder initParams(@NonNull InitParams initParams,@NonNull ShareMgrImpl.ShareTypeBuilder shareTypeBuilder) {
+    public static ShareInitBuilder initParams(@NonNull Context context,@NonNull InitParams initParams,@NonNull ShareMgrImpl.ShareTypeBuilder shareTypeBuilder) {
         ShareInitBuilder builder = new ShareInitBuilder();
         builder.mInitParams = initParams;
         builder.mShareTypeBuilder = shareTypeBuilder;
+        builder.mContext = context;
         return builder;
     }
 
@@ -49,11 +59,6 @@ public class ShareInitBuilder {
 
     public static void wxEntryActivityOnCreate(Bundle bundle){
         new WxCallbackActivity().onCreate(bundle);
-    }
-
-    public ShareInitBuilder mainActivity(@NonNull Activity activity) {
-        mMainActivity = activity;
-        return this;
     }
 
     public ShareInitBuilder privacyPolicyAgreed(boolean agreed) {
@@ -104,7 +109,7 @@ public class ShareInitBuilder {
         if (null == mPicDownloader) {
             throw new IllegalArgumentException("HttpGet must set");
         }
-        InitParams initParams = InternalShareInitBridge.getInstance().init(mMainActivity, mIsPrivacyPolicyAgreed,mShareTypeBuilder);
+        InitParams initParams = InternalShareInitBridge.getInstance().init(mContext, mIsPrivacyPolicyAgreed,mShareTypeBuilder);
         initParams.from(mInitParams);
         InternalShareInitBridge.getInstance()
                 .configDebug(mDebugCheck)

@@ -1,6 +1,5 @@
 package com.zfun.sharelib.core;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -13,10 +12,10 @@ import com.tencent.tauth.Tencent;
 /**
  * QQ有关的分享。
  * <p/>
- * Created by lizhaofei on 2017/8/4.
+ * Created by zfun on 2017/8/4.
  */
 abstract class QQShareAbsHandler implements IShareHandler {
-    protected Activity mActivity;
+    protected Context mContext;
     protected boolean isRelease = true;
 
     /**
@@ -146,13 +145,13 @@ abstract class QQShareAbsHandler implements IShareHandler {
 
     @Override
     public void init() {
-        mActivity = InternalShareInitBridge.getInstance().getHostActivity();
+        mContext = InternalShareInitBridge.getInstance().getApplicationContext();
         isRelease = false;
     }
 
     @Override
     public void release() {
         isRelease = true;
-        mActivity = null;
+        mContext = null;
     }
 }

@@ -10,10 +10,6 @@ import com.zfun.sharelib.type.QzoneOAuthV2;
 import com.sina.weibo.sdk.auth.Oauth2AccessToken;
 
 /**
- * Seriously, you should say something about your code
- * Author: hongze
- * Date: 13-9-18
- * Time: 下午5:19
  */
 public class AccessTokenUtils {
     private static final String TAG = "AccessTokenUtils";

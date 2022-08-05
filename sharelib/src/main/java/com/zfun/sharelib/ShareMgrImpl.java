@@ -7,29 +7,20 @@ import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_WX_CYCLE;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_WX_FRIEND;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_WX_MINI_PROGRAM;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.zfun.sharelib.core.IShareHandler;
 import com.zfun.sharelib.core.IShareMgr;
 import com.zfun.sharelib.core.ISharePlug;
-import com.zfun.sharelib.core.QQFrendShareHandler;
+import com.zfun.sharelib.core.QQFriendShareHandler;
 import com.zfun.sharelib.core.QQZoneShareHandler;
 import com.zfun.sharelib.core.ShareConstant;
 import com.zfun.sharelib.core.WeixinMiniProgramHandler;
-import com.zfun.sharelib.init.NullableDebugCheck;
 import com.zfun.sharelib.core.ShareData;
 import com.zfun.sharelib.core.SinaWeiboHandler;
 import com.zfun.sharelib.core.WeixinCircleHandler;
 import com.zfun.sharelib.core.WeixinFriendHandler;
 import com.zfun.sharelib.init.InternalShareInitBridge;
-import com.zfun.sharelib.init.NullableActivity;
-import com.tencent.mm.opensdk.constants.ConstantsAPI;
-import com.tencent.mm.opensdk.openapi.IWXAPI;
-import com.tencent.mm.opensdk.openapi.WXAPIFactory;
-import com.tencent.tauth.Tencent;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,14 +31,12 @@ import java.util.Set;
 /**
  * 分享管理器
  * <p/>
- * Created by lizhaofei on 2017/8/4 16:04
+ * Created by zfun on 2017/8/4 16:04
  */
 public class ShareMgrImpl implements IShareMgr {
     private final Map<Integer, IShareHandler> mShareHandlers = Collections.synchronizedMap(new HashMap<>());
     private volatile boolean shareHandlerInited = false;
 
-    private Tencent mTencent;
-    private IWXAPI mWxAPI;
     //    private IWBAPI mWBAPI;//SsoFactory类处理了
     private IShareHandler mCurShareHandler;
 
@@ -70,7 +59,7 @@ public class ShareMgrImpl implements IShareMgr {
     private void configShareHandler(@NonNull ShareTypeBuilder shareTypeBuilder) {
         mShareHandlers.putAll(shareTypeBuilder.shareHandlers);
         if (shareTypeBuilder.useQQFriend) {
-            mShareHandlers.put(SHARE_TYPE_QQ_FRIEND, new QQFrendShareHandler());
+            mShareHandlers.put(SHARE_TYPE_QQ_FRIEND, new QQFriendShareHandler());
         }
         if (shareTypeBuilder.useQQZone) {
             mShareHandlers.put(SHARE_TYPE_QQ_ZONE, new QQZoneShareHandler());
@@ -87,57 +76,11 @@ public class ShareMgrImpl implements IShareMgr {
         if (shareTypeBuilder.useSinaWeibo) {
             mShareHandlers.put(SHARE_TYPE_SINA_WEIBO, new SinaWeiboHandler());
         }
-        if(shareTypeBuilder.useQQZone || shareTypeBuilder.useQQFriend){
-            initQQSdk(InternalShareInitBridge.getInstance().getHostActivity());
-        }
-        if(shareTypeBuilder.useWXFriend || shareTypeBuilder.useWXTimeline){
-            initWxSdk(InternalShareInitBridge.getInstance().getHostActivity());
-        }
-    }
-
-    @Nullable
-    public Tencent getTencent() {
-        return mTencent;
-    }
-
-    @Nullable
-    public IWXAPI getWxApi() {
-        return mWxAPI;
-    }
-
-    synchronized private void initQQSdk(Context applicationContext) {
-        if (null == applicationContext) {
-            return;
-        }
-        if (null != mTencent) {
-            return;
-        }
-        mTencent = Tencent.createInstance(
-                ShareConstant.QQ_APP_ID,
-                applicationContext.getApplicationContext(),
-                // 第三个参数是清单中注册的FileProvider的authorities属性
-                InternalShareInitBridge.getInstance().getInitParams().getFileProviderAuthorities());
-        if(null == mTencent){
-            NullableDebugCheck.get().classicAssert(false,new Throwable("QQ分享初始化时失败"));
-        }
-    }
-
-    synchronized private void initWxSdk(Context applicationContext) {
-        if (null == applicationContext) {
-            return;
-        }
-        if (null != mWxAPI) {
-            return;
-        }
-        mWxAPI = WXAPIFactory.createWXAPI(applicationContext, ShareConstant.WX_APP_ID, true, ConstantsAPI.LaunchApplication.LAUNCH_MODE_USING_START_ACTIVITY);
-        mWxAPI.registerApp(ShareConstant.WX_APP_ID);
     }
 
     //暂时先不用调用
     private void release() {
         shareHandlerInited = false;
-        mTencent = null;
-        mWxAPI = null;
         Set<Integer> keySet = mShareHandlers.keySet();
         for (Integer integer : keySet) {
             IShareHandler handler = mShareHandlers.get(integer);
@@ -238,27 +181,23 @@ public class ShareMgrImpl implements IShareMgr {
         return handler;
     }
 
-    //所有分享Handler默认持有cn.kuwo.player.activities.MainActivity，方便主进程使用
     private boolean initIfNeed() {
         if (shareHandlerInited) {
             return true;
         }
-        if (!(InternalShareInitBridge.getInstance().getHostActivity() instanceof NullableActivity)) {//这里有可能为null
-            synchronized (this) {
-                if (!shareHandlerInited) {
-                    Set<Integer> keySet = mShareHandlers.keySet();
-                    for (Integer integer : keySet) {
-                        IShareHandler handler = mShareHandlers.get(integer);
-                        if (null != handler) {
-                            handler.init();
-                        }
+        synchronized (this) {
+            if (!shareHandlerInited) {
+                Set<Integer> keySet = mShareHandlers.keySet();
+                for (Integer integer : keySet) {
+                    IShareHandler handler = mShareHandlers.get(integer);
+                    if (null != handler) {
+                        handler.init();
                     }
-                    shareHandlerInited = true;
                 }
+                shareHandlerInited = true;
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
     public static class ShareTypeBuilder {

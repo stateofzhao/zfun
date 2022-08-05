@@ -13,7 +13,7 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * 分享的一些配置信息
  * <p/>
- * Created by lizhaofei on 2017/8/6 13:42
+ * Created by zfun on 2017/8/6 13:42
  */
 public class ShareConstant {
     //SDK

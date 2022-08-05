@@ -1,15 +1,14 @@
 package com.zfun.sharelib.core;
 
-import android.app.Activity;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.content.Context;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.AccessTokenUtils;
 import com.zfun.sharelib.LiveState;
-import com.zfun.sharelib.SsoFactory;
+import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.sina.weibo.sdk.api.ImageObject;
@@ -21,13 +20,11 @@ import com.sina.weibo.sdk.common.UiError;
 import com.sina.weibo.sdk.openapi.IWBAPI;
 
 /**
- * 新浪微博分享，注意微博分享结果的回调在{@link InternalShareInitBridge#getHostActivity()} 或者是 {@link ShareData#setCompelContext(Activity)}
- * 对应的Activity中。
  * <p/>
- * Created by lizhaofei on 2017/8/8 16:41
+ * Created by zfun on 2017/8/8 16:41
  */
 public class SinaWeiboHandler implements IShareHandler {
-    private Activity mActivity;
+    private Context mContext;
     private boolean isRelease = true;
 
     @Nullable
@@ -104,28 +101,17 @@ public class SinaWeiboHandler implements IShareHandler {
         if (!InternalShareInitBridge.getInstance().isPrivacyPolicyAgreed()) {
             return;
         }
-        final Activity compelActivity = shareData.getCompelContext();//注意，不能设为全局属性，因为SinaWeiboHandler是app运行期间一直存在的，会引起Activity泄露
-        if (null == mActivity && null == compelActivity) {
-            return;
-        }
-
-        final Activity realActivity = null != compelActivity ? compelActivity : mActivity;
-        final IWBAPI realWBAPI;
-
-        if (null != shareData.getWBAPI()) {
-            realWBAPI = shareData.getWBAPI();
-        } else if (null != mActivity) {
-            realWBAPI = SsoFactory.getWBAPI(mActivity);
-        } else {
-            realWBAPI = null;
-        }
 
         if (!LiveState.getInstance().isNetAvailable()) {
             NullableToast.showSysToast("网络连接不可用");
             return;
         }
+        if (null == mContext) {
+            return;
+        }
+        final IWBAPI realWBAPI = SdkApiProvider.getWBAPI(mContext);
 
-        Oauth2AccessToken accessToken = AccessTokenUtils.readAccessToken(realActivity);
+        Oauth2AccessToken accessToken = AccessTokenUtils.readAccessToken(mContext);
         if (accessToken.isSessionValid()) {
             mNowShareData = shareData;
             WeiboMultiMessage message = new WeiboMultiMessage();
@@ -142,38 +128,34 @@ public class SinaWeiboHandler implements IShareHandler {
             }
 
             message.imageObject = imageObject;
-            if (realWBAPI != null) {
-                realWBAPI.shareMessage(message, false);
-            }
+            realWBAPI.shareMessage(message, false);
         } else {
-            if (realWBAPI != null) {
-                //授权回调 需要在与SsoHandler绑定的Activity的onActivityResult()中做处理了，才能回调到这里注册接口，这个SDK真是醉了
-                realWBAPI.authorize(new WbAuthListener() {
-                    @Override
-                    public void onComplete(Oauth2AccessToken oauth2AccessToken) {
-                        try {
-                            String webUid = oauth2AccessToken.getUid();
-                            String token = oauth2AccessToken.getAccessToken();
-                            String expiresIn = String.valueOf(oauth2AccessToken.getExpiresTime() / 1000);
-                            AccessTokenUtils.keepAccessToken(mActivity, oauth2AccessToken);
-                            AccessTokenUtils.keepAccessUid(mActivity, webUid);
-                            NullableToast.showSysToast("认证成功");
-                        } catch (Exception e) {
-                            postShareError();
-                        }
-                    }
-
-                    @Override
-                    public void onError(UiError uiError) {
+            //授权回调 需要在与SsoHandler绑定的Activity的onActivityResult()中做处理了，才能回调到这里注册接口，这个SDK真是醉了
+            realWBAPI.authorize(new WbAuthListener() {
+                @Override
+                public void onComplete(Oauth2AccessToken oauth2AccessToken) {
+                    try {
+                        String webUid = oauth2AccessToken.getUid();
+                        String token = oauth2AccessToken.getAccessToken();
+                        String expiresIn = String.valueOf(oauth2AccessToken.getExpiresTime() / 1000);
+                        AccessTokenUtils.keepAccessToken(mContext, oauth2AccessToken);
+                        AccessTokenUtils.keepAccessUid(mContext, webUid);
+                        NullableToast.showSysToast("认证成功");
+                    } catch (Exception e) {
                         postShareError();
                     }
+                }
 
-                    @Override
-                    public void onCancel() {
-                        postShareCancel();
-                    }
-                });
-            }
+                @Override
+                public void onError(UiError uiError) {
+                    postShareError();
+                }
+
+                @Override
+                public void onCancel() {
+                    postShareCancel();
+                }
+            });
         }
     }
 
@@ -185,12 +167,12 @@ public class SinaWeiboHandler implements IShareHandler {
     @Override
     public void init() {
         isRelease = false;
-        mActivity = InternalShareInitBridge.getInstance().getHostActivity();
+        mContext = InternalShareInitBridge.getInstance().getApplicationContext();
     }
 
     @Override
     public void release() {
         isRelease = true;
-        mActivity = null;
+        mContext = null;
     }
 }

@@ -1,9 +1,6 @@
 package com.zfun.sharelib.core;
 
-import android.app.Activity;
-import android.content.Context;
-
-import com.zfun.sharelib.ShareMgrImpl;
+import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.ShareUtils;
 import com.zfun.sharelib.init.NullableToast;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
@@ -14,7 +11,7 @@ import androidx.annotation.NonNull;
 /**
  * 微信小程序
  * <p/>
- * Created by lizhaofei on 2021/2/22 15:30
+ * Created by zfun on 2021/2/22 15:30
  */
 public class WeixinMiniProgramHandler extends WeixinAbsShareHandler{
     @Override
@@ -27,27 +24,25 @@ public class WeixinMiniProgramHandler extends WeixinAbsShareHandler{
         if(isRelease){
             return;
         }
-        final Activity compelActivity = shareData.getCompelContext();
-        if (null == mContext && null == compelActivity) {
+        if (null == mContext) {
             return;
         }
-        final Context realContext = null != compelActivity ? compelActivity : mContext;
-        final IWXAPI api = ShareMgrImpl.getInstance().getWxApi();
-        if (api != null && api.isWXAppInstalled()) {
+        final IWXAPI api = SdkApiProvider.getWXAPI(mContext);
+        if (api.isWXAppInstalled()) {
             if (isSupport()) {
                 /*smallImage(shareData);*/
                 doShare(shareData, api);
             } else {
-                NullableToast.showDialogTip(realContext, "微信版本过低");
+                NullableToast.showDialogTip("微信版本过低");
             }
         } else {
-            NullableToast.showDialogTip(realContext, "微信未安装");
+            NullableToast.showDialogTip("微信未安装");
         }
     }
 
     @Override
     public boolean isSupport() {
-        return ShareUtils.isSupportSmallAppShare();
+        return ShareUtils.isSupportSmallAppShare(mContext);
     }
 
    /* private void smallImage(@NonNull ShareData shareData){

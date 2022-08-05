@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.AccessTokenUtils;
-import com.zfun.sharelib.ShareMgrImpl;
+import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.zfun.sharelib.type.QzoneOAuthV2;
@@ -26,50 +26,48 @@ import java.util.ArrayList;
 /**
  * QQ空间分享
  * <p/>
- * Created by lizhaofei on 2017/8/4.
+ * Created by zfun on 2017/8/4.
  */
 //这个应该有两种形式，一种是需要打开一个新的Fragment来让用户编辑 简介；一种是直接发送到QQ中。
 public class QQZoneShareHandler extends QQShareAbsHandler {
     private static final String TAG = "QQZoneShareHandler";
-
-    private QzoneOAuthV2 mQzoneOAuth = null;
-    private TencentLoginListener mLoginListener;
 
     @Override
     public void share(@NonNull final ShareData shareData) {
         if (isRelease) {//防止 由于异步任务执行完毕后，回调这里，但是ShareMgrImpl已经被relase掉了，而出现的NullPointException
             return;
         }
-        final Activity compelActivity = shareData.getCompelContext();
-        if (null == mActivity && null == compelActivity) {
+        if (null == mContext) {
             return;
         }
-        final Activity realActivity = null != compelActivity ? compelActivity : mActivity;//优先取强制使用的Activity,不会造成Activity泄露因为只是局部使用此Activity
-        final Context applicationContext = realActivity.getApplicationContext();
-        final Tencent tencent = ShareMgrImpl.getInstance().getTencent();
+        final Activity activity = shareData.getQQZoneShareData().activityRef.get();
+        if(null == activity){
+            return;
+        }
+        final Tencent tencent = SdkApiProvider.getTencentAPI(mContext);
 
-        mQzoneOAuth = AccessTokenUtils.doReadTencentQzoneToken(applicationContext);
-        if (AccessTokenUtils.isSessionValid(mQzoneOAuth.expiresIn) && !"".equals(mQzoneOAuth.openId)) {
-            tencent.setOpenId(mQzoneOAuth.openId);
-            tencent.setAccessToken(mQzoneOAuth.accessToken, mQzoneOAuth.expiresIn);
+        final QzoneOAuthV2 qzoneOAuth = AccessTokenUtils.doReadTencentQzoneToken(mContext);
+        if (AccessTokenUtils.isSessionValid(qzoneOAuth.expiresIn) && !"".equals(qzoneOAuth.openId)) {
+            tencent.setOpenId(qzoneOAuth.openId);
+            tencent.setAccessToken(qzoneOAuth.accessToken, qzoneOAuth.expiresIn);
 
             Bundle params = getShareParams(shareData);
             if (null == params) {
                 postShareError(shareData);
                 return;
             }
-            TencentShareListener listener = new TencentShareListener(shareData);
-            listener.activity = realActivity;
+            final TencentShareListener listener = new TencentShareListener(shareData);
+            listener.activity = activity;
             listener.tencent = tencent;
-            tencent.shareToQzone(realActivity, params, listener);
+            tencent.shareToQzone(activity, params, listener);
         } else {
-            mLoginListener = new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData);
-            tencent.login(realActivity, ShareConstant.QZONE_SCOPE, mLoginListener);
+            TencentLoginListener mLoginListener = new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData);
+            tencent.login(activity, ShareConstant.QZONE_SCOPE, mLoginListener);
         }
     }
 
     private Bundle getShareParams(ShareData shareData) {
-        ShareData.QQZone qqZone = shareData.getQqZShareData();
+        ShareData.QQZone qqZone = shareData.getQQZoneShareData();
 
         if (null == qqZone) {
             return null;
@@ -186,7 +184,7 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
                     tencent.login(activity, ShareConstant.QZONE_SCOPE, new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData));
                 } else if (ret.endsWith("100030")) {
                     NullableToast.showSysToast(ret + "没有分享权限，请重新授权");
-                    AccessTokenUtils.clear(mActivity.getApplicationContext(), AccessTokenUtils.TENCENT_QZONE_PREFERENCES);
+                    AccessTokenUtils.clear(mContext.getApplicationContext(), AccessTokenUtils.TENCENT_QZONE_PREFERENCES);
                     tencent.login(activity, ShareConstant.QZONE_SCOPE, new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData));
                 } else {
                     //发送失败，清空授权信息
@@ -247,11 +245,11 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
                 String accessToken = jdata.optString("access_token", "");
                 String openid = jdata.optString("openid", "");
                 String expiresIn = jdata.optString("expires_in", "");
-                QzoneOAuthV2 auth = AccessTokenUtils.doReadTencentQzoneToken(mActivity.getApplicationContext());
+                QzoneOAuthV2 auth = AccessTokenUtils.doReadTencentQzoneToken(mContext.getApplicationContext());
                 auth.accessToken = accessToken;
                 auth.openId = openid;
                 auth.expiresIn = expiresIn;
-                AccessTokenUtils.doSaveTencentQzoneToken(mActivity, auth);
+                AccessTokenUtils.doSaveTencentQzoneToken(mContext, auth);
                 NullableToast.showSysToast("认证成功");
                 //认证完毕，再次调用分享
                 share(shareData);
@@ -259,10 +257,10 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
                 e.printStackTrace();
                 NullableToast.showSysToast("授权失败");
             }
-            Context context = mActivity.getApplicationContext();
+            final Context context = mContext.getApplicationContext();
             if (context != null) {
                 Tencent mQQAuth = Tencent.createInstance(ShareConstant.QQ_APP_ID, context);
-                com.tencent.connect.UserInfo mInfo = new com.tencent.connect.UserInfo(mActivity.getApplicationContext(), mQQAuth.getQQToken());
+                com.tencent.connect.UserInfo mInfo = new com.tencent.connect.UserInfo(context, mQQAuth.getQQToken());
                 mInfo.getUserInfo(new IUiListener() {
 
                     @Override
@@ -277,7 +275,7 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
                         JSONObject jsonObject = (JSONObject) arg0;
                         String name = jsonObject.optString("nickname");
                         if (!TextUtils.isEmpty(name)) {
-                            AccessTokenUtils.doSaveUserInfoByType(mActivity, null, name, AccessTokenUtils.SOURCE_QZONE);
+                            AccessTokenUtils.doSaveUserInfoByType(context, null, name, AccessTokenUtils.SOURCE_QZONE);
                         }
                     }
 

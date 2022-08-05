@@ -14,7 +14,7 @@ import com.zfun.sharelib.init.NullableToast;
 /**
  * 复制链接
  * <p/>
- * Created by lizhaofei on 2017/8/8 17:44
+ * Created by zfun on 2017/8/8 17:44
  */
 public class CopyUrlHandler implements IShareHandler {
     private Context mContext;
@@ -52,7 +52,7 @@ public class CopyUrlHandler implements IShareHandler {
     @Override
     public void init() {
         isRelease = false;
-        mContext = InternalShareInitBridge.getInstance().getHostActivity();
+        mContext = InternalShareInitBridge.getInstance().getApplicationContext();
     }
 
     @Override

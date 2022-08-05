@@ -1,25 +1,21 @@
 package com.zfun.sharelib.core;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Bitmap;
-import androidx.annotation.Nullable;
+
+import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.ShareMgrImpl;
-import com.sina.weibo.sdk.openapi.IWBAPI;
 import com.tencent.connect.share.QQShare;
 import com.tencent.connect.share.QzoneShare;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-import com.zfun.sharelib.SsoFactory;
-import com.zfun.sharelib.init.InternalShareInitBridge;
-
 /**
  * 分享数据
  * <p/>
- * Created by lizhaofei on 2017/8/6 8:57
+ * Created by zfun on 2017/8/6 8:57
  */
 public class ShareData {
 
@@ -39,33 +35,30 @@ public class ShareData {
     //复制链接，复制下载链接 用到的
     private String mUrl;
 
-    private WeakReference<Activity> mCompelContext;
-    private WeakReference<IWBAPI> mWBAPI;
-
     public OnShareListener mShareListener;
 
     /**
      * 构建分享到QQ好友的 纯图片数据
      */
-    public QQImageBuilder buildQQImage() {
-        return new QQImageBuilder();
+    public QQImageBuilder buildQQImage(@NonNull Activity activity) {
+        return new QQImageBuilder(activity);
     }
 
     /**
      * 构建分享到QQ好友的 图文分享数据
      */
-    public QQTextImageBuilder buildQQTImage() {
-        return new QQTextImageBuilder();
+    public QQTextImageBuilder buildQQTImage(@NonNull Activity activity) {
+        return new QQTextImageBuilder(activity);
     }
 
     /** 构建分享到QQ好友的 音乐分享数据 */
-    public QQAudioBuilder buildQQAudio() {
-        return new QQAudioBuilder();
+    public QQAudioBuilder buildQQAudio(@NonNull Activity activity) {
+        return new QQAudioBuilder(activity);
     }
 
     /** 构建QQ空间 图文分享数据 */
-    public QZoneImageTextBuilder buildQZoneTImage() {
-        return new QZoneImageTextBuilder();
+    public QZoneImageTextBuilder buildQZoneTImage(@NonNull Activity activity) {
+        return new QZoneImageTextBuilder(activity);
     }
 
     /** 构建微信分项数据 */
@@ -91,21 +84,6 @@ public class ShareData {
         mUrl = url;
     }
 
-    /** 设置让{@link IShareHandler} 强制使用的Activity，这样能够让IShareHandler强制使用此处设置的Activity进行分享操作 */
-    public void setCompelContext(Activity activity) {
-        mCompelContext = new WeakReference<>(activity);
-    }
-
-    /**
-     * 设置新浪微博授权使用的{@link IWBAPI}，
-     * 如果不设置的话会默认使用 {@link SsoFactory#getWBAPI(Context)} 来获取{@link IWBAPI}，
-     * 这样如果发起分享的话，结果回调方法不在{@link InternalShareInitBridge#getHostActivity()}中，
-     * 需要你自己来处理分享回调。
-     */
-    public void setWBAPI(IWBAPI wbapi) {
-        mWBAPI = new WeakReference<>(wbapi);
-    }
-
     public void setOnShareListener(OnShareListener listener) {
         mShareListener = listener;
     }
@@ -115,12 +93,12 @@ public class ShareData {
     }
 
     /** 获取 qq空间 分享数据 */
-    public QQZone getQqZShareData() {
+    public QQZone getQQZoneShareData() {
         return mQQZShareData;
     }
 
     /** 获取 QQ好友 分项数据 */
-    public QQ getQqFrendData() {
+    public QQ getQQFriendData() {
         return mQQShareData;
     }
 
@@ -130,17 +108,6 @@ public class ShareData {
 
     public SinaWeibo getSinaShareData() {
         return mSinaShareData;
-    }
-
-    @Nullable
-    public Activity getCompelContext() {
-        return null != mCompelContext ? mCompelContext.get() : null;
-    }
-
-    /** 参见 {@link #setWBAPI(IWBAPI)} */
-    @Nullable
-    public IWBAPI getWBAPI() {
-        return null != mWBAPI ? mWBAPI.get() : null;
     }
 
     //分享到QQ好友的数据
@@ -160,7 +127,9 @@ public class ShareData {
         public final String audioUrl;
         public final int ext;
 
-        private QQ(int shareType, String title, String targetUrl, String summary, String imageURLorFilePath,
+        public final WeakReference<Activity> activityRef;
+
+        private QQ(WeakReference<Activity> activityRef,int shareType, String title, String targetUrl, String summary, String imageURLorFilePath,
                 String appName, String site, String audioUrl, int ext) {
             this.shareType = shareType;
             this.title = title;
@@ -171,6 +140,8 @@ public class ShareData {
             this.site = site;
             this.audioUrl = audioUrl;
             this.ext = ext;
+
+            this.activityRef = activityRef;
         }
 
         public void share(){
@@ -188,10 +159,12 @@ public class ShareData {
         public final String targetUrl;
         public final ArrayList<String> imageUrlOrFilePath;
 
+        public final WeakReference<Activity> activityRef;
+
         /**
          * @param imageUrlOrFilePath 不支持混合传递，要么全是URL，要么全是文件路径
          * */
-        private QQZone(int shareType, String title, String summary, String site,
+        private QQZone(WeakReference<Activity> activityRef,int shareType, String title, String summary, String site,
                        ArrayList<String> imageUrlOrFilePath, String targetUrl) {
             this.shareType = shareType;
             this.title = title;
@@ -199,10 +172,12 @@ public class ShareData {
             this.site = site;
             this.imageUrlOrFilePath = imageUrlOrFilePath;
             this.targetUrl = targetUrl;
+
+            this.activityRef = activityRef;
         }
 
-        private QQZone(String title, String summary, String site, ArrayList<String> imageUrlOrFilePath, String targetUrl) {
-            this(QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT, title, summary, site, imageUrlOrFilePath, targetUrl);
+        private QQZone(WeakReference<Activity> activityRef,String title, String summary, String site, ArrayList<String> imageUrlOrFilePath, String targetUrl) {
+            this(activityRef,QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT, title, summary, site, imageUrlOrFilePath, targetUrl);
         }
 
         public void share(){
@@ -305,7 +280,10 @@ public class ShareData {
         private String site;
         private int ext = -1;
 
-        private QQTextImageBuilder() {
+        private final WeakReference<Activity> activityRef;
+
+        private QQTextImageBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
         }
 
         public QQTextImageBuilder title(String title) {
@@ -350,7 +328,7 @@ public class ShareData {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl)) {
                 throw new IllegalArgumentException("title or targetUrl must not null!");
             }
-            mQQShareData =  new QQ(QQShare.SHARE_TO_QQ_TYPE_DEFAULT, title, targetUrl, summary, imageURLorFilePath,
+            mQQShareData =  new QQ(activityRef,QQShare.SHARE_TO_QQ_TYPE_DEFAULT, title, targetUrl, summary, imageURLorFilePath,
                             appName, site, null, ext);
             return mQQShareData;
         }
@@ -362,7 +340,10 @@ public class ShareData {
         private String imageLocalUri;//只能是本地图片路径
         private int ext;
 
-        private QQImageBuilder() {
+        private final WeakReference<Activity> activityRef;
+
+        private QQImageBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
         }
 
         public QQImageBuilder appName(String appName) {
@@ -384,7 +365,7 @@ public class ShareData {
             if (TextUtils.isEmpty(imageLocalUri)) {
                 throw new IllegalArgumentException("imageLocalUri must not null!");
             }
-            mQQShareData = new QQ(QQShare.SHARE_TO_QQ_TYPE_IMAGE, null, null, null, imageLocalUri, appName,
+            mQQShareData = new QQ(activityRef,QQShare.SHARE_TO_QQ_TYPE_IMAGE, null, null, null, imageLocalUri, appName,
                             null, null, ext);
             return mQQShareData;
         }
@@ -402,7 +383,10 @@ public class ShareData {
 
         private String audioUrl;
 
-        private QQAudioBuilder() {
+        private final WeakReference<Activity> activityRef;
+
+        private QQAudioBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
         }
 
         public QQAudioBuilder title(String title) {
@@ -452,7 +436,7 @@ public class ShareData {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl) || TextUtils.isEmpty(audioUrl)) {
                 throw new IllegalArgumentException("title or targetUrl or audioUrl must not null!");
             }
-            mQQShareData = new QQ(QQShare.SHARE_TO_QQ_TYPE_AUDIO, title, targetUrl, summary, imageURLorFilePath,
+            mQQShareData = new QQ(activityRef,QQShare.SHARE_TO_QQ_TYPE_AUDIO, title, targetUrl, summary, imageURLorFilePath,
                     appName, site, audioUrl, ext);
             return mQQShareData;
         }
@@ -467,7 +451,10 @@ public class ShareData {
         private ArrayList<String> netImageUrls;
         private ArrayList<String> localImagePaths;
 
-        private QZoneImageTextBuilder() {
+        private final WeakReference<Activity> activityRef;
+
+        private QZoneImageTextBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
         }
 
         public QZoneImageTextBuilder title(String title) {
@@ -516,7 +503,7 @@ public class ShareData {
             } else {
                 images = localImagePaths;
             }
-            mQQZShareData = new QQZone(title, summary, site, images, targetUrl);
+            mQQZShareData = new QQZone(activityRef,title, summary, site, images, targetUrl);
             return mQQZShareData;
         }
     }//QZoneImageTextBuilder end

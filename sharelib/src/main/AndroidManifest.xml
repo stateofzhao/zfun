@@ -1,28 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.zfun.sharelib">
+<manifest package="com.zfun.sharelib">
 
     <application>
-        <!-- qq 分享用到的 start-->
-        <activity
-            android:name="com.tencent.connect.common.AssistActivity"
-            android:configChanges="orientation|keyboardHidden"
-            android:screenOrientation="behind"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity
-            android:name="com.tencent.tauth.AuthActivity"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:noHistory="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="tencent${qqAppId}" />
-            </intent-filter>
-        </activity><!-- qq 分享用到的 end-->
     </application>
 
 </manifest>

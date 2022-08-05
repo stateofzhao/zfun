@@ -19,7 +19,7 @@ public class NullableMessageHandler implements IMessageHandler {
 
     private final Handler mainHandler;
     private NullableMessageHandler(){
-        mainHandler = new Handler(InternalShareInitBridge.getInstance().getHostActivity().getMainLooper());
+        mainHandler = new Handler(InternalShareInitBridge.getInstance().getApplicationContext().getMainLooper());
     }
     @Override
     public void asyncRunInMainThread(Runnable runnable) {

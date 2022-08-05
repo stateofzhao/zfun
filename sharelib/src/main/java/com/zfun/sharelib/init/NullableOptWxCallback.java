@@ -86,7 +86,7 @@ public class NullableOptWxCallback implements IOptWxCallback {
                 break;
         }
 
-        NullableToast.showDialogTip(InternalShareInitBridge.getInstance().getHostActivity(), resultMsg);
+        NullableToast.showDialogTip(resultMsg);
     }
 
     private boolean isShareResp(@NonNull BaseResp baseResp) {

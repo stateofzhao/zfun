@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 /**
  * 酷我好友分享
  * <p/>
- * Created by lizhaofei on 2017/8/16 17:30
+ * Created by zfun on 2017/8/16 17:30
  */
 public class KwFriendHandler implements IShareHandler {
 
