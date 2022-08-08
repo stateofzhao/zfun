@@ -27,6 +27,12 @@ public class ShareData {
         void onCancel();
     }//OnShareResult end
 
+    public interface OnWXLoginListener{
+        void onFail();
+        void onCancel();
+        void onSuc(String code,String state);
+    }//
+
     private QQ mQQShareData;
     private QQZone mQQZShareData;
     private Wx mWxShareData;
@@ -36,6 +42,7 @@ public class ShareData {
     private String mUrl;
 
     public OnShareListener mShareListener;
+    public OnWXLoginListener mWXLoginListener;
 
     /**
      * 构建分享到QQ好友的 纯图片数据
@@ -86,6 +93,10 @@ public class ShareData {
 
     public void setOnShareListener(OnShareListener listener) {
         mShareListener = listener;
+    }
+
+    public void setOnWXLoginListener(OnWXLoginListener listener){
+        mWXLoginListener = listener;
     }
 
     public String getCopyUrl() {
@@ -193,6 +204,7 @@ public class ShareData {
         public final static int TYPE_WEB = 5;//网页分享
         public final static int TYPE_SMALL_APP = 6;//小程序类型分享，暂未实现
         public final static int TYPE_MUSIC_VIDEO = 7;//音乐视频类型分享
+        public final static int TYPE_LOGIN = 10;//微信登录
 
         //通用
         public int type = -1;
@@ -251,6 +263,10 @@ public class ShareData {
 
         public void share2MiniProgram(){
             share(ShareConstant.SHARE_TYPE_WX_MINI_PROGRAM);
+        }
+
+        public void login(){
+
         }
     }//Wx end
 
@@ -558,6 +574,12 @@ public class ShareData {
             return new MusicVideoBuilder();
         }
 
+        public LoginBuilder typeLogin(){
+            checkType();
+            wx.type = Wx.TYPE_LOGIN;
+            return new LoginBuilder();
+        }
+
         private void checkType() {
             if (wx.type != -1) {//证明已经设置了类型
                 throw new IllegalArgumentException("weixin share type already has set!");
@@ -581,7 +603,7 @@ public class ShareData {
                 mWxShareData = wx;
                 return mWxShareData;
             }
-        }
+        }//
 
         public class ImageBuilder {
 
@@ -606,7 +628,7 @@ public class ShareData {
                 mWxShareData = wx;
                 return mWxShareData;
             }
-        }
+        }//
 
         public class MusicBuilder {
 
@@ -851,6 +873,14 @@ public class ShareData {
                 return mWxShareData;
             }
         }//MusicVideoBuilder end
+
+        //微信登录
+        public class LoginBuilder{
+            public ShareData.Wx build(){
+                mWxShareData = wx;
+                return mWxShareData;
+            }
+        }//
     }//WXBuilder end
 
     //构建 微博 分享数据

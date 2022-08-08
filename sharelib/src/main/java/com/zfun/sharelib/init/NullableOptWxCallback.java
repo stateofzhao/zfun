@@ -6,13 +6,17 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.zfun.sharelib.ShareMgrImpl;
+import com.zfun.sharelib.core.IShareHandler;
 import com.zfun.sharelib.core.ShareConstant;
 import com.tencent.mm.opensdk.constants.ConstantsAPI;
 import com.tencent.mm.opensdk.modelbase.BaseReq;
 import com.tencent.mm.opensdk.modelbase.BaseResp;
 import com.tencent.mm.opensdk.modelmsg.SendAuth;
 import com.tencent.mm.opensdk.modelmsg.ShowMessageFromWX;
+import com.zfun.sharelib.core.WeixinLoginHandler;
 
 import java.lang.ref.WeakReference;
 
@@ -66,9 +70,14 @@ public class NullableOptWxCallback implements IOptWxCallback {
         boolean isShare = isShareResp(baseResp);
         switch (baseResp.errCode) {
             case BaseResp.ErrCode.ERR_OK:
-                if (baseResp instanceof SendAuth.Resp) {
-                    //授权
+                if (baseResp instanceof SendAuth.Resp) {//授权
                     resultMsg = "授权成功";
+                    final String state = ((SendAuth.Resp) baseResp).state;
+                    final String accessCode = ((SendAuth.Resp) baseResp).code;
+                    final WeixinLoginHandler handler = getWeixinLoginHandler();
+                    if(null != handler){
+                        handler.postSuc(accessCode,state);
+                    }
                 } else {
                     if (isShare) {
                         resultMsg = "分享成功";
@@ -76,21 +85,59 @@ public class NullableOptWxCallback implements IOptWxCallback {
                 }
                 break;
             case BaseResp.ErrCode.ERR_USER_CANCEL:
-                resultMsg = "发送取消";
+                if (baseResp instanceof SendAuth.Resp) {//授权
+                    resultMsg = "用户取消授权";
+                    final WeixinLoginHandler handler = getWeixinLoginHandler();
+                    if(null != handler){
+                        handler.postCancel();
+                    }
+                } else {
+                    if (isShare) {
+                        resultMsg = "发送取消";
+                    }
+                }
                 break;
             case BaseResp.ErrCode.ERR_AUTH_DENIED:
-                resultMsg = "发送被拒绝";
+                if (baseResp instanceof SendAuth.Resp) {//授权
+                    resultMsg = "用户拒绝授权";
+                    final WeixinLoginHandler handler = getWeixinLoginHandler();
+                    if(null != handler){
+                        handler.postFail();
+                    }
+                } else {
+                    if (isShare) {
+                        resultMsg = "发送被拒绝";
+                    }
+                }
                 break;
             default:
-                resultMsg = "发送返回";
+                if (baseResp instanceof SendAuth.Resp) {//授权
+                    resultMsg = "授权失败";
+                    final WeixinLoginHandler handler = getWeixinLoginHandler();
+                    if(null != handler){
+                        handler.postFail();
+                    }
+                } else {
+                    if (isShare) {
+                        resultMsg = "发送失败";
+                    }
+                }
                 break;
         }
-
         NullableToast.showDialogTip(resultMsg);
     }
 
     private boolean isShareResp(@NonNull BaseResp baseResp) {
         String trans = baseResp.transaction;
         return !TextUtils.isEmpty(trans) && trans.contains(ShareConstant.SHARE_TAG_STR);
+    }
+
+    @Nullable
+    private WeixinLoginHandler getWeixinLoginHandler(){
+        final IShareHandler currentHandler = ShareMgrImpl.getInstance().getCurShareHandler();
+        if(currentHandler instanceof WeixinLoginHandler){
+            return (WeixinLoginHandler) currentHandler;
+        }
+        return null;
     }
 }

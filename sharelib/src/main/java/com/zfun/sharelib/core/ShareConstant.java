@@ -29,6 +29,8 @@ public class ShareConstant {
 
     public final static String fileProviderAuthorities;//清单中注册的FileProvider的authorities属性
 
+    public static final String WX_LOGIN_STATE_PRE = "zfun_wx_login";
+
     //URL
     //todo lzf QZONE_REDIRECT_URL 是啥
     public static final String QZONE_REDIRECT_URL;
@@ -51,6 +53,7 @@ public class ShareConstant {
     public final static int SHARE_TYPE_COPY_URL = 7;
     public final static int SHARE_TYPE_CHORUS_URL = 8;
     public final static int SHARE_TYPE_WX_MINI_PROGRAM = 12;//微信小程序分享
+    public final static int LOGIN_WX = 21;//微信登录
 
     public final static String SHARE_TAG_STR = "==share";
     //--------分享用到的URL
