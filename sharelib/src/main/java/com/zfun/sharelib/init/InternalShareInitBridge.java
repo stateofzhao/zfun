@@ -174,7 +174,7 @@ public class InternalShareInitBridge {
     @NonNull
     public IOptWxCallback getOptWxCallback(@NonNull Activity WxCallbackActivity) {
         if (null == optWxCallback) {
-            return NullableOptWxCallback.get(WxCallbackActivity, appEntryActivityClass);
+            return new NullableOptWxCallback(WxCallbackActivity, appEntryActivityClass);
         }
         return optWxCallback;
     }

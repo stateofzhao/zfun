@@ -18,36 +18,25 @@ import com.tencent.mm.opensdk.modelmsg.SendAuth;
 import com.tencent.mm.opensdk.modelmsg.ShowMessageFromWX;
 import com.zfun.sharelib.core.WeixinLoginHandler;
 
-import java.lang.ref.WeakReference;
-
 /**
  * Created by lzf on 2021/12/22 2:58 下午
  */
 public class NullableOptWxCallback implements IOptWxCallback {
-    private final @Nullable Class<?> desActivity;
+    private final @Nullable Class<?> appEntryActivity;
     private final Activity WxCallbackActivity;
 
-    private static WeakReference<IOptWxCallback> reference;
-
-    public NullableOptWxCallback(@NonNull Activity WxCallbackActivity, @Nullable Class<?> desActivity) {
+    public NullableOptWxCallback(@NonNull Activity WxCallbackActivity, @Nullable Class<?> appEntryActivity) {
         this.WxCallbackActivity = WxCallbackActivity;
-        this.desActivity = desActivity;
-    }
-
-    public static synchronized IOptWxCallback get(Activity wxCallbackActivity, @Nullable Class<?> appEntryActivity) {
-        if (null == reference || null == reference.get()) {
-            reference = new WeakReference<>(new NullableOptWxCallback(wxCallbackActivity, appEntryActivity));
-        }
-        return reference.get();
+        this.appEntryActivity = appEntryActivity;
     }
 
     @Override
     public void onOptWxReq(BaseReq baseReq) {
         switch (baseReq.getType()) {
             case ConstantsAPI.COMMAND_SHOWMESSAGE_FROM_WX:
-                if(null != desActivity){
+                if(null != appEntryActivity){
                     ShowMessageFromWX.Req req = (ShowMessageFromWX.Req) baseReq;
-                    Intent newIntent = new Intent(WxCallbackActivity, desActivity);
+                    Intent newIntent = new Intent(WxCallbackActivity, appEntryActivity);
                     if (req.message != null && !TextUtils.isEmpty(req.message.messageExt)) {
                         newIntent.setData(Uri.parse(req.message.messageExt));
                     }
@@ -59,8 +48,8 @@ public class NullableOptWxCallback implements IOptWxCallback {
             case ConstantsAPI.COMMAND_GETMESSAGE_FROM_WX:
             default:
                 // 微信调用自己app的界面
-                if(null != desActivity){
-                    Intent intent = new Intent(WxCallbackActivity, desActivity);
+                if(null != appEntryActivity){
+                    Intent intent = new Intent(WxCallbackActivity, appEntryActivity);
                     WxCallbackActivity.startActivity(intent);
                 }
                 WxCallbackActivity.finish();
