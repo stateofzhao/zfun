@@ -53,7 +53,7 @@ public class ShareConstant {
     public final static int SHARE_TYPE_COPY_URL = 7;
     public final static int SHARE_TYPE_CHORUS_URL = 8;
     public final static int SHARE_TYPE_WX_MINI_PROGRAM = 12;//微信小程序分享
-    public final static int LOGIN_WX = 21;//微信登录
+    public final static int SHARE_TYPE_LOGIN_WX = 21;//微信登录
 
     public final static String SHARE_TAG_STR = "==share";
     //--------分享用到的URL

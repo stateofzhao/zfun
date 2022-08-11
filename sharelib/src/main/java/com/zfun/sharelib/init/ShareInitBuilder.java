@@ -21,13 +21,23 @@ import com.zfun.sharelib.WxCallbackActivity;
  * <P/>
  *
  * -------微信分享注意---------- start
- * 微信回调需要WxEntryActivity承接，如果自己不需要监听就写一个自己【xxx.WxEntryActivity】继承{@link com.zfun.sharelib.WxCallbackActivity}并声明到Manifest中（xxx为自己app的包名），
+ * 微信回调需要WxEntryActivity承接，如果自己不需要监听就写一个自己【xxx.wxapi.WXEntryActivity】继承{@link com.zfun.sharelib.WxCallbackActivity}并声明到Manifest中（xxx为自己app的包名），
  * 否则就在你的【微信回调Activity】中实例化{@link com.zfun.sharelib.WxCallbackActivity#WxCallbackActivity(Activity)}并且调用
  * {@link com.zfun.sharelib.WxCallbackActivity#onCreate(Bundle)
  *-------微信分享注意---------- end
  *
  * -------qq分享注意---------- start
- * 切记如果使用qq分享，需要在项目的 gradle.properties 中配置 QQ_APP_ID=xxxx，其中xxxx为你的 QQ_APP_ID
+ * 切记如果使用qq分享，需要在项目主工程的build.gradle中添加
+ * <code>
+ *     android{
+ *         defaultConfig{
+ *              manifestPlaceholders = [
+ *                 QQ_APP_ID:xxxxx
+ *              ]
+ *         }
+ *     }
+ * </code>
+ * 其中xxxx为你的 QQ_APP_ID。
  * -------qq分享注意---------- end
  */
 public class ShareInitBuilder {
@@ -97,9 +107,6 @@ public class ShareInitBuilder {
     }
 
     public void build() {
-        if (null == mEntryActivityClass) {
-            throw new IllegalArgumentException("entryActivity must set");
-        }
         if (null == mInitParams) {
             throw new IllegalArgumentException("InitParams must set");
         }

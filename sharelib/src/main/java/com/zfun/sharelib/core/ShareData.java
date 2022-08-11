@@ -266,7 +266,7 @@ public class ShareData {
         }
 
         public void login(){
-
+            share(ShareConstant.SHARE_TYPE_LOGIN_WX);
         }
     }//Wx end
 

@@ -1,6 +1,6 @@
 package com.zfun.sharelib;
 
-import static com.zfun.sharelib.core.ShareConstant.LOGIN_WX;
+import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_LOGIN_WX;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_QQ_FRIEND;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_QQ_ZONE;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_SINA_WEIBO;
@@ -80,7 +80,7 @@ public class ShareMgrImpl implements IShareMgr {
         }
         //
         if(shareTypeBuilder.useWXLogin){
-            mShareHandlers.put(LOGIN_WX, new WeixinLoginHandler());
+            mShareHandlers.put(SHARE_TYPE_LOGIN_WX, new WeixinLoginHandler());
         }
     }
 

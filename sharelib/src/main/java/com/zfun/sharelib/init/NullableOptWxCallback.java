@@ -24,17 +24,17 @@ import java.lang.ref.WeakReference;
  * Created by lzf on 2021/12/22 2:58 下午
  */
 public class NullableOptWxCallback implements IOptWxCallback {
-    private final Class<?> desActivity;
+    private final @Nullable Class<?> desActivity;
     private final Activity WxCallbackActivity;
 
     private static WeakReference<IOptWxCallback> reference;
 
-    public NullableOptWxCallback(@NonNull Activity WxCallbackActivity, @NonNull Class<?> desActivity) {
+    public NullableOptWxCallback(@NonNull Activity WxCallbackActivity, @Nullable Class<?> desActivity) {
         this.WxCallbackActivity = WxCallbackActivity;
         this.desActivity = desActivity;
     }
 
-    public static synchronized IOptWxCallback get(Activity wxCallbackActivity, Class<?> appEntryActivity) {
+    public static synchronized IOptWxCallback get(Activity wxCallbackActivity, @Nullable Class<?> appEntryActivity) {
         if (null == reference || null == reference.get()) {
             reference = new WeakReference<>(new NullableOptWxCallback(wxCallbackActivity, appEntryActivity));
         }
@@ -45,20 +45,24 @@ public class NullableOptWxCallback implements IOptWxCallback {
     public void onOptWxReq(BaseReq baseReq) {
         switch (baseReq.getType()) {
             case ConstantsAPI.COMMAND_SHOWMESSAGE_FROM_WX:
-                ShowMessageFromWX.Req req = (ShowMessageFromWX.Req) baseReq;
-                Intent newIntent = new Intent(WxCallbackActivity, desActivity);
-                if (req.message != null && !TextUtils.isEmpty(req.message.messageExt)) {
-                    newIntent.setData(Uri.parse(req.message.messageExt));
+                if(null != desActivity){
+                    ShowMessageFromWX.Req req = (ShowMessageFromWX.Req) baseReq;
+                    Intent newIntent = new Intent(WxCallbackActivity, desActivity);
+                    if (req.message != null && !TextUtils.isEmpty(req.message.messageExt)) {
+                        newIntent.setData(Uri.parse(req.message.messageExt));
+                    }
+                    WxCallbackActivity.startActivity(newIntent);
                 }
-                WxCallbackActivity.startActivity(newIntent);
                 WxCallbackActivity.finish();
                 break;
             // 可能有其他类型的消息，默认都把自己app起来，避免这个透明Activity卡住用户操作
             case ConstantsAPI.COMMAND_GETMESSAGE_FROM_WX:
             default:
                 // 微信调用自己app的界面
-                Intent intent = new Intent(WxCallbackActivity, desActivity);
-                WxCallbackActivity.startActivity(intent);
+                if(null != desActivity){
+                    Intent intent = new Intent(WxCallbackActivity, desActivity);
+                    WxCallbackActivity.startActivity(intent);
+                }
                 WxCallbackActivity.finish();
                 break;
         }
@@ -124,6 +128,7 @@ public class NullableOptWxCallback implements IOptWxCallback {
                 }
                 break;
         }
+        WxCallbackActivity.finish();
         NullableToast.showDialogTip(resultMsg);
     }
 

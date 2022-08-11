@@ -12,21 +12,19 @@ android {
         /*multiDexEnabled true*/
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
-
-        if (project.hasProperty("QQ_APP_ID")) {
-            manifestPlaceholders = [
-                    qqAppId: QQ_APP_ID
-            ]
-        }
+        /*if (project.hasProperty("QQ_APP_ID")) {
+            manifestPlaceholders = [QQ_APP_ID:"111"]
+        }*/
     }
 
     sourceSets{
         main{
-            if(project.hasProperty("QQ_APP_ID")){
-                manifest.srcFile "${projectDir}/src/main/useQQ/AndroidManifest.xml"
+            /*if(project.hasProperty("QQ_APP_ID")){
+                manifest.srcFile "src/main/useQQ/AndroidManifest.xml"
             }else {
-                manifest.srcFile "${projectDir}/src/main/AndroidManifest.xml"
-            }
+                manifest.srcFile "src/main/AndroidManifest.xml"
+            }*/
+            manifest.srcFile "src/main/useQQ/AndroidManifest.xml"
         }
     }
 

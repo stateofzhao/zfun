@@ -3,8 +3,10 @@ package com.zfun.sharelib.core;
 import androidx.annotation.NonNull;
 
 import com.tencent.mm.opensdk.modelmsg.SendAuth;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.init.InternalShareInitBridge;
+import com.zfun.sharelib.init.NullableToast;
 
 public class WeixinLoginHandler implements IShareHandler {
     private ShareData mShareData;
@@ -17,10 +19,19 @@ public class WeixinLoginHandler implements IShareHandler {
             postCancel();
             return;
         }
+        final IWXAPI iwxapi = SdkApiProvider.getWXAPI(InternalShareInitBridge.getInstance().getApplicationContext());
+        if (!iwxapi.isWXAppInstalled()) {
+            postFail();
+            NullableToast.showDialogTip("微信未安装");
+            return;
+        }
         final SendAuth.Req authReq = new SendAuth.Req();
         authReq.scope = "snsapi_userinfo";
         authReq.state = getWXLoginState(new Object());
-        SdkApiProvider.getWXAPI(InternalShareInitBridge.getInstance().getApplicationContext()).sendReq(authReq);
+        final boolean sendOK = iwxapi.sendReq(authReq);
+        if(!sendOK){
+            postFail();
+        }
     }
 
     @Override
@@ -57,7 +68,7 @@ public class WeixinLoginHandler implements IShareHandler {
     }
 
     public void postSuc(final String code,final String state){
-        final ShareData.OnWXLoginListener listener = null!=mShareData&&null!=mShareData.mShareListener?mShareData.mWXLoginListener:null;
+        final ShareData.OnWXLoginListener listener = null!=mShareData&&null!=mShareData.mWXLoginListener?mShareData.mWXLoginListener:null;
         if (null == listener) {
             return;
         }

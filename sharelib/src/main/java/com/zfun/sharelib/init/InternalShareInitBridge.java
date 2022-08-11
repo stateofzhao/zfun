@@ -65,7 +65,7 @@ public class InternalShareInitBridge {
     /**
      * @param appEntryActivityClass app的入口Activity
      */
-    public InternalShareInitBridge configWxCallbackOpt(@Nullable IOptWxCallback wxCallback, @NonNull Class<?> appEntryActivityClass) {
+    public InternalShareInitBridge configWxCallbackOpt(@Nullable IOptWxCallback wxCallback, @Nullable Class<?> appEntryActivityClass) {
         this.optWxCallback = wxCallback;
         this.appEntryActivityClass = appEntryActivityClass;
         return this;

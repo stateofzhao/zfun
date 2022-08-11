@@ -1,7 +1,7 @@
 <resources>
     <style name="DialogBottomRound" parent="android:Theme.Dialog">
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">#00000000</item>
+        <item name="android:windowBackground">@color/transparent</item>
     </style>
 
     <style name="PopupAnimation" parent="android:Animation">
