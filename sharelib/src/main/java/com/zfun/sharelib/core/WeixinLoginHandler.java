@@ -50,7 +50,7 @@ public class WeixinLoginHandler implements IShareHandler {
     }
 
     public void postCancel() {
-        final ShareData.OnWXLoginListener listener = null!=mShareData&&null!=mShareData.mShareListener?mShareData.mWXLoginListener:null;
+        final ShareData.OnWXLoginListener listener = null!=mShareData&&null!=mShareData.mWXLoginListener?mShareData.mWXLoginListener:null;
         if (null == listener) {
             return;
         }
@@ -59,7 +59,7 @@ public class WeixinLoginHandler implements IShareHandler {
     }
 
     public void postFail() {
-        final ShareData.OnWXLoginListener listener = null!=mShareData&&null!=mShareData.mShareListener?mShareData.mWXLoginListener:null;
+        final ShareData.OnWXLoginListener listener = null!=mShareData&&null!=mShareData.mWXLoginListener?mShareData.mWXLoginListener:null;
         if (null == listener) {
             return;
         }
