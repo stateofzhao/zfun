@@ -37,7 +37,7 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     public static final int STYLE_PULL_REFRESH = 1;
     public static final int STYLE_VERTICAL_PAGE = 2;
 
-    private int mStyle = STYLE_VERTICAL_PAGE;
+    private int mStyle = STYLE_PULL_REFRESH;
     private int mTouchSlop;
     private int mMinimumVelocity;
     private int mMaximumVelocity;
@@ -122,6 +122,16 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
         mHeaderSpringBackAnimTimeMs = springBackAnimTimeMs;
     }
 
+    /**
+     * @param style {@link #STYLE_PULL_REFRESH}、{@link #STYLE_VERTICAL_PAGE}
+     * */
+    public void setStyle(int style){
+        if(style != STYLE_PULL_REFRESH && style != STYLE_VERTICAL_PAGE){
+            return;
+        }
+        mStyle = style;
+        requestLayout();
+    }
     public void setOnRefreshListener(OnRefreshListener listener) {
         mOnRefreshListener = listener;
     }
@@ -129,6 +139,8 @@ public class XPullRefreshLayout extends FrameLayout implements NestedScrollingPa
     public void setOnPageChangeCallback(OnPageChangeCallback callback){
         mOnPageChangeCallback = callback;
     }
+
+
 
     private void internalLayoutChild() {
         if (getChildCount() > 0) {

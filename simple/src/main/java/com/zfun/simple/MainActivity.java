@@ -15,6 +15,7 @@ import com.zfun.simple.io.IOActivity;
 import com.zfun.simple.letternavigation.LetterNavigationActivity;
 import com.zfun.simple.pullrefresh.PullRefreshActivity;
 import com.zfun.simple.pullrefresh.XPullRefreshActivity;
+import com.zfun.simple.pullrefresh.XPullRefreshVerticalViewPagerActivity;
 import com.zfun.simple.usecase.InteractorTestActivity;
 import com.zfun.test.jniclass.ObserverUninstall;
 
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             "二进制学习",
             "下拉刷新布局",
             "X下拉刷新布局",
+            "X下拉刷新布局 - 简单的纵向ViewPager",
             "IO学习"};
 
     RecyclerView mListView;
@@ -57,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (position == 4) {
             XPullRefreshActivity.open(this);
         } else if (position == 5) {
+            XPullRefreshVerticalViewPagerActivity.open(this);
+        } else if (position == 6) {
             IOActivity.open(this);
         }
     }

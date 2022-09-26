@@ -4,14 +4,16 @@
                                                      android:layout_width="match_parent"
                                                      android:layout_height="match_parent">
 
+    <!-- 第一页 -->
     <com.zfun.lib.widget.pullrefresh.refreshview.SunView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
     />
 
+    <!-- 第二页 -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
 </com.zfun.lib.widget.xpullrefresh.XPullRefreshLayout>

@@ -23,6 +23,7 @@
         <activity android:name="com.zfun.simple.binary.BinaryActivity"/>
         <activity android:name="com.zfun.simple.pullrefresh.PullRefreshActivity"/>
         <activity android:name="com.zfun.simple.pullrefresh.XPullRefreshActivity"/>
+        <activity android:name="com.zfun.simple.pullrefresh.XPullRefreshVerticalViewPagerActivity"/>
         <activity android:name="com.zfun.simple.io.IOActivity"/>
     </application>
 
