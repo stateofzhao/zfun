@@ -18,7 +18,7 @@ pluginManagement{
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == 'io.github.stateofzhao') {
-                useModule("io.github.stateofzhao:GradleMoudlePlugin:${requested.version}")
+                useModule("io.github.stateofzhao:GradleModulePlugin:${requested.version}")
                 //如果这里写死版本号，则外部plugins{id 'io.github.stateofzhao'}即可，无需传递版本号
                 /*useModule("io.github.stateofzhao:GradleMoudlePlugin:1.0.0-SNAPSHOT")*/
             }
@@ -29,7 +29,7 @@ pluginManagement{
     plugins{
         id 'com.android.application' version '7.1.2' apply false
         id 'com.android.library' version '7.1.2' apply false
-        id 'io.github.stateofzhao' version '1.1.0-SNAPSHOT' apply false
+        id 'io.github.stateofzhao' version '1.2.2-SNAPSHOT' apply false
     }
 }
 
@@ -41,6 +41,7 @@ dependencyResolutionManagement{
     repositories{
         google()
         mavenCentral()
+        jcenter()
 
         //本地aar依赖
         flatDir {
@@ -52,3 +53,4 @@ dependencyResolutionManagement{
 include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'simple'
 include ':audio'
 include ':sharelib'
+include ':xposedmodule'

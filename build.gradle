@@ -1,5 +1,14 @@
+buildscript {
+    ext.kotlin_version = '1.5.20'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
 plugins {
-    id 'io.github.stateofzhao' version '1.1.1-SNAPSHOT' apply true
+    id 'io.github.stateofzhao' version '1.2.2-SNAPSHOT' apply true
 }
 
 //此种方式不行，不会去 settings.gradle 的 pluginManagement{resolutionStrategy{...}}

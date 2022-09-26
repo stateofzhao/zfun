@@ -1,0 +1,7 @@
+[
+    {
+        "className":"android.app.ApplicationPackageManager",
+        "methodName":"queryIntentActivities",
+        "args":["android.content.Intent","int"]
+    }
+]
