@@ -41,7 +41,7 @@
 ## observerUninstall
 卸载监听，现在应该是不能用了，留在这里是学习 CMake 用的。
 
-## simple
+## sample
 例子。
 
 ## apk
