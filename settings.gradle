@@ -50,7 +50,7 @@ dependencyResolutionManagement{
     }
 }
 
-include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'simple'
+include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'sample'
 include ':audio'
 include ':sharelib'
 include ':xposedmodule'

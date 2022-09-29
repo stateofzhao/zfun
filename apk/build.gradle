@@ -42,10 +42,10 @@ android {
     }
 }
 
-
 dependencies {
-    implementation project(':simple')
+    implementation project(':sample')
 }
+
 
 def readChannelFromFile = { String path ->
     def channelList = []
