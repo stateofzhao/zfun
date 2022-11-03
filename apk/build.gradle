@@ -1,10 +1,11 @@
 plugins {
     id 'com.android.application'
+    id 'zfun.module.inject' apply true
 }
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    buildToolsVersion buildToolsVersion
     flavorDimensions "apk"
 
     defaultConfig {

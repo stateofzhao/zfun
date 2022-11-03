@@ -1,0 +1,25 @@
+plugins{
+    id 'com.android.application' apply true
+    id 'kotlin-android' apply true
+    id 'org.jetbrains.kotlin.kapt' apply true //kotlin 注解处理器
+}
+
+android{
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+    }
+}
+
+dependencies {
+    implementation project(':component-structure:component-1:bridge')
+    implementation project(':component-structure:component-1:module1')
+    implementation project(':component-structure:component-1:module2')
+    implementation project(':component-structure:component-1:module3')
+
+    //for init
+    implementation project(':component-structure:initProcessor')
+    kapt project(':component-structure:initProcessor')
+}

@@ -1,0 +1,19 @@
+plugins{
+    id 'com.android.library' apply true
+    id 'kotlin-android' apply true
+}
+
+android{
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    implementation androidxKotlin
+    implementation kotlinStdlib
+    implementation androidxAppCompat
+
+//    kapt project(path:':component-structure:initProcessor')
+}

@@ -26,10 +26,10 @@ dependencies {
   implementation project(':zfunLib')
   implementation project(':observerUninstall')
   implementation project(':learn')
-  implementation "androidx.appcompat:appcompat:$androidXAppCompat"
-  implementation "androidx.recyclerview:recyclerview:$recyclerViewVersion"
-  implementation "androidx.constraintlayout:constraintlayout:$constraintlayout"
-  testImplementation "junit:junit:$junitVersion"
-  androidTestImplementation "androidx.test.ext:junit:$androidXtestJunit"
-  androidTestImplementation "androidx.test.espresso:espresso-core:$androidXtestEspresso"
+  implementation androidxAppCompat
+  implementation androidxRecyclerView
+  implementation constraintlayout
+  testImplementation junit
+  androidTestImplementation androidxTestJunit
+  androidTestImplementation androidxTestEspresso
 }

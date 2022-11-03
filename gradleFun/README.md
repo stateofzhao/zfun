@@ -1,0 +1,2 @@
+- 学习Gradle脚本&放置一些有意思的Gradle脚本。
+- Gradle项目的根目录下的 build.gradle 会自动被识别到，他是Gradle项目构建的入口。

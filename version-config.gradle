@@ -1,0 +1,33 @@
+//统一版本管理。
+//引用时：$minSdkVersion 区别于引用 gradle.properties 中的值： ${xxx}。
+//注意：$xxx 必须放到双引号中。
+ext {
+    minSdkVersion = 21
+    targetSdkVersion = 32
+    compileSdkVersion = 32
+    buildToolsVersion = "30.0.2"
+
+    //kotlin
+    androidxKotlin = 'androidx.core:core-ktx:1.3.2'
+    kotlinStdlib = "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    kotlinScrope = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1"
+    kotlinScropeAndroid = 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1'
+
+    androidxSupportV4 = 'androidx.legacy:legacy-support-v4:1.0.0'
+    androidxAppCompat = 'androidx.appcompat:appcompat:1.3.0'
+    androidxRecyclerView = 'androidx.recyclerview:recyclerview:1.2.1'
+    constraintlayout = 'androidx.constraintlayout:constraintlayout:2.0.4'
+    androidMaterial = 'com.google.android.material:material:1.4.0'
+
+    okhttp = 'com.squareup.okhttp:okhttp:2.7.5'
+    okhttpUrlConnection = 'com.squareup.okhttp:okhttp-urlconnection:2.5.0'
+    gson = 'com.google.code.gson:gson:2.8.6'
+    fresco = 'com.facebook.fresco:fresco:0.14.0'
+    nineoldandroids = 'com.nineoldandroids:library:2.4.0'
+    eventBus = 'org.greenrobot:eventbus:3.0.0'
+    timber = 'com.jakewharton.timber:timber:5.0.1'
+
+    androidxTestJunit = 'androidx.test.ext:junit:1.1.3'
+    androidxTestEspresso = 'androidx.test.espresso:espresso-core:3.4.0'
+    junit = 'junit:junit:4.13.2'
+}

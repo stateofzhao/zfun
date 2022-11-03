@@ -31,7 +31,7 @@ android {
             minifyEnabled true //如果自身作为module被其它模块直接引用，那么此处这个值仅针对自己有效
             //consumerProguardFiles：library模块使用的，consumerProguardFiles 配置的proguard文件会自动插入到 Application工程的 proguard 文件中。
             //proguardFiles        ：library模块和application模块都可以使用，用来指定自身proguard文件的，在编译时会根据指定的proguard文件来进行混淆。
-            //【注意】，consumerProguardFiles 配置的proguard文件在自身编译时不生效。
+            //【注意】consumerProguardFiles 配置的proguard文件在自身编译时不生效。
             //consumerProguardFiles 'consumer-rules.pro' //automatically add your proguard rules into your library user
             //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

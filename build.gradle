@@ -1,46 +1,12 @@
-buildscript {
-    ext.kotlin_version = '1.5.20'
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
 plugins {
-    id 'io.github.stateofzhao' version '1.2.2-SNAPSHOT' apply true
+    id 'zfun.module.mgr' apply true
 }
+
+apply from: 'version-config.gradle'
+
 
 //此种方式不行，不会去 settings.gradle 的 pluginManagement{resolutionStrategy{...}}
-//apply plugin: 'io.github.stateofzhao' version '1.0.0-SNAPSHOT'
-
-//引用时：$minSdkVersion 区别于引用 gradle.properties 中的值： ${xxx}
-ext {
-    minSdkVersion = 21
-    targetSdkVersion = 32
-    compileSdkVersion = 32
-    buildToolsVersion = "30.0.2"
-
-    androidXVersion = '1.0.0'
-    androidxSupportV4 = '1.0.0'
-    androidXAppCompat = '1.3.0'
-    androidXRecyclerView = '1.2.1'
-    constraintlayout='2.0.4'
-    fragmentVersion = '1.4.1'
-    recyclerViewVersion = '1.2.1'
-    okhttpVersion = '2.7.5'
-    okhttpUrlConnectionVersion = '2.5.0'
-    gsonVersion = '2.8.6'
-    androidMaterial = '1.4.0'
-    frescoVersion = '0.14.0'
-    nineoldandroidsVersion = '2.4.0'
-    eventBusVersion = '3.0.0'
-
-    androidXtestJunit = '1.1.3'
-    androidXtestEspresso = '3.4.0'
-    junitVersion = '4.13.2'
-
-}
+//apply plugin: 'zfun.module.mgr'
 
 task clean(type: Delete) {
     delete rootProject.buildDir

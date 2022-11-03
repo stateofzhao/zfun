@@ -44,11 +44,11 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
+    androidTestImplementation(androidxTestEspresso, {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     implementation project(":zfunLib")
-    implementation "androidx.appcompat:appcompat:$androidXAppCompat"
-    implementation "androidx.recyclerview:recyclerview:$androidXRecyclerView"
-    testImplementation "junit:junit:$junitVersion"
+    implementation androidxAppCompat
+    implementation androidxRecyclerView
+    testImplementation junit
 }

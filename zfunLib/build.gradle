@@ -21,13 +21,13 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "com.squareup.okhttp:okhttp:$okhttpVersion"
-    implementation "com.squareup.okhttp:okhttp-urlconnection:$okhttpUrlConnectionVersion"
-    implementation "com.google.code.gson:gson:$gsonVersion"
-    implementation "com.facebook.fresco:fresco:$frescoVersion"
-    implementation "androidx.legacy:legacy-support-v4:$androidxSupportV4"
-    implementation "com.nineoldandroids:library:$nineoldandroidsVersion"
-    implementation "androidx.appcompat:appcompat:$androidXAppCompat"
-    implementation "androidx.recyclerview:recyclerview:$androidXRecyclerView"
-    implementation "org.greenrobot:eventbus:$eventBusVersion"
+    implementation okhttp
+    implementation okhttpUrlConnection
+    implementation gson
+    implementation fresco
+    implementation androidxSupportV4
+    implementation nineoldandroids
+    implementation androidxAppCompat
+    implementation androidxRecyclerView
+    implementation eventBus
 }

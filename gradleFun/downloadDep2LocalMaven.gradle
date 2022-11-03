@@ -1,0 +1,36 @@
+//fun Configuration.isDeprecated() = this is DeprecatableConfiguration && resolutionAlternatives != null
+//
+//fun ConfigurationContainer.resolveAll() = this
+//        .filter { it.isCanBeResolved && !it.isDeprecated() }
+//        .forEach { it.resolve() }
+//
+//tasks.register("downloadDependencies") {
+//    doLast {
+//        configurations.resolveAll()
+//        buildscript.configurations.resolveAll()
+//    }
+//}
+//
+//task downloadDependencies(type: Exec) {
+//    configurations.testRuntime.files
+//    commandLine 'echo', 'Downloaded all dependencies'
+//}
+
+task download(type:Exec){
+    configurations.testRuntime.files
+    commandLine "echo", "Downloaded all dependencies and copied to mavenLocal"
+}
+
+task getDeps(type: Copy) {
+    from configurations.runtimeClasspath
+    into repositories.mavenLocal().url
+
+    doFirst {
+        ant.delete(dir: 'runtime')
+        ant.mkdir(dir: 'runtime')
+    }
+
+    doLast {
+        ant.delete(dir: 'runtime')
+    }
+}

@@ -1,9 +1,9 @@
 plugins {
     id 'com.android.application'
+    id 'kotlin-android'
 }
 apply from: 'version.gradle'
 apply from: 'lib.gradle'
-apply plugin: 'kotlin-android'
 
 android {
     compileSdk 31
@@ -42,7 +42,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     //kotlin
     implementation "androidx.core:core-ktx:1.8.0"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     //xposed
     compileOnly "de.robv.android.xposed:api:$xposeapiversion"

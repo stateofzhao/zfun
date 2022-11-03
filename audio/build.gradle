@@ -24,9 +24,9 @@ android {
 
 dependencies {
 
-    implementation "androidx.appcompat:appcompat:$androidXAppCompat"
-    implementation "com.google.android.material:material:$androidMaterial"
-    testImplementation "junit:junit:$junitVersion"
-    androidTestImplementation "androidx.test.ext:junit:$androidXtestJunit"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$androidXtestEspresso"
+    implementation androidxAppCompat
+    implementation androidMaterial
+    testImplementation junit
+    androidTestImplementation androidxTestJunit
+    androidTestImplementation androidxTestEspresso
 }

@@ -1,0 +1,14 @@
+plugins{
+    id 'com.android.library' apply true
+    id 'kotlin-android' apply true
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+}
+
+dependencies {
+    implementation project(':component-structure:component-1:base')
+    implementation project(':component-structure:component-1:bridge')
+}

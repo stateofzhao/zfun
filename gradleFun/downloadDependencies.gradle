@@ -1,0 +1,23 @@
+//下载项目的maven依赖，然后转存到指定目录（相当于将依赖拉取下来后放到本地maven仓库）
+
+//Exec类型的task，也即是此task继承自ExecTask
+task downloadDependencies(type: Exec) {
+    finalizedBy 'cacheToMavenLocal' //此task执行完毕后，执行 cacheToMavenLocal task
+
+//    configurations.implementation.canBeResolved(true)
+    configurations.runtimeOnly.canBeResolved(true)
+
+     configurations.runtimeOnly.files
+    commandLine "echo", "Downloaded all dependencies and copied to mavenLocal"
+}
+
+//Copy类型的task，也即是此task继承自CopyTask
+task cacheToMavenLocal(type: Copy) {
+    from new File(gradle.gradleUserHomeDir, "caches/modules-2/files-2.1")
+    into repositories.mavenLocal().url
+    eachFile {
+        List<String> parts = it.path.split("/")
+        it.path = [parts[0].replace(".","/"), parts[1], parts[2], parts[4]].join("/")
+    }
+    includeEmptyDirs false
+}
