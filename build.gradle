@@ -11,3 +11,4 @@ apply from: 'version-config.gradle'
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+apply from:'gradleFun/downloadDependencies.gradle'
