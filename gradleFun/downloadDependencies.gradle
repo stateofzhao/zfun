@@ -1,23 +1,310 @@
-//下载项目的maven依赖，然后转存到指定目录（相当于将依赖拉取下来后放到本地maven仓库）
+/**下载项目的maven依赖，然后转存到指定目录（相当于将依赖拉取下来后放到本地maven仓库）。*/
 
+//fixme lzf 会对传递依赖中的相同依赖进行重复拉取，后续可以优化掉
+
+/*apply plugin:'java' //so that I can use 'implementation', 'compileClasspath' configuration；申请此插件后可以访问 ConfigurationContainer#implementation,ConfigurationContainer#compileClasspath
+//编译环境
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}*/
+
+import org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier
+import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
+import org.gradle.util.GFileUtils
+
+//配置项 ============================================================================================ start
+def outputPath = rootProject.projectDir.parent+'/offlineDepdencies/maven'
+
+def includeSources = true
+def includeJavadocs = true
+def includeMavenPom = true
+
+def includeBuildscriptDependencies = true //是否包含构建脚本的依赖
+
+def cleanOutputPath = true  //是否清空依赖输出目录
+
+def includeProjectNames = []//要拉取的项目；默认拉取所有项目
+def includeConfigurationNames = []//要拉取的依赖类型，默认拉取所有，例如：implementation,compileOnly等
+def includeGroupNames = []//要拉取的依赖的group，采用String.contains进行判断，所以可以仅设置group中的部分字符；默认会全部拉取
+//配置项 ============================================================================================ end
+
+
+//Task闭包中直接编写的代码，会在配置阶段执行。可以通过doFirst、doLast块将代码逻辑放到执行阶段中执行
 //Exec类型的task，也即是此task继承自ExecTask
-task downloadDependencies(type: Exec) {
-    finalizedBy 'cacheToMavenLocal' //此task执行完毕后，执行 cacheToMavenLocal task
+task downloadDependencies() {
+    //读取配置
+    doFirst {
+        def EMPTY_DEPENDENCIES_ARRAY = new Dependency[0]
+        def Set<ModuleComponentIdentifier> componentIds = new HashSet<>() //外部依赖module身份唯一标识符
+        def Map<ModuleComponentIdentifier,Set<File>> repositoryFiles = [:]//外部依赖module包含的文件
+        def Set<ConfigurationWrapper> projectConfigurations = []
+        def Set<RepositoryWrapper> projectRepositories = []
 
-//    configurations.implementation.canBeResolved(true)
-    configurations.runtimeOnly.canBeResolved(true)
+        trace("##################################【downloadDependencies】任务 ################################## 开始")
 
-     configurations.runtimeOnly.files
-    commandLine "echo", "Downloaded all dependencies and copied to mavenLocal"
+        trace("==================配置==================")
+        trace("outputPath：                      $outputPath")
+        trace("includeSources：                  $includeSources")
+        trace("includeJavadocs：                 $includeJavadocs")
+        trace("includeMavenPom：                 $includeMavenPom")
+        trace("includeBuildscriptDependencies：  $includeBuildscriptDependencies")
+        trace("cleanOutputPath：                 $cleanOutputPath")
+        trace("includeProjectNames：             $includeProjectNames")
+        trace("includeConfigurationNames：       $includeConfigurationNames")
+        trace("includeGroupNames：               $includeGroupNames")
+        trace("==================配置==================")
+
+        //读取配置项
+        gradle.allprojects{ project ->
+            //项目依赖
+            if (includeProjectNames?.empty || includeProjectNames.contains(project.name)) {
+                if (includeConfigurationNames?.empty) {
+                    project.configurations.forEach{ configuration ->
+                        addToConfigurationSet(projectConfigurations,configuration,project)
+                    }
+
+                } else {
+                    includeConfigurationNames.forEach{ name ->
+                        addToConfigurationSet(projectConfigurations,project.configurations.getByName(name),project)
+                    }//
+                }
+                //项目buildscript依赖
+                if (includeBuildscriptDependencies) {
+                    project.buildscript.configurations.forEach{ configuration ->
+                        addToConfigurationSet(projectConfigurations,configuration,project)
+                    }
+                }
+            }
+            //配置project的依赖仓库，因为project的依赖仓库是不带buildscript的依赖仓库的，所以这里需要给它们加上
+            def oriRepositories = project.repositories
+            def oriBuildscriptRep = project.buildscript.repositories
+            project.repositories.addAll(oriBuildscriptRep)
+            projectRepositories.add(new RepositoryWrapper(oriRepositories,project))
+        }//allprojects
+
+        //根据配置拉取依赖
+        if (projectConfigurations?.empty){
+            trace("无需拉取依赖")
+            return
+        }
+        for (configWrapper in projectConfigurations) {
+            def Configuration configuration = configWrapper.configuration
+            def Project project = configWrapper.project
+            trace("【${project.name}】下载项目依赖 ============================== start")
+            for (dependency in configuration.allDependencies){
+                if (dependency instanceof ExternalModuleDependency){//外部依赖（maven库，libs中的依赖等） //只处理外部依赖
+                    if (null==dependency.module.group){//fixme lzf 本地libs目录下的依赖，group为null（先暂时这么用，以后找到更好的方式时再修改）
+                        trace("忽略本地libs下依赖：$dependency.module.name")
+                        continue
+                    } else {
+                        trace("开始拉取依赖：$dependency.module.group:$dependency.module.name:$dependency.version")
+                    }
+                    //step 1 获取module信息以及module的artifact文件
+                    //detachedConfiguration 为每个依赖项创建一个分离的配置，以获取依赖项的所有声明版本，否则只会拉取到最新的版本
+                    def configurationCopy = project.configurations.detachedConfiguration([dependency].toArray(EMPTY_DEPENDENCIES_ARRAY))
+                    if (configurationCopy.resolvedConfiguration.hasError()){
+                        trace("无法解析此依赖！")
+                        continue
+                    }
+                    configurationCopy.resolvedConfiguration.resolvedArtifacts.forEach{
+                        def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(it.moduleVersion.id.group, it.moduleVersion.id.name), it.moduleVersion.id.version)
+                        def skip = isNeedSkipFetch(includeGroupNames,it.moduleVersion.id)
+                        if (skip){
+                            trace("由于配置，忽略此依赖：",componentId,null)
+                        } else {
+                            componentIds.add(componentId)
+                            addToMultimap(repositoryFiles,componentId,it.file)//it.file 为jar，aar等
+                            trace("添加依赖：",componentId,it.file)
+                        }
+                    }//end forEach
+
+                    //step 2 获取module的 sources 和 javadocs
+                    if (includeSources || includeJavadocs){
+                        trace("收集java源码和java文档")
+                        def jvmArtifacts = project.dependencies.createArtifactResolutionQuery()
+                                .forComponents(componentIds)
+                                .withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
+                                .execute()//查询远程module仓库
+                        for (component in jvmArtifacts.resolvedComponents){
+                            if (includeSources){
+                                def sources = component.getArtifacts(SourcesArtifact)
+                                if (!sources?.empty){
+                                    sources.forEach({
+                                        def file = (it as ResolvedArtifactResult).file
+                                        addToMultimap(repositoryFiles,component.id,file)
+                                        trace("添加依赖源码：",component.id,file)
+                                    })
+                                }
+                            }
+
+                            if (includeJavadocs){
+                                def javadocs = component.getArtifacts(JavadocArtifact)
+                                if (!javadocs?.empty){
+                                    javadocs.forEach{
+                                        def file = (it as ResolvedArtifactResult).file
+                                        addToMultimap(repositoryFiles,component.id,file)
+                                        trace("添加依赖文档：",component.id,file)
+                                    }
+                                }
+                            }
+                        }
+                    }//end if(includeSources || includeJavadocs)
+
+                    //step 3 添加maven pom
+                    if (includeMavenPom){
+                        trace("收集maven pom 文档")
+                        def mavenArtifacts = project.dependencies.createArtifactResolutionQuery()
+                                .forComponents(componentIds)
+                                .withArtifacts(MavenModule, MavenPomArtifact)
+                                .execute()
+                        for (component in mavenArtifacts.resolvedComponents){
+                            def pomResults = component.getArtifacts(MavenPomArtifact)
+                            if (pomResults?.empty) {
+                                continue
+                            }
+
+                            for (pomArtifact in pomResults){
+                                if (pomArtifact instanceof UnresolvedArtifactResult){
+                                    logger.log(LogLevel.ERROR,"Resolver was unable to resolve artifact '{}'", pomArtifact.id, pomArtifact.getFailure())
+                                    break
+                                }
+                                def pomFile = (pomArtifact as ResolvedArtifactResult).file
+                                addToMultimap(repositoryFiles,component.id,pomFile)
+                                trace("添加MavenPom文档：",component.id,pomFile)
+                            }
+                        }
+                    }//end if(includeMavenPom){}
+                } else if (dependency instanceof FileCollectionDependency){//包括：本地SDK依赖，例如，Android32；本地libs下的jar依赖；不包括：本地libs下的aar(本地libs下的aar依赖最终会解析为 ExternalModuleDependency)
+                    dependency.files.forEach{
+                        trace("本地依赖忽略："+it.path)
+                    }
+                } else if (dependency instanceof ProjectDependency){//本地project依赖：implementation project(':projectA')
+                    trace("本地project依赖忽略："+dependency.dependencyProject)
+                }
+            }//end for 解析配置项的依赖：implementation ,compileOnly等
+            trace("【${project.name}】下载项目依赖 ============================== end")
+        }//end for 解析所有依赖
+
+        printoutDependencies(cleanOutputPath,outputPath,repositoryFiles)
+        trace("依赖拉取完毕")
+
+        //还原project的repository
+        projectRepositories.forEach {
+            it.project.repositories.clear()
+            it.project.repositories.addAll(it.repositoryHandler)
+        }
+
+        trace("################################## 【downloadDependencies】任务 ################################## 结束")
+    }//doFirst
+
+    onlyIf{
+        false //不需要自动执行，当需要时手动执行即可
+    }
 }
 
+static <K,V> void addToMultimap(Map<K,Set<V>> map, K key, V value){
+    if (!map.containsKey(key)){
+        map.put(key,[] as Set<V>)
+    }
+    map.get(key).add(value)
+}
+
+static def addToConfigurationSet(Set<ConfigurationWrapper> projectConfigurations,Configuration configuration,Project project){
+    if (!configuration.allDependencies?.empty){
+        projectConfigurations.add(new ConfigurationWrapper(configuration, project))
+    }
+}
+
+// Return the offline-repository target directory for the given component (naming follows maven conventions)
+static def File moduleDirectory(String outputPath,ModuleComponentIdentifier ci) {
+    new File(outputPath, "${ci.group.tokenize(".").join("/")}/${ci.module}/${ci.version}")
+}
+
+static def boolean isNeedSkipFetch(List<String> groupNames,ModuleVersionIdentifier identifier){
+    if (groupNames?.empty){
+        return false
+    } else {
+        def groupName = identifier.group
+        if (null == groupName){
+            groupName = ""
+        }
+        for (it in groupNames){
+            if (groupName.toLowerCase().contains(it.toLowerCase())){
+                return false
+            }
+        }
+        return true
+    }
+}
+
+def printoutDependencies(boolean cleanOutputPath,String outputPath,Map<ModuleComponentIdentifier,Set<File>> repositoryFiles){
+    if (cleanOutputPath){
+        trace("清空依赖输出目录：$outputPath")
+        GFileUtils.deleteDirectory(new File(outputPath))
+    }
+    trace("开始输出依赖到指定目录：$outputPath")
+    if (repositoryFiles?.isEmpty()){
+        return
+    }
+    def keys = repositoryFiles.keySet()
+    for (ModuleComponentIdentifier id in keys){
+        def files = repositoryFiles.get(id)
+        def dir = moduleDirectory(outputPath,id)
+        GFileUtils.mkdirs(dir)
+        files.forEach{file->
+            GFileUtils.copyFile(file,new File(dir,file.name))
+        }
+    }
+}
+
+def trace(String msg){
+    println msg
+}
+
+def trace(String pre, ComponentIdentifier componentIdentifier, File file) {
+    def fileMsg
+    if (null != file){
+        fileMsg = " == 文件路径${file.getAbsoluteFile()}"
+    }else {
+        fileMsg = ""
+    }
+    if (componentIdentifier instanceof DefaultModuleComponentIdentifier) {
+        def id = componentIdentifier as DefaultModuleComponentIdentifier
+        println pre + "${id.group}:${id.module}:${id.version}$fileMsg"
+    } else {
+        println pre + "${componentIdentifier.displayName}$fileMsg"
+    }
+}
+
+//
+class ConfigurationWrapper{
+    def Configuration configuration
+    def Project project
+    ConfigurationWrapper(Configuration conf,Project proj){
+        this.configuration = conf
+        this.project = proj
+    }
+}//class ConfigurationWrapper end
+
+class RepositoryWrapper{
+    def RepositoryHandler repositoryHandler
+    def Project project
+    RepositoryWrapper(RepositoryHandler repository,Project proj){
+        repositoryHandler = repository
+        project = proj
+    }
+}//class RepositoryWrapper end
+
+
 //Copy类型的task，也即是此task继承自CopyTask
-task cacheToMavenLocal(type: Copy) {
+/*task cacheToMavenLocal(type: Copy) {
     from new File(gradle.gradleUserHomeDir, "caches/modules-2/files-2.1")
-    into repositories.mavenLocal().url
+    into repositories.mavenLocal().url //本地maven仓库，此处为默认路径:{user_space}/.m2/repository/
     eachFile {
         List<String> parts = it.path.split("/")
         it.path = [parts[0].replace(".","/"), parts[1], parts[2], parts[4]].join("/")
     }
     includeEmptyDirs false
-}
+    setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+}*/
