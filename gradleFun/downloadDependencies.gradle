@@ -199,7 +199,7 @@ task downloadDependencies() {
     }//doFirst
 
     onlyIf{
-        false //不需要自动执行，当需要时手动执行即可
+        true //即使为true也不会在构建时执行，因为他是一个单独的task，并没有依赖构建过程中的task
     }
 }
 
