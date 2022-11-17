@@ -184,8 +184,13 @@ task downloadDependencies() {
                             }
                         }//end if(includeMavenPom){}
                     } else if (dependency instanceof FileCollectionDependency){//包括：本地SDK依赖，例如，Android32；本地libs下的jar依赖；不包括：本地libs下的aar(本地libs下的aar依赖最终会解析为 ExternalModuleDependency)
-                        dependency.files.forEach{
-                            trace("本地依赖忽略："+it.path,3)
+                        // annotationProcess配置的注解处理器依赖会走到这里，但是报这个错： Transform's input file does not exist: xxx
+                        try {
+                            dependency.files.forEach {
+                                trace("本地依赖忽略：" + it.path, 3)
+                            }
+                        } catch (Exception ignore) {
+                            trace("本地依赖忽略：${dependency.name}",3)
                         }
                     } else if (dependency instanceof ProjectDependency){//本地project依赖：implementation project(':projectA')
                         trace("本地project依赖忽略："+dependency.dependencyProject,3)
