@@ -36,44 +36,49 @@ task downloadDependencies() {
     //读取配置
     doFirst {
         def EMPTY_DEPENDENCIES_ARRAY = new Dependency[0]
-        def Set<ModuleComponentIdentifier> componentIds = new HashSet<>() //外部依赖module身份唯一标识符
+
         def Map<ModuleComponentIdentifier,Set<File>> repositoryFiles = [:]//外部依赖module包含的文件
         def Set<ConfigurationWrapper> projectConfigurations = []
         def Set<RepositoryWrapper> projectRepositories = []
 
-        trace("##################################【downloadDependencies】任务 ################################## 开始")
+        trace("##################################【downloadDependencies】任务 ################################## 开始",0)
 
-        trace("==================配置==================")
-        trace("outputPath：                      $outputPath")
-        trace("includeSources：                  $includeSources")
-        trace("includeJavadocs：                 $includeJavadocs")
-        trace("includeMavenPom：                 $includeMavenPom")
-        trace("includeBuildscriptDependencies：  $includeBuildscriptDependencies")
-        trace("cleanOutputPath：                 $cleanOutputPath")
-        trace("includeProjectNames：             $includeProjectNames")
-        trace("includeConfigurationNames：       $includeConfigurationNames")
-        trace("includeGroupNames：               $includeGroupNames")
-        trace("==================配置==================")
+        trace("==================配置==================",1)
+        trace("outputPath：                      $outputPath",2)
+        trace("includeSources：                  $includeSources",2)
+        trace("includeJavadocs：                 $includeJavadocs",2)
+        trace("includeMavenPom：                 $includeMavenPom",2)
+        trace("includeBuildscriptDependencies：  $includeBuildscriptDependencies",2)
+        trace("cleanOutputPath：                 $cleanOutputPath",2)
+        trace("includeProjectNames：             $includeProjectNames",2)
+        trace("includeConfigurationNames：       $includeConfigurationNames",2)
+        trace("includeGroupNames：               $includeGroupNames",2)
+        trace("==================配置==================",1)
 
         //读取配置项
         gradle.allprojects{ project ->
             //项目依赖
             if (includeProjectNames?.empty || includeProjectNames.contains(project.name)) {
+                def projectConfigWrapper = null
                 if (includeConfigurationNames?.empty) {
-                    project.configurations.forEach{ configuration ->
-                        addToConfigurationSet(projectConfigurations,configuration,project)
-                    }
-
+                    projectConfigWrapper = createConfigurationWrapper(project,project.configurations)
                 } else {
-                    includeConfigurationNames.forEach{ name ->
-                        addToConfigurationSet(projectConfigurations,project.configurations.getByName(name),project)
-                    }//
+                    def projectConfigs = []
+                    includeConfigurationNames.forEach { name ->
+                        projectConfigs.add(project.configurations.getByName(name))
+                    }
+                    projectConfigWrapper = createConfigurationWrapper(project,projectConfigs)
                 }
                 //项目buildscript依赖
                 if (includeBuildscriptDependencies) {
-                    project.buildscript.configurations.forEach{ configuration ->
-                        addToConfigurationSet(projectConfigurations,configuration,project)
+                    if (null == projectConfigWrapper) {
+                        projectConfigWrapper = createConfigurationWrapper(project,project.buildscript.configurations)
+                    } else {
+                        projectConfigWrapper.appendConfigurations(project,project.buildscript.configurations)
                     }
+                }
+                if (null != projectConfigWrapper) {
+                    projectConfigurations.add(projectConfigWrapper)
                 }
             }
             //配置project的依赖仓库，因为project的依赖仓库是不带buildscript的依赖仓库的，所以这里需要给它们加上
@@ -85,117 +90,119 @@ task downloadDependencies() {
 
         //根据配置拉取依赖
         if (projectConfigurations?.empty){
-            trace("无需拉取依赖")
+            trace("无需拉取依赖",1)
             return
         }
         for (configWrapper in projectConfigurations) {
-            def Configuration configuration = configWrapper.configuration
+            def Set<Configuration> configurations = configWrapper.configurations
             def Project project = configWrapper.project
-            trace("【${project.name}】下载项目依赖 ============================== start")
-            for (dependency in configuration.allDependencies){
-                if (dependency instanceof ExternalModuleDependency){//外部依赖（maven库，libs中的依赖等） //只处理外部依赖
-                    if (null==dependency.module.group){//fixme lzf 本地libs目录下的依赖，group为null（先暂时这么用，以后找到更好的方式时再修改）
-                        trace("忽略本地libs下依赖：$dependency.module.name")
-                        continue
-                    } else {
-                        trace("开始拉取依赖：$dependency.module.group:$dependency.module.name:$dependency.version")
-                    }
-                    //step 1 获取module信息以及module的artifact文件
-                    //detachedConfiguration 为每个依赖项创建一个分离的配置，以获取依赖项的所有声明版本，否则只会拉取到最新的版本
-                    def configurationCopy = project.configurations.detachedConfiguration([dependency].toArray(EMPTY_DEPENDENCIES_ARRAY))
-                    if (configurationCopy.resolvedConfiguration.hasError()){
-                        trace("无法解析此依赖！")
-                        continue
-                    }
-                    configurationCopy.resolvedConfiguration.resolvedArtifacts.forEach{
-                        def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(it.moduleVersion.id.group, it.moduleVersion.id.name), it.moduleVersion.id.version)
-                        def skip = isNeedSkipFetch(includeGroupNames,it.moduleVersion.id)
-                        if (skip){
-                            trace("由于配置，忽略此依赖：",componentId,null)
+            trace("【${project.name}】项目下载依赖 ============================== start",1)
+            for (aConfiguration in configurations){
+                trace("【${aConfiguration.name}】配置拉取 ================ start",2)
+                for (dependency in aConfiguration.allDependencies){
+                    Set<ModuleComponentIdentifier> componentIds = new HashSet<>()
+                    if (dependency instanceof ExternalModuleDependency){//外部依赖（maven库，libs中的依赖等） //只处理外部依赖
+                        if (null==dependency.module.group){//fixme lzf 本地libs目录下的依赖，group为null（先暂时这么用，以后找到更好的方式时再修改）
+                            trace("忽略本地libs下依赖：$dependency.module.name",3)
+                            continue
                         } else {
-                            componentIds.add(componentId)
-                            addToMultimap(repositoryFiles,componentId,it.file)//it.file 为jar，aar等
-                            trace("添加依赖：",componentId,it.file)
+                            trace("开始拉取依赖：$dependency.module.group:$dependency.module.name:$dependency.version",3)
                         }
-                    }//end forEach
-
-                    //step 2 获取module的 sources 和 javadocs
-                    if (includeSources || includeJavadocs){
-                        trace("收集java源码和java文档")
-                        def jvmArtifacts = project.dependencies.createArtifactResolutionQuery()
-                                .forComponents(componentIds)
-                                .withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
-                                .execute()//查询远程module仓库
-                        for (component in jvmArtifacts.resolvedComponents){
-                            if (includeSources){
-                                def sources = component.getArtifacts(SourcesArtifact)
-                                if (!sources?.empty){
-                                    sources.forEach({
-                                        def file = (it as ResolvedArtifactResult).file
-                                        addToMultimap(repositoryFiles,component.id,file)
-                                        trace("添加依赖源码：",component.id,file)
-                                    })
-                                }
+                        //step 1 获取module信息以及module的artifact文件
+                        //detachedConfiguration 为每个依赖项创建一个分离的配置，以获取依赖项的所有声明版本，否则只会拉取到最新的版本
+                        def configurationCopy = project.configurations.detachedConfiguration([dependency].toArray(EMPTY_DEPENDENCIES_ARRAY))
+                        if (configurationCopy.resolvedConfiguration.hasError()){
+                            trace("无法解析此依赖！",3)
+                            continue
+                        }
+                        configurationCopy.resolvedConfiguration.resolvedArtifacts.forEach{
+                            def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(it.moduleVersion.id.group, it.moduleVersion.id.name), it.moduleVersion.id.version)
+                            def skip = isNeedSkipFetch(includeGroupNames,it.moduleVersion.id)
+                            if (skip){
+                                trace("由于配置，忽略此依赖：",componentId,null,4)
+                            } else {
+                                componentIds.add(componentId)
+                                addToMultimap(repositoryFiles,componentId,it.file)//it.file 为jar，aar等
+                                trace("添加依赖：",componentId,it.file,4)
                             }
+                        }//end forEach
 
-                            if (includeJavadocs){
-                                def javadocs = component.getArtifacts(JavadocArtifact)
-                                if (!javadocs?.empty){
-                                    javadocs.forEach{
-                                        def file = (it as ResolvedArtifactResult).file
-                                        addToMultimap(repositoryFiles,component.id,file)
-                                        trace("添加依赖文档：",component.id,file)
+                        //step 2 获取module的 sources 和 javadocs
+                        if ((includeSources || includeJavadocs) && !componentIds.empty){
+                            trace("收集Java源码和Java文档",4)
+                            def jvmArtifacts = project.dependencies.createArtifactResolutionQuery()
+                                    .forComponents(componentIds)
+                                    .withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
+                                    .execute()//查询远程module仓库
+                            for (component in jvmArtifacts.resolvedComponents){
+                                if (includeSources){
+                                    def sources = component.getArtifacts(SourcesArtifact)
+                                    if (!sources?.empty){
+                                        sources.forEach({
+                                            def file = (it as ResolvedArtifactResult).file
+                                            addToMultimap(repositoryFiles,component.id,file)
+                                            trace("添加依赖源码：",component.id,file,4)
+                                        })
+                                    }
+                                }
+
+                                if (includeJavadocs){
+                                    def javadocs = component.getArtifacts(JavadocArtifact)
+                                    if (!javadocs?.empty){
+                                        javadocs.forEach{
+                                            def file = (it as ResolvedArtifactResult).file
+                                            addToMultimap(repositoryFiles,component.id,file)
+                                            trace("添加依赖文档：",component.id,file,4)
+                                        }
                                     }
                                 }
                             }
-                        }
-                    }//end if(includeSources || includeJavadocs)
+                        }//end if(includeSources || includeJavadocs)
 
-                    //step 3 添加maven pom
-                    if (includeMavenPom){
-                        trace("收集maven pom 文档")
-                        def mavenArtifacts = project.dependencies.createArtifactResolutionQuery()
-                                .forComponents(componentIds)
-                                .withArtifacts(MavenModule, MavenPomArtifact)
-                                .execute()
-                        for (component in mavenArtifacts.resolvedComponents){
-                            def pomResults = component.getArtifacts(MavenPomArtifact)
-                            if (pomResults?.empty) {
-                                continue
-                            }
-
-                            for (pomArtifact in pomResults){
-                                if (pomArtifact instanceof UnresolvedArtifactResult){
-                                    logger.log(LogLevel.ERROR,"Resolver was unable to resolve artifact '{}'", pomArtifact.id, pomArtifact.getFailure())
-                                    break
+                        //step 3 添加maven pom
+                        if (includeMavenPom && !componentIds.empty){
+                            trace("收集maven pom 文档",4)
+                            def mavenArtifacts = project.dependencies.createArtifactResolutionQuery()
+                                    .forComponents(componentIds)
+                                    .withArtifacts(MavenModule, MavenPomArtifact)
+                                    .execute()
+                            for (component in mavenArtifacts.resolvedComponents){
+                                def pomResults = component.getArtifacts(MavenPomArtifact)
+                                if (pomResults?.empty) {
+                                    continue
                                 }
-                                def pomFile = (pomArtifact as ResolvedArtifactResult).file
-                                addToMultimap(repositoryFiles,component.id,pomFile)
-                                trace("添加MavenPom文档：",component.id,pomFile)
+
+                                for (pomArtifact in pomResults){
+                                    if (pomArtifact instanceof UnresolvedArtifactResult){
+                                        trace("Resolver was unable to resolve artifact:${pomArtifact.id} failMsg:{$pomArtifact.getFailure()}",4)
+                                        break
+                                    }
+                                    def pomFile = (pomArtifact as ResolvedArtifactResult).file
+                                    addToMultimap(repositoryFiles,component.id,pomFile)
+                                    trace("添加MavenPom文档：",component.id,pomFile,4)
+                                }
                             }
+                        }//end if(includeMavenPom){}
+                    } else if (dependency instanceof FileCollectionDependency){//包括：本地SDK依赖，例如，Android32；本地libs下的jar依赖；不包括：本地libs下的aar(本地libs下的aar依赖最终会解析为 ExternalModuleDependency)
+                        dependency.files.forEach{
+                            trace("本地依赖忽略："+it.path,3)
                         }
-                    }//end if(includeMavenPom){}
-                } else if (dependency instanceof FileCollectionDependency){//包括：本地SDK依赖，例如，Android32；本地libs下的jar依赖；不包括：本地libs下的aar(本地libs下的aar依赖最终会解析为 ExternalModuleDependency)
-                    dependency.files.forEach{
-                        trace("本地依赖忽略："+it.path)
+                    } else if (dependency instanceof ProjectDependency){//本地project依赖：implementation project(':projectA')
+                        trace("本地project依赖忽略："+dependency.dependencyProject,3)
                     }
-                } else if (dependency instanceof ProjectDependency){//本地project依赖：implementation project(':projectA')
-                    trace("本地project依赖忽略："+dependency.dependencyProject)
-                }
-            }//end for 解析配置项的依赖：implementation ,compileOnly等
-            trace("【${project.name}】下载项目依赖 ============================== end")
+                }//end for 解析配置项的依赖：implementation ,compileOnly等
+                trace("【${aConfiguration.name}】配置拉取 ================ end",2)
+            }
+            trace("【${project.name}】项目下载依赖 ============================== end",1)
         }//end for 解析所有依赖
 
         printoutDependencies(cleanOutputPath,outputPath,repositoryFiles)
-        trace("依赖拉取完毕")
-
         //还原project的repository
         projectRepositories.forEach {
             it.project.repositories.clear()
             it.project.repositories.addAll(it.repositoryHandler)
         }
-
-        trace("################################## 【downloadDependencies】任务 ################################## 结束")
+        trace("################################## 【downloadDependencies】任务 ################################## 结束",0)
     }//doFirst
 
     onlyIf{
@@ -210,18 +217,12 @@ static <K,V> void addToMultimap(Map<K,Set<V>> map, K key, V value){
     map.get(key).add(value)
 }
 
-static def addToConfigurationSet(Set<ConfigurationWrapper> projectConfigurations,Configuration configuration,Project project){
-    if (!configuration.allDependencies?.empty){
-        projectConfigurations.add(new ConfigurationWrapper(configuration, project))
-    }
-}
-
 // Return the offline-repository target directory for the given component (naming follows maven conventions)
-static def File moduleDirectory(String outputPath,ModuleComponentIdentifier ci) {
+static File moduleDirectory(String outputPath,ModuleComponentIdentifier ci) {
     new File(outputPath, "${ci.group.tokenize(".").join("/")}/${ci.module}/${ci.version}")
 }
 
-static def boolean isNeedSkipFetch(List<String> groupNames,ModuleVersionIdentifier identifier){
+static boolean isNeedSkipFetch(List<String> groupNames,ModuleVersionIdentifier identifier){
     if (groupNames?.empty){
         return false
     } else {
@@ -238,12 +239,25 @@ static def boolean isNeedSkipFetch(List<String> groupNames,ModuleVersionIdentifi
     }
 }
 
-def printoutDependencies(boolean cleanOutputPath,String outputPath,Map<ModuleComponentIdentifier,Set<File>> repositoryFiles){
+static ConfigurationWrapper createConfigurationWrapper(Project project,Set<Configuration> configurations){
+    if(null == project || configurations?.empty){
+        return null
+    }
+    def configSet = new HashSet()
+    configurations?.forEach{
+        if (!(it?.allDependencies?.empty)){
+            configSet.add(it)
+        }
+    }
+    return new ConfigurationWrapper(project,configSet)
+}
+
+static def printoutDependencies(boolean cleanOutputPath,String outputPath,Map<ModuleComponentIdentifier,Set<File>> repositoryFiles){
     if (cleanOutputPath){
-        trace("清空依赖输出目录：$outputPath")
+        trace("清空依赖输出目录：$outputPath",1)
         GFileUtils.deleteDirectory(new File(outputPath))
     }
-    trace("开始输出依赖到指定目录：$outputPath")
+    trace("开始输出依赖到指定目录：$outputPath",1)
     if (repositoryFiles?.isEmpty()){
         return
     }
@@ -258,32 +272,56 @@ def printoutDependencies(boolean cleanOutputPath,String outputPath,Map<ModuleCom
     }
 }
 
-def trace(String msg){
-    println msg
+static def trace(String msg,int indentation){
+    def strBuild = new StringBuilder()
+    for (int i =0;i<indentation;i++){
+        strBuild.append('>')
+    }
+    if (strBuild.length() > 0) {
+        strBuild.append(' ')
+    }
+    strBuild.append(msg)
+    println strBuild.toString()
 }
 
-def trace(String pre, ComponentIdentifier componentIdentifier, File file) {
+static def trace(String pre, ComponentIdentifier componentIdentifier, File file, int indentation) {
     def fileMsg
     if (null != file){
         fileMsg = " == 文件路径${file.getAbsoluteFile()}"
     }else {
         fileMsg = ""
     }
+    def msg = ""
     if (componentIdentifier instanceof DefaultModuleComponentIdentifier) {
         def id = componentIdentifier as DefaultModuleComponentIdentifier
-        println pre + "${id.group}:${id.module}:${id.version}$fileMsg"
+        msg = pre + "${id.group}:${id.module}:${id.version}$fileMsg"
     } else {
-        println pre + "${componentIdentifier.displayName}$fileMsg"
+        msg = pre + "${componentIdentifier.displayName}$fileMsg"
     }
+    trace(msg , indentation)
 }
 
 //
 class ConfigurationWrapper{
-    def Configuration configuration
+    def Set<Configuration> configurations
     def Project project
-    ConfigurationWrapper(Configuration conf,Project proj){
-        this.configuration = conf
+    ConfigurationWrapper(Project proj,Set<Configuration> confs){
         this.project = proj
+        this.configurations = confs
+    }
+
+    def appendConfigurations(Project proj,Set<Configuration> confs){
+        if (project == proj){
+            if (!confs?.empty){
+                def configSet = []
+                confs.forEach{
+                    if (!it.allDependencies?.empty){
+                        configSet.add(it)
+                    }
+                }
+                configurations?.addAll(configSet)
+            }
+        }
     }
 }//class ConfigurationWrapper end
 
