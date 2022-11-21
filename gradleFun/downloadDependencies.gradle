@@ -9,16 +9,48 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }*/
 
+
+//----------------依赖maven官方api----------------
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.apache.maven:maven-model-builder:3.5.2'
+        classpath 'org.apache.maven:maven-model:3.5.2'
+    }
+}
+//----------------依赖maven官方api----------------
+
+
 import org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier
 import org.gradle.api.internal.artifacts.DefaultModuleIdentifier
 import org.gradle.util.GFileUtils
+import org.apache.maven.model.building.DefaultModelBuildingRequest
+import org.apache.maven.model.Model
+import org.apache.maven.model.resolution.ModelResolver
+import org.apache.maven.model.Repository
+import org.apache.maven.model.Parent
+import org.apache.maven.model.building.FileModelSource
+import org.apache.maven.model.building.ModelSource2
+import org.apache.maven.model.resolution.InvalidRepositoryException
+import org.apache.maven.model.resolution.UnresolvableModelException
+import org.apache.maven.model.building.DefaultModelBuilderFactory
+import org.apache.maven.model.validation.DefaultModelValidator
+import org.apache.maven.model.path.DefaultPathTranslator
+import org.apache.maven.model.path.DefaultUrlNormalizer
+import org.apache.maven.model.interpolation.StringSearchModelInterpolator
+
+import javax.swing.GrayFilter
 
 //配置项 ============================================================================================ start
 def outputPath = rootProject.projectDir.parent+'/offlineDepdencies/maven'
+def gradleLocalCachePath = "$gradle.gradleUserHomeDir/caches/modules-2/files-2.1"//未实现的功能
 
 def includeSources = true
 def includeJavadocs = true
 def includeMavenPom = true
+def includeGradlePlugin = true //未实现的功能
 
 def includeBuildscriptDependencies = true //是否包含构建脚本的依赖
 
@@ -38,6 +70,7 @@ task downloadDependencies() {
         def EMPTY_DEPENDENCIES_ARRAY = new Dependency[0]
 
         def Map<ModuleComponentIdentifier,Set<File>> repositoryFiles = [:]//外部依赖module包含的文件
+        def Map<String,File> extFiles = [:]//额外要拉取的文件
         def Set<ConfigurationWrapper> projectConfigurations = []
         def Set<RepositoryWrapper> projectRepositories = []
 
@@ -101,7 +134,13 @@ task downloadDependencies() {
                 trace("【${aConfiguration.name}】配置拉取 ================ start",2)
                 for (dependency in aConfiguration.allDependencies){
                     Set<ModuleComponentIdentifier> componentIds = new HashSet<>()
+                    //step 1 获取依赖
                     if (dependency instanceof ExternalModuleDependency){//外部依赖（maven库，libs中的依赖等） //只处理外部依赖
+                        def skip = isNeedSkipFetch(includeGroupNames, dependency.module.group)
+                        if (skip) {
+                            trace("由于配置，忽略此依赖：${dependency.module.group}:${dependency.module.name}:${dependency.version}", 3)
+                            continue
+                        }
                         if (null==dependency.module.group){//fixme lzf 本地libs目录下的依赖，group为null（先暂时这么用，以后找到更好的方式时再修改）
                             trace("忽略本地libs下依赖：$dependency.module.name",3)
                             continue
@@ -117,72 +156,19 @@ task downloadDependencies() {
                         }
                         configurationCopy.resolvedConfiguration.resolvedArtifacts.forEach{
                             def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(it.moduleVersion.id.group, it.moduleVersion.id.name), it.moduleVersion.id.version)
-                            def skip = isNeedSkipFetch(includeGroupNames,it.moduleVersion.id)
-                            if (skip){
-                                trace("由于配置，忽略此依赖：",componentId,null,4)
-                            } else {
-                                componentIds.add(componentId)
-                                addToMultimap(repositoryFiles,componentId,it.file)//it.file 为jar，aar等
-                                trace("添加依赖：",componentId,it.file,4)
-                            }
+                            componentIds.add(componentId)
+                            addToMultimap(repositoryFiles,componentId,it.file)//it.file 为jar，aar等
+                            trace("添加依赖：",componentId,it.file,4)
                         }//end forEach
-
-                        //step 2 获取module的 sources 和 javadocs
-                        if ((includeSources || includeJavadocs) && !componentIds.empty){
-                            trace("收集Java源码和Java文档",4)
-                            def jvmArtifacts = project.dependencies.createArtifactResolutionQuery()
-                                    .forComponents(componentIds)
-                                    .withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
-                                    .execute()//查询远程module仓库
-                            for (component in jvmArtifacts.resolvedComponents){
-                                if (includeSources){
-                                    def sources = component.getArtifacts(SourcesArtifact)
-                                    if (!sources?.empty){
-                                        sources.forEach({
-                                            def file = (it as ResolvedArtifactResult).file
-                                            addToMultimap(repositoryFiles,component.id,file)
-                                            trace("添加依赖源码：",component.id,file,4)
-                                        })
-                                    }
-                                }
-
-                                if (includeJavadocs){
-                                    def javadocs = component.getArtifacts(JavadocArtifact)
-                                    if (!javadocs?.empty){
-                                        javadocs.forEach{
-                                            def file = (it as ResolvedArtifactResult).file
-                                            addToMultimap(repositoryFiles,component.id,file)
-                                            trace("添加依赖文档：",component.id,file,4)
-                                        }
-                                    }
-                                }
-                            }
-                        }//end if(includeSources || includeJavadocs)
-
-                        //step 3 添加maven pom
-                        if (includeMavenPom && !componentIds.empty){
-                            trace("收集maven pom 文档",4)
-                            def mavenArtifacts = project.dependencies.createArtifactResolutionQuery()
-                                    .forComponents(componentIds)
-                                    .withArtifacts(MavenModule, MavenPomArtifact)
-                                    .execute()
-                            for (component in mavenArtifacts.resolvedComponents){
-                                def pomResults = component.getArtifacts(MavenPomArtifact)
-                                if (pomResults?.empty) {
-                                    continue
-                                }
-
-                                for (pomArtifact in pomResults){
-                                    if (pomArtifact instanceof UnresolvedArtifactResult){
-                                        trace("Resolver was unable to resolve artifact:${pomArtifact.id} failMsg:{$pomArtifact.getFailure()}",4)
-                                        break
-                                    }
-                                    def pomFile = (pomArtifact as ResolvedArtifactResult).file
-                                    addToMultimap(repositoryFiles,component.id,pomFile)
-                                    trace("添加MavenPom文档：",component.id,pomFile,4)
-                                }
-                            }
-                        }//end if(includeMavenPom){}
+                        //todo gradle官方插件虽然能拉取下来，但是无法只依赖拉取到的依赖来解析，仍然会报无法找到插件的错误
+                        //下面方式拉取方不对
+                        //gradle 官方插件库的插件依赖，没有找到更好的方式，暂时采用下下面这种方式来拉取
+                        /*def gradlePlugin = new File(gradleLocalCachePath,gradlePluginFile(dependency.group,dependency.module.name).path)
+                        if (gradlePlugin.exists()){
+                            trace("gradle Plugin Portal 拉取：${gradlePlugin.path}",3)
+                            def desDir = gradlePluginOfflineDirectory(outputPath, dependency.group, dependency.module.name)
+                            extFiles.put(desDir.path,gradlePlugin)
+                        }*/
                     } else if (dependency instanceof FileCollectionDependency){//包括：本地SDK依赖，例如，Android32；本地libs下的jar依赖；不包括：本地libs下的aar(本地libs下的aar依赖最终会解析为 ExternalModuleDependency)
                         // annotationProcess配置的注解处理器依赖会走到这里，但是报这个错： Transform's input file does not exist: xxx
                         try {
@@ -195,6 +181,75 @@ task downloadDependencies() {
                     } else if (dependency instanceof ProjectDependency){//本地project依赖：implementation project(':projectA')
                         trace("本地project依赖忽略："+dependency.dependencyProject,3)
                     }
+
+                    //step 2 获取依赖的 sources 和 javadocs
+                    if ((includeSources || includeJavadocs) && !componentIds.empty){
+                        trace("收集Java源码和Java文档",4)
+                        def jvmArtifacts = project.dependencies.createArtifactResolutionQuery()
+                                .forComponents(componentIds)
+                                .withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
+                                .execute()//查询远程module仓库
+                        for (component in jvmArtifacts.resolvedComponents){
+                            if (includeSources){
+                                def sources = component.getArtifacts(SourcesArtifact)
+                                if (!sources?.empty){
+                                    sources.forEach({
+                                        def file = (it as ResolvedArtifactResult).file
+                                        addToMultimap(repositoryFiles,component.id,file)
+                                        trace("添加依赖源码：",component.id,file,4)
+                                    })
+                                }
+                            }
+
+                            if (includeJavadocs){
+                                def javadocs = component.getArtifacts(JavadocArtifact)
+                                if (!javadocs?.empty){
+                                    javadocs.forEach{
+                                        def file = (it as ResolvedArtifactResult).file
+                                        addToMultimap(repositoryFiles,component.id,file)
+                                        trace("添加依赖文档：",component.id,file,4)
+                                    }
+                                }
+                            }
+                        }
+                    }//end if(includeSources || includeJavadocs)
+
+                    //step 3 添加maven pom
+                    if (includeMavenPom && !componentIds.empty){
+                        trace("收集maven pom 文档",4)
+                        def mavenArtifacts = project.dependencies.createArtifactResolutionQuery()
+                                .forComponents(componentIds)
+                                .withArtifacts(MavenModule, MavenPomArtifact)
+                                .execute()
+                        def pomModelResolver = new PomModelResolver(project)
+                        for (component in mavenArtifacts.resolvedComponents){
+                            def pomResults = component.getArtifacts(MavenPomArtifact)
+                            if (pomResults?.empty) {
+                                continue
+                            }
+
+                            for (pomArtifact in pomResults){
+                                if (pomArtifact instanceof UnresolvedArtifactResult){
+                                    trace("Resolver was unable to resolve artifact:${pomArtifact.id} failMsg:{$pomArtifact.getFailure()}",4)
+                                    break //只需要解析一个就行了
+                                }
+                                def pomFile = (pomArtifact as ResolvedArtifactResult).file
+                                addToMultimap(repositoryFiles,component.id,pomFile)
+                                trace("添加MavenPom文档：",component.id,pomFile,4)
+
+                                //解析parent pom
+                                resolveParenPom(pomModelResolver,pomFile)
+                                break //只需要解析一个就行了
+                            }
+                        }
+                        //parent poms
+                        def keySet = pomModelResolver.componentCache.keySet()
+                        for (id in keySet){
+                            def parentPomFile = pomModelResolver.componentCache.get(id)
+                            addToMultimap(repositoryFiles,id,parentPomFile)
+                            trace("添加Parent MavenPom文档：",id,parentPomFile,4)
+                        }
+                    }//end if(includeMavenPom){}
                 }//end for 解析配置项的依赖：implementation ,compileOnly等
                 trace("【${aConfiguration.name}】配置拉取 ================ end",2)
             }
@@ -202,6 +257,21 @@ task downloadDependencies() {
         }//end for 解析所有依赖
 
         printoutDependencies(cleanOutputPath,outputPath,repositoryFiles)
+        //额外文件
+        if (!extFiles?.isEmpty()){
+            def keySet = extFiles.keySet()
+            for (String key in keySet){
+                def sourceFile = extFiles.get(key)
+                def desFile = new File(key)
+                trace("额外文件复制到：${desFile.path}",1)
+                if (sourceFile.isDirectory()) {
+                    desFile.mkdirs()
+                    GFileUtils.copyDirectory(sourceFile, desFile)
+                } else {
+                    GFileUtils.copyFile(sourceFile, desFile)
+                }
+            }
+        }
         //还原project的repository
         projectRepositories.forEach {
             it.project.repositories.clear()
@@ -213,6 +283,39 @@ task downloadDependencies() {
     onlyIf{
         true //即使为true也不会在构建时执行，因为他是一个单独的task，并没有依赖构建过程中的task
     }
+}
+
+//解析parent pom
+static def org.apache.maven.model.Model resolveParenPom(PomModelResolver pomModelResolver,File pomFile){
+    def modelBuildingRequest = new DefaultModelBuildingRequest()
+    modelBuildingRequest.setSystemProperties(System.getProperties())
+    modelBuildingRequest.setModelSource(new FileModelSource(pomFile))
+    modelBuildingRequest.setModelResolver(pomModelResolver)
+
+    try {
+        def modelBuilder = new DefaultModelBuilderFactory().newInstance()
+
+        def modelInterpolator = new StringSearchModelInterpolator()
+        modelInterpolator.setUrlNormalizer(new DefaultUrlNormalizer())
+        modelInterpolator.setPathTranslator(new DefaultPathTranslator())
+
+        modelBuilder.setModelInterpolator(modelInterpolator)
+        modelBuilder.setModelValidator(new DefaultModelValidator())
+
+        def result = modelBuilder.build(modelBuildingRequest)
+
+        if (!result.problems.empty) {
+            result.problems.each {
+                trace("${it.moduleId}:${it.message}",4)
+            }
+        }
+
+        return result.effectiveModel
+    } catch (Exception e) {
+        String msg = "resolveParenPom exception ${pomFile.path} :${e.getMessage()}"
+        trace(msg,4)
+    }
+    return null
 }
 
 static <K,V> void addToMultimap(Map<K,Set<V>> map, K key, V value){
@@ -227,11 +330,18 @@ static File moduleDirectory(String outputPath,ModuleComponentIdentifier ci) {
     new File(outputPath, "${ci.group.tokenize(".").join("/")}/${ci.module}/${ci.version}")
 }
 
-static boolean isNeedSkipFetch(List<String> groupNames,ModuleVersionIdentifier identifier){
+static File gradlePluginFile(String groupName,String moduleName){
+    new File("${groupName}/${moduleName}")
+}
+
+static File gradlePluginOfflineDirectory(String outputPath,String groupName,String moduleName){
+    new File(outputPath,"${groupName.tokenize(".").join("/")}/${moduleName}")
+}
+
+static boolean isNeedSkipFetch(List<String> groupNames,String groupName){
     if (groupNames?.empty){
         return false
     } else {
-        def groupName = identifier.group
         if (null == groupName){
             groupName = ""
         }
@@ -257,6 +367,7 @@ static ConfigurationWrapper createConfigurationWrapper(Project project,Set<Confi
     return new ConfigurationWrapper(project,configSet)
 }
 
+//输出依赖文件到指定目录
 static def printoutDependencies(boolean cleanOutputPath,String outputPath,Map<ModuleComponentIdentifier,Set<File>> repositoryFiles){
     if (cleanOutputPath){
         trace("清空依赖输出目录：$outputPath",1)
@@ -338,6 +449,65 @@ class RepositoryWrapper{
         project = proj
     }
 }//class RepositoryWrapper end
+
+class PomModelResolver implements ModelResolver{
+    def Project project
+    def Map<String, FileModelSource> pomCache = [:]
+    def Map<ModuleComponentIdentifier, File> componentCache = [:]
+
+    PomModelResolver(Project proj){
+        project = proj
+    }
+
+    @Override
+    ModelSource2 resolveModel(org.apache.maven.model.Parent parent) throws UnresolvableModelException {
+        return resolveModel(parent.groupId, parent.artifactId, parent.version)
+    }
+
+    @Override
+    ModelSource2 resolveModel(org.apache.maven.model.Dependency dependency) throws UnresolvableModelException {
+        return resolveModel(dependency.groupId, dependency.artifactId, dependency.version)
+    }
+
+    @Override
+    ModelSource2 resolveModel(String groupId, String artifactId, String version) throws UnresolvableModelException {
+        def id = "$groupId:$artifactId:$version".toString()
+        if (!pomCache.containsKey(id)) {
+            def mavenArtifacts = project.dependencies.createArtifactResolutionQuery()
+                    .forComponents(DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(groupId, artifactId), version))
+                    .withArtifacts(MavenModule, MavenPomArtifact)
+                    .execute()
+            def component = mavenArtifacts.resolvedComponents.first()
+            def poms = component.getArtifacts(MavenPomArtifact)
+            if (poms?.empty) {
+                return null
+            }
+            def pomArtifact = poms.first()
+            if (pomArtifact instanceof UnresolvedArtifactResult) {
+                trace("Resolver was unable to resolve artifact:${pomArtifact.id} failMsg:{$pomArtifact.getFailure()}",4)
+                return null
+            }
+            def pomFile = pomArtifact.file as File
+
+            def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(groupId, artifactId), version)
+            componentCache[componentId] = pomFile
+
+            def pom = new FileModelSource(pomFile)
+            pomCache[id] = pom
+            return pom
+        }
+        return pomCache[id]
+    }
+
+    @Override
+    void addRepository(org.apache.maven.model.Repository repository, boolean replace) throws InvalidRepositoryException {}
+
+    @Override
+    void addRepository(org.apache.maven.model.Repository repository) throws InvalidRepositoryException {}
+
+    @Override
+    ModelResolver newCopy() { return this }
+}//class PomModelResolver end
 
 
 //Copy类型的task，也即是此task继承自CopyTask
