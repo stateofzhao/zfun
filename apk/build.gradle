@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application'
-    id 'zfun.module.inject' apply true
+//    id 'zfun.module.inject' apply true
 }
 
 android {
