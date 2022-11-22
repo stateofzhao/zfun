@@ -41,11 +41,16 @@ import org.apache.maven.model.path.DefaultPathTranslator
 import org.apache.maven.model.path.DefaultUrlNormalizer
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator
 
-import javax.swing.GrayFilter
 
 //配置项 ============================================================================================ start
+def runTypeDirectName = 'direcName'
+def runTypeAllName = 'allName'
+def runTypeAll = 'all'
+
 def outputPath = rootProject.projectDir.parent+'/offlineDepdencies/maven'
 def gradleLocalCachePath = "$gradle.gradleUserHomeDir/caches/modules-2/files-2.1"//未实现的功能
+
+def runType = runTypeDirectName
 
 def includeSources = true
 def includeJavadocs = true
@@ -73,11 +78,19 @@ task downloadDependencies() {
         def Map<String,File> extFiles = [:]//额外要拉取的文件
         def Set<ConfigurationWrapper> projectConfigurations = []
         def Set<RepositoryWrapper> projectRepositories = []
+        def Set<String> dependenciesName = new HashSet()
 
+        if (runTypeAll != runType){
+            includeSources = false
+            includeJavadocs = false
+            includeMavenPom = false
+            includeGradlePlugin = false
+            cleanOutputPath = false
+        }
         trace("##################################【downloadDependencies】任务 ################################## 开始",0)
-
         trace("==================配置==================",1)
         trace("outputPath：                      $outputPath",2)
+        trace("runType:                          $runType",2)
         trace("includeSources：                  $includeSources",2)
         trace("includeJavadocs：                 $includeJavadocs",2)
         trace("includeMavenPom：                 $includeMavenPom",2)
@@ -145,7 +158,14 @@ task downloadDependencies() {
                             trace("忽略本地libs下依赖：$dependency.module.name",3)
                             continue
                         } else {
-                            trace("开始拉取依赖：$dependency.module.group:$dependency.module.name:$dependency.version",3)
+                            def depName = "$dependency.module.group:$dependency.module.name:$dependency.version"
+                            dependenciesName.add(depName)
+                            if (runTypeDirectName == runType){
+                                continue
+                            }
+                            if (runTypeAll == runType){
+                                trace("开始拉取依赖：$depName",3)
+                            }
                         }
                         //step 1 获取module信息以及module的artifact文件
                         //detachedConfiguration 为每个依赖项创建一个分离的配置，以获取依赖项的所有声明版本，否则只会拉取到最新的版本
@@ -154,12 +174,18 @@ task downloadDependencies() {
                             trace("无法解析此依赖！",3)
                             continue
                         }
-                        configurationCopy.resolvedConfiguration.resolvedArtifacts.forEach{
-                            def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(it.moduleVersion.id.group, it.moduleVersion.id.name), it.moduleVersion.id.version)
+                        def iterator = configurationCopy.resolvedConfiguration.resolvedArtifacts.iterator()
+                        while (iterator.hasNext()) {
+                            def resolvedArtifact = iterator.next()
+                            if (runTypeAllName == runType){
+                                dependenciesName.add(">$resolvedArtifact.moduleVersion.id.group:$resolvedArtifact.moduleVersion.id.name:$resolvedArtifact.moduleVersion.id.version")
+                                continue
+                            }
+                            def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(resolvedArtifact.moduleVersion.id.group, resolvedArtifact.moduleVersion.id.name), resolvedArtifact.moduleVersion.id.version)
                             componentIds.add(componentId)
-                            addToMultimap(repositoryFiles,componentId,it.file)//it.file 为jar，aar等
-                            trace("添加依赖：",componentId,it.file,4)
-                        }//end forEach
+                            addToMultimap(repositoryFiles, componentId, resolvedArtifact.file)//it.file 为jar，aar等
+                            trace("添加依赖：", componentId, resolvedArtifact.file, 4)
+                        }
                         //todo gradle官方插件虽然能拉取下来，但是无法只依赖拉取到的依赖来解析，仍然会报无法找到插件的错误
                         //下面方式拉取方不对
                         //gradle 官方插件库的插件依赖，没有找到更好的方式，暂时采用下下面这种方式来拉取
@@ -271,6 +297,18 @@ task downloadDependencies() {
                     GFileUtils.copyFile(sourceFile, desFile)
                 }
             }
+        }
+        //将依赖名称写入文件
+        if (!dependenciesName.empty){
+            def sb = new StringBuilder()
+            dependenciesName.forEach{ str->
+                sb.append(str).append(System.lineSeparator())
+            }
+            def file = new File(outputPath,"dependenciesList.txt")
+            if (file.exists()){
+                file.delete()
+            }
+            GFileUtils.writeFile(sb.toString(),file,"UTF-8")
         }
         //还原project的repository
         projectRepositories.forEach {
