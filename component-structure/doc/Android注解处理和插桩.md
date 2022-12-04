@@ -1,4 +1,4 @@
-# Android注解
+# Android注解处理-APT(Annotation Processing Tool)
 需要两个java类型library来配合实现：
 - annotation library
 - annotationProcessor library
@@ -18,3 +18,10 @@ annotationProcessor library 需要依赖于 annotation library。
     - java环境：annotationProcessor project('xxx')
     - kotlin环境：kapt project('xxx')
 
+# Android字节码插桩
+方案有三个：
+AspectJ
+框架，自己无需实现字节码处理，只需要在代码中使用注解即可，所以其无法全部批量插桩，只能手动在需要插桩的地方添加注解。
+AspectJ会额外生成一些包装代码，对性能以及包大小有一定影响。
+Javassist
+ASM
