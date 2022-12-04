@@ -17,7 +17,8 @@ import com.zfun.simple.pullrefresh.PullRefreshActivity;
 import com.zfun.simple.pullrefresh.XPullRefreshActivity;
 import com.zfun.simple.pullrefresh.XPullRefreshVerticalViewPagerAct;
 import com.zfun.simple.usecase.InteractorTestActivity;
-import com.zfun.test.jniclass.ObserverUninstall;
+
+import io.flutter.embedding.android.FlutterActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     final String[] mActionData = new String[]{"字母导航控件示例",
@@ -26,7 +27,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             "下拉刷新布局",
             "X下拉刷新布局",
             "X下拉刷新布局 - 简单的纵向ViewPager",
-            "IO学习"};
+            "IO学习",
+            "Flutter学习"};
 
     RecyclerView mListView;
     TextView mChannelTV;
@@ -37,8 +39,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         //启用卸载统计
-        ObserverUninstall ou = new ObserverUninstall();
-        ou.init(null, "uninstall/test.php", "www.baidu.com");
+        /*ObserverUninstall ou = new ObserverUninstall();
+        ou.init(null, "uninstall/test.php", "www.baidu.com");*/
 
         findView();
         fillView();
@@ -62,6 +64,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             XPullRefreshVerticalViewPagerAct.open(this);
         } else if (position == 6) {
             IOActivity.open(this);
+        } else if (position == 7){
+            startActivity(
+                    FlutterActivity.createDefaultIntent(this)
+            );
         }
     }
 

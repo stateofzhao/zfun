@@ -32,4 +32,6 @@ dependencies {
   testImplementation junit
   androidTestImplementation androidxTestJunit
   androidTestImplementation androidxTestEspresso
+
+  implementation project(':flutter')
 }

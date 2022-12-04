@@ -25,6 +25,14 @@
         <activity android:name="com.zfun.simple.pullrefresh.XPullRefreshActivity"/>
         <activity android:name="com.zfun.simple.pullrefresh.XPullRefreshVerticalViewPagerAct"/>
         <activity android:name="com.zfun.simple.io.IOActivity"/>
+
+        <activity
+            android:name="io.flutter.embedding.android.FlutterActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize"
+            />
+
     </application>
 
 </manifest>
