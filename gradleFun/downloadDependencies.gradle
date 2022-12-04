@@ -70,7 +70,6 @@ def includeGroupNames = []//要拉取的依赖的group，采用String.contains�
 //Task闭包中直接编写的代码，会在配置阶段执行。可以通过doFirst、doLast块将代码逻辑放到执行阶段中执行
 //Exec类型的task，也即是此task继承自ExecTask
 task downloadDependencies() {
-    //读取配置
     doFirst {
         def EMPTY_DEPENDENCIES_ARRAY = new Dependency[0]
 
@@ -145,20 +144,50 @@ task downloadDependencies() {
             trace("【${project.name}】项目下载依赖 ============================== start",1)
             for (aConfiguration in configurations){
                 trace("【${aConfiguration.name}】配置拉取 ================ start",2)
+
+//                for (ResolvedArtifact artifact : aConfiguration.copy().resolvedConfiguration.resolvedArtifacts) {
+//                    def groupName = artifact.moduleVersion.id.group
+//                    def name = artifact.moduleVersion.id.name
+//                    def version = artifact.moduleVersion.id.version
+//
+//                    def skip = isNeedSkipFetch(includeGroupNames, groupName)
+//                    if (skip) {
+//                        trace("由于配置，忽略此依赖：${groupName}:${name}:${version}", 3)
+//                        continue
+//                    }
+//                    if (null == groupName){
+//                        trace("忽略本地libs下依赖：$dependency.module.name",3)
+//                        continue
+//                    }
+//                    trace("读取到依赖：${groupName}:${name}:${version}", 3)
+//                    def depName = "$groupName:$name:$version"
+//                    dependenciesName.add(depName)
+//
+//                    if (runTypeAll != runType){
+//                        continue
+//                    }
+//                    def componentId = DefaultModuleComponentIdentifier.newId(DefaultModuleIdentifier.newId(groupName, name), version)
+//                    componentIds.add(componentId)
+//                    addToMultimap(repositoryFiles, componentId, artifact.file)//it.file 为jar，aar等
+//                    trace("获取到依赖文件：", componentId, resolvedArtifact.file, 3)
+//                }
                 for (dependency in aConfiguration.allDependencies){
                     Set<ModuleComponentIdentifier> componentIds = new HashSet<>()
                     //step 1 获取依赖
                     if (dependency instanceof ExternalModuleDependency){//外部依赖（maven库，libs中的依赖等） //只处理外部依赖
-                        def skip = isNeedSkipFetch(includeGroupNames, dependency.module.group)
+                        def groupName = dependency.module.group
+                        def name = dependency.module.name
+                        def version = dependency.version
+                        def skip = isNeedSkipFetch(includeGroupNames,groupName)
                         if (skip) {
-                            trace("由于配置，忽略此依赖：${dependency.module.group}:${dependency.module.name}:${dependency.version}", 3)
+                            trace("由于配置，忽略此依赖：$groupName:$name:$version", 3)
                             continue
                         }
-                        if (null==dependency.module.group){//fixme lzf 本地libs目录下的依赖，group为null（先暂时这么用，以后找到更好的方式时再修改）
-                            trace("忽略本地libs下依赖：$dependency.module.name",3)
+                        if (null==groupName){//fixme lzf 本地libs目录下的依赖，group为null（先暂时这么用，以后找到更好的方式时再修改）
+                            trace("忽略本地libs下依赖：$name",3)
                             continue
                         } else {
-                            def depName = "$dependency.module.group:$dependency.module.name:$dependency.version"
+                            def depName = "$groupName:$name:$version"
                             dependenciesName.add(depName)
                             if (runTypeDirectName == runType){
                                 continue
@@ -171,12 +200,16 @@ task downloadDependencies() {
                         //detachedConfiguration 为每个依赖项创建一个分离的配置，以获取依赖项的所有声明版本，否则只会拉取到最新的版本
                         def configurationCopy = project.configurations.detachedConfiguration([dependency].toArray(EMPTY_DEPENDENCIES_ARRAY))
                         if (configurationCopy.resolvedConfiguration.hasError()){
-                            trace("无法解析此依赖！",3)
+                            trace("无法解析此依赖：$groupName:$name:$version",3)
                             continue
                         }
                         def iterator = configurationCopy.resolvedConfiguration.resolvedArtifacts.iterator()
                         while (iterator.hasNext()) {
                             def resolvedArtifact = iterator.next()
+                            def artSkip = isNeedSkipFetch(includeGroupNames,resolvedArtifact.moduleVersion.id.group)
+                            if (artSkip){
+                                continue
+                            }
                             if (runTypeAllName == runType){
                                 dependenciesName.add(">$resolvedArtifact.moduleVersion.id.group:$resolvedArtifact.moduleVersion.id.name:$resolvedArtifact.moduleVersion.id.version")
                                 continue
