@@ -1,4 +1,4 @@
-package com.zfun.simple.usecase;
+package com.zfun.example.usecase;
 
 /**
  * Created by Diagrams on 2016/8/12 11:39

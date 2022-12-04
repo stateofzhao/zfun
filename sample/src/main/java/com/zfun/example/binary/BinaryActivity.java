@@ -1,4 +1,4 @@
-package com.zfun.simple.binary;
+package com.zfun.example.binary;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.zfun.learn.binary.BinaryUtils;
 import com.zfun.lib.util.AndroidUtil;
-import com.zfun.simple.R;
+import com.zfun.example.R;
 
 /**
  * {@link BinaryUtils}

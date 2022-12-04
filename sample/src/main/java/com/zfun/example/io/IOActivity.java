@@ -1,4 +1,4 @@
-package com.zfun.simple.io;
+package com.zfun.example.io;
 
 import android.Manifest;
 import android.content.Context;
@@ -14,7 +14,7 @@ import com.zfun.lib.executor.TaskHandler;
 import com.zfun.lib.permission.Permission;
 import com.zfun.lib.permission.SimpleCallback;
 import com.zfun.lib.util.FileUtil;
-import com.zfun.simple.R;
+import com.zfun.example.R;
 
 import java.io.*;
 

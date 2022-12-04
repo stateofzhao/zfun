@@ -1,4 +1,4 @@
-package com.zfun.simple.usecase;
+package com.zfun.example.usecase;
 
 import com.zfun.lib.executor.BaseTask;
 

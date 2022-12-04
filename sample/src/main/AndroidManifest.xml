@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.zfun.simple">
+          package="com.zfun.example">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.zfun.simple.MainActivity"
+        <activity android:name="com.zfun.example.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -18,13 +18,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.zfun.simple.letternavigation.LetterNavigationActivity"/>
-        <activity android:name="com.zfun.simple.usecase.InteractorTestActivity"/>
-        <activity android:name="com.zfun.simple.binary.BinaryActivity"/>
-        <activity android:name="com.zfun.simple.pullrefresh.PullRefreshActivity"/>
-        <activity android:name="com.zfun.simple.pullrefresh.XPullRefreshActivity"/>
-        <activity android:name="com.zfun.simple.pullrefresh.XPullRefreshVerticalViewPagerAct"/>
-        <activity android:name="com.zfun.simple.io.IOActivity"/>
+        <activity android:name="com.zfun.example.letternavigation.LetterNavigationActivity"/>
+        <activity android:name="com.zfun.example.usecase.InteractorTestActivity"/>
+        <activity android:name="com.zfun.example.binary.BinaryActivity"/>
+        <activity android:name="com.zfun.example.pullrefresh.PullRefreshActivity"/>
+        <activity android:name="com.zfun.example.pullrefresh.XPullRefreshActivity"/>
+        <activity android:name="com.zfun.example.pullrefresh.XPullRefreshVerticalViewPagerAct"/>
+        <activity android:name="com.zfun.example.io.IOActivity"/>
 
         <activity
             android:name="io.flutter.embedding.android.FlutterActivity"

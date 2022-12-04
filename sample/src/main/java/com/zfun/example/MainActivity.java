@@ -1,4 +1,4 @@
-package com.zfun.simple;
+package com.zfun.example;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,13 +10,13 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.zfun.lib.util.ChannelUtil;
-import com.zfun.simple.binary.BinaryActivity;
-import com.zfun.simple.io.IOActivity;
-import com.zfun.simple.letternavigation.LetterNavigationActivity;
-import com.zfun.simple.pullrefresh.PullRefreshActivity;
-import com.zfun.simple.pullrefresh.XPullRefreshActivity;
-import com.zfun.simple.pullrefresh.XPullRefreshVerticalViewPagerAct;
-import com.zfun.simple.usecase.InteractorTestActivity;
+import com.zfun.example.binary.BinaryActivity;
+import com.zfun.example.io.IOActivity;
+import com.zfun.example.letternavigation.LetterNavigationActivity;
+import com.zfun.example.pullrefresh.PullRefreshActivity;
+import com.zfun.example.pullrefresh.XPullRefreshActivity;
+import com.zfun.example.pullrefresh.XPullRefreshVerticalViewPagerAct;
+import com.zfun.example.usecase.InteractorTestActivity;
 
 import io.flutter.embedding.android.FlutterActivity;
 

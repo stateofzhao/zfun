@@ -1,11 +1,11 @@
-package com.zfun.simple.letternavigation;
+package com.zfun.example.letternavigation;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import com.zfun.lib.widget.LetterNavigation;
-import com.zfun.simple.R;
+import com.zfun.example.R;
 
 public class LetterNavigationActivity extends AppCompatActivity implements LetterNavigation.OnItemSelected {
 

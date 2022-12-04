@@ -11,7 +11,7 @@
         android:theme="@style/AppTheme"
         tools:replace="android:label">
         <activity
-            android:name="com.zfun.simple.MainActivity"
+            android:name="com.zfun.example.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,4 +1,4 @@
-package com.zfun.simple.usecase;
+package com.zfun.example.usecase;
 
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import com.zfun.lib.executor.TaskHandler;
-import com.zfun.simple.R;
+import com.zfun.example.R;
 
 public class InteractorTestActivity extends AppCompatActivity implements View.OnClickListener {
     TextView tv;

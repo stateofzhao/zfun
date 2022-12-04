@@ -1,4 +1,4 @@
-package com.zfun.simple.pullrefresh;
+package com.zfun.example.pullrefresh;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +9,7 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import com.zfun.lib.widget.pullrefresh.PullRefreshLayout;
-import com.zfun.simple.R;
+import com.zfun.example.R;
 
 public class PullRefreshActivity extends AppCompatActivity {
     ListView listView;

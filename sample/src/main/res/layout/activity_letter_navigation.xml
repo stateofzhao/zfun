@@ -8,7 +8,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.zfun.simple.letternavigation.LetterNavigationActivity">
+    tools:context="com.zfun.example.letternavigation.LetterNavigationActivity">
 
     <com.zfun.lib.widget.LetterNavigation
         android:id="@+id/ln"

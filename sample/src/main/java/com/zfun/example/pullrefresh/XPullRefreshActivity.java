@@ -1,4 +1,4 @@
-package com.zfun.simple.pullrefresh;
+package com.zfun.example.pullrefresh;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,9 +14,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.zfun.lib.widget.xpullrefresh.XPullRefreshLayout;
-import com.zfun.simple.R;
+import com.zfun.example.R;
 
-public class XPullRefreshVerticalViewPagerAct extends AppCompatActivity {
+/**
+ * Created by zfun on 2021/12/8 2:30 PM
+ */
+public class XPullRefreshActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     XPullRefreshLayout pullRefreshLayout;
 
@@ -24,14 +27,14 @@ public class XPullRefreshVerticalViewPagerAct extends AppCompatActivity {
 
     public static void open(Context context) {
         Intent intent = new Intent();
-        intent.setClass(context, XPullRefreshVerticalViewPagerAct.class);
+        intent.setClass(context, XPullRefreshActivity.class);
         context.startActivity(intent);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_xpullrefresh_vertical_viewpager);
+        setContentView(R.layout.activity_xpullrefresh);
         initView();
     }
 
@@ -40,16 +43,19 @@ public class XPullRefreshVerticalViewPagerAct extends AppCompatActivity {
         pullRefreshLayout = findViewById(R.id.rl);
 
         recyclerView.setVisibility(View.VISIBLE);
-        pullRefreshLayout.setStyle(XPullRefreshLayout.STYLE_VERTICAL_PAGE);
 
         refreshData();
+
+        pullRefreshLayout.setOnRefreshListener(() -> {
+            handler.postDelayed(new RefreshTask(), 5000);//延迟两秒，模拟网络操作
+        });
     }
 
     private void refreshData() {
         boolean isRecycler = recyclerView.getVisibility() == View.VISIBLE;
         String[] data = new String[20];
         for (int i = 0; i < data.length; i++) {
-            data[i] = isRecycler ? "TEST - RECYCLER" : "TEST - LIST" + Math.random();
+            data[i] = isRecycler ?"TEST - RECYCLER":"TEST - LIST" + Math.random();
         }
         if (recyclerView.getAdapter() instanceof RecyclerAdapter) {
             ((RecyclerAdapter) recyclerView.getAdapter()).refresh(data);
@@ -77,12 +83,12 @@ public class XPullRefreshVerticalViewPagerAct extends AppCompatActivity {
 
         @NonNull
         @Override
-        public RecyclerAdapter.MyHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new RecyclerAdapter.MyHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false));
+        public MyHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new MyHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item, parent, false));
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RecyclerAdapter.MyHolder holder, int position) {
+        public void onBindViewHolder(@NonNull MyHolder holder, int position) {
             holder.bind(data[position]);
         }
 
