@@ -47,7 +47,7 @@ dependencies {
     androidTestImplementation(androidxTestEspresso, {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation project(":zfunLib")
+    implementation project(":zfunlib")
     implementation androidxAppCompat
     implementation androidxRecyclerView
     testImplementation junit

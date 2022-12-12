@@ -77,7 +77,7 @@ dependencyResolutionManagement{
     }
 }
 
-include ':apk', ':zfunLib', ':observerUninstall', ':learn',  'sample'
+include ':apk', ':zfunlib', ':observerUninstall', ':learn',  'sample'
 include ':audio'
 include ':sharelib'
 include ':xposedmodule'

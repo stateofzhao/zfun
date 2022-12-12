@@ -31,7 +31,7 @@ import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
  * 调用 {@link #submitTaskForMainThreadCallback(Priority, Callable, ResultCallback)} 添加任务
  * <p>
  *
- * @deprecated 仅供学习线程池，具体使用时请使用 zfunLib下的Executor。
+ * @deprecated 仅供学习线程池，具体使用时请使用 zfunlib下的Executor。
  */
 public class MyExecutor {
   private final static String TAG = "MyExecutor";
