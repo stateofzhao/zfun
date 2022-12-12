@@ -1,18 +1,16 @@
 package com.zfun.sharelib.core;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
 import android.text.TextUtils;
 
-import com.zfun.sharelib.AccessTokenUtils;
+import com.tencent.connect.share.QzonePublish;
 import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
-import com.zfun.sharelib.type.QzoneOAuthV2;
 import com.tencent.connect.share.QzoneShare;
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
@@ -45,59 +43,64 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
             return;
         }
         final Tencent tencent = SdkApiProvider.getTencentAPI(mContext);
-
-        final QzoneOAuthV2 qzoneOAuth = AccessTokenUtils.doReadTencentQzoneToken(mContext);
-        if (AccessTokenUtils.isSessionValid(qzoneOAuth.expiresIn) && !"".equals(qzoneOAuth.openId)) {
-            tencent.setOpenId(qzoneOAuth.openId);
-            tencent.setAccessToken(qzoneOAuth.accessToken, qzoneOAuth.expiresIn);
-
-            Bundle params = getShareParams(shareData);
-            if (null == params) {
-                postShareError(shareData);
-                return;
-            }
-            final TencentShareListener listener = new TencentShareListener(shareData);
-            listener.activity = activity;
-            listener.tencent = tencent;
-            tencent.shareToQzone(activity, params, listener);
-        } else {
-            TencentLoginListener mLoginListener = new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData);
-            tencent.login(activity, ShareConstant.QZONE_SCOPE, mLoginListener);
+        Bundle params = getShareParams(shareData);
+        if (null == params) {
+            postShareError(shareData);
+            return;
         }
+        final TencentShareListener listener = new TencentShareListener(shareData);
+        tencent.shareToQzone(activity, params, listener);
     }
 
     private Bundle getShareParams(ShareData shareData) {
         ShareData.QQZone qqZone = shareData.getQQZoneShareData();
-
         if (null == qqZone) {
             return null;
         }
+        final int type = qqZone.shareType;
 
         Bundle params = new Bundle();
-        params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE,
-                QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT);//qq空间 目前仅支持 图文分享
-        params.putString(QzoneShare.SHARE_TO_QQ_TITLE, qqZone.title);
-        params.putString(QzoneShare.SHARE_TO_QQ_TARGET_URL, qqZone.targetUrl);
+        if (type == ShareData.QQZone.TYPE_IMAGE_TEXT){
+            params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT);//qq空间
+            params.putString(QzoneShare.SHARE_TO_QQ_TITLE, qqZone.title);
+            params.putString(QzoneShare.SHARE_TO_QQ_TARGET_URL, qqZone.targetUrl);
+            if (!TextUtils.isEmpty(qqZone.summary)) {
+                params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, qqZone.summary);
+            }
+            if (null != qqZone.imageUrlOrFilePath && qqZone.imageUrlOrFilePath.size() > 0) {
+                String first = qqZone.imageUrlOrFilePath.get(0);
+                boolean isNetImages = false;
+                if (!TextUtils.isEmpty(first) && first.startsWith("http")) {
+                    isNetImages = true;
+                }
+                if (isNetImages) {
+                    params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, qqZone.imageUrlOrFilePath);
+                } else {
+                    params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, qqZone.imageUrlOrFilePath);
+                }
+            } else {//qq空间分享必须带图了，这里来一个默认图
+                ArrayList<String> list = new ArrayList<>();
+                list.add(ShareConstant.SHARE_DEFAULT_IMAGE);
+                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, list);
+            }
+        } else if (type == ShareData.QQZone.TYPE_MOOD){
+            params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzonePublish.PUBLISH_TO_QZONE_TYPE_PUBLISHMOOD);
+            params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY,qqZone.summary);
+            params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL,qqZone.imageUrlOrFilePath);
+            Bundle extParas = new Bundle();
+            extParas.putString(QzonePublish.HULIAN_CALL_BACK,qqZone.hulianCallBack);
+            extParas.putString(QzonePublish.HULIAN_EXTRA_SCENE,qqZone.hulianScene);
+            params.putBundle(QzonePublish.PUBLISH_TO_QZONE_EXTMAP,extParas);
+        } else if (type == ShareData.QQZone.TYPE_PUBLISH_VIDEO){
+            params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzonePublish.PUBLISH_TO_QZONE_TYPE_PUBLISHVIDEO);
+            params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY,qqZone.summary);
+            params.putString(QzonePublish.PUBLISH_TO_QZONE_VIDEO_PATH,qqZone.videoLocalPath);
+            Bundle extParas = new Bundle();
+            extParas.putString(QzonePublish.HULIAN_CALL_BACK,qqZone.hulianCallBack);
+            extParas.putString(QzonePublish.HULIAN_EXTRA_SCENE,qqZone.hulianScene);
+            params.putBundle(QzonePublish.PUBLISH_TO_QZONE_EXTMAP,extParas);
+        }
 
-        if (!TextUtils.isEmpty(qqZone.summary)) {
-            params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, qqZone.summary);
-        }
-        if (null != qqZone.imageUrlOrFilePath && qqZone.imageUrlOrFilePath.size() > 0) {
-            String first = qqZone.imageUrlOrFilePath.get(0);
-            boolean isNetImages = false;
-            if (!TextUtils.isEmpty(first) && first.startsWith("http")) {
-                isNetImages = true;
-            }
-            if (isNetImages) {
-                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, qqZone.imageUrlOrFilePath);
-            } else {
-                params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, qqZone.imageUrlOrFilePath);
-            }
-        } else {//qq空间分享必须带图了，这里来一个默认图
-            ArrayList<String> list = new ArrayList<>();
-            list.add(ShareConstant.SHARE_DEFAULT_IMAGE);
-            params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, list);
-        }
         if (!TextUtils.isEmpty(qqZone.site)) {
             params.putString(QzoneShare.SHARE_TO_QQ_SITE, qqZone.site);
         }
@@ -159,8 +162,6 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
 
     //分享监听
     private class TencentShareListener implements IUiListener {
-        private Activity activity;
-        private Tencent tencent;
         private final ShareData shareData;
 
         private TencentShareListener(ShareData shareData) {
@@ -179,17 +180,19 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
                 if (ret.equals("0")) {
                     NullableToast.showSysToast("分享成功");
                     postShareSuccess(shareData);
-                } else if (msg.equals("token is invalid")) {//access token废除。token被回收，或者被用户删除。请重新走登录流程{"ret":-23,"msg":"token is invalid"}
+                }
+                /*else if (msg.equals("token is invalid")) {//access token废除。token被回收，或者被用户删除。请重新走登录流程{"ret":-23,"msg":"token is invalid"}
                     AccessTokenUtils.clear(activity, AccessTokenUtils.TENCENT_QZONE_PREFERENCES);
                     tencent.login(activity, ShareConstant.QZONE_SCOPE, new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData));
                 } else if (ret.endsWith("100030")) {
                     NullableToast.showSysToast(ret + "没有分享权限，请重新授权");
                     AccessTokenUtils.clear(mContext.getApplicationContext(), AccessTokenUtils.TENCENT_QZONE_PREFERENCES);
                     tencent.login(activity, ShareConstant.QZONE_SCOPE, new TencentLoginListener(TencentLoginListener.SOURCE_SHARE, shareData));
-                } else {
+                }*/
+                else {
                     //发送失败，清空授权信息
-                    NullableToast.showSysToast(ret + "发送失败,请确认授权发送分享");
-                    AccessTokenUtils.clear(activity, AccessTokenUtils.TENCENT_QZONE_PREFERENCES);
+                    NullableToast.showSysToast(ret + "发送失败："+msg);
+                    /*AccessTokenUtils.clear(activity, AccessTokenUtils.TENCENT_QZONE_PREFERENCES);*/
                 }
             }
         }
@@ -218,89 +221,4 @@ public class QQZoneShareHandler extends QQShareAbsHandler {
         }
     }//
 
-    //qq登录监听
-    private class TencentLoginListener implements IUiListener {
-        final static int SOURCE_SHARE = 2;
-
-        private int source = 1;
-        private final ShareData shareData;
-
-        TencentLoginListener(int source, ShareData shareData) {
-            this.source = source;
-            this.shareData = shareData;
-        }
-
-        @Override
-        public void onCancel() {
-        }
-
-        @Override
-        public void onComplete(Object data) {
-            if (isRelease) {
-                return;
-            }
-            JSONObject jdata = (JSONObject) data;
-            try {
-                int ret = jdata.getInt("ret");
-                String accessToken = jdata.optString("access_token", "");
-                String openid = jdata.optString("openid", "");
-                String expiresIn = jdata.optString("expires_in", "");
-                QzoneOAuthV2 auth = AccessTokenUtils.doReadTencentQzoneToken(mContext.getApplicationContext());
-                auth.accessToken = accessToken;
-                auth.openId = openid;
-                auth.expiresIn = expiresIn;
-                AccessTokenUtils.doSaveTencentQzoneToken(mContext, auth);
-                NullableToast.showSysToast("认证成功");
-                //认证完毕，再次调用分享
-                share(shareData);
-            } catch (Exception e) {
-                e.printStackTrace();
-                NullableToast.showSysToast("授权失败");
-            }
-            final Context context = mContext.getApplicationContext();
-            if (context != null) {
-                Tencent mQQAuth = Tencent.createInstance(ShareConstant.QQ_APP_ID, context);
-                com.tencent.connect.UserInfo mInfo = new com.tencent.connect.UserInfo(context, mQQAuth.getQQToken());
-                mInfo.getUserInfo(new IUiListener() {
-
-                    @Override
-                    public void onError(UiError arg0) {
-                    }
-
-                    @Override
-                    public void onComplete(Object arg0) {
-                        if (isRelease) {
-                            return;
-                        }
-                        JSONObject jsonObject = (JSONObject) arg0;
-                        String name = jsonObject.optString("nickname");
-                        if (!TextUtils.isEmpty(name)) {
-                            AccessTokenUtils.doSaveUserInfoByType(context, null, name, AccessTokenUtils.SOURCE_QZONE);
-                        }
-                    }
-
-                    @Override
-                    public void onCancel() {
-                    }
-
-                    @Override
-                    public void onWarning(int i) {
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onError(UiError arg0) {
-            if (isRelease) {
-                return;
-            }
-            NullableToast.showSysToast("授权失败");
-        }
-
-        @Override
-        public void onWarning(int i) {
-
-        }
-    }//
 }

@@ -8,7 +8,6 @@ import android.text.TextUtils;
 
 import com.zfun.sharelib.ShareMgrImpl;
 import com.tencent.connect.share.QQShare;
-import com.tencent.connect.share.QzoneShare;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
@@ -66,6 +65,10 @@ public class ShareData {
     /** 构建QQ空间 图文分享数据 */
     public QZoneImageTextBuilder buildQZoneTImage(@NonNull Activity activity) {
         return new QZoneImageTextBuilder(activity);
+    }
+
+    public QZoneMoodBuilder buildMood(@NonNull Activity activity){
+        return new QZoneMoodBuilder(activity);
     }
 
     /** 构建微信分项数据 */
@@ -158,17 +161,29 @@ public class ShareData {
         public void share(){
             ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_QQ_FRIEND, ShareData.this);
         }
+
+
     }//QQ end
 
     //分享到QQ空间的数据
     public class QQZone {
-        /** 目前仅支持图文分享 */
+        public static final int TYPE_IMAGE_TEXT = 1;//图文，只支持一张，传递多张的话也只会取第一张
+        public static final int TYPE_MINI_PROGRAM = 2;//小程序 todo zfun 暂不支持
+
+        public static final int TYPE_MOOD = 10; //纯图
+        public static final int TYPE_PUBLISH_VIDEO = 11;//视频
+
         public final int shareType;
+
         public final String title;
         public final String summary;
         public final String site;
         public final String targetUrl;
         public final ArrayList<String> imageUrlOrFilePath;
+
+        public final String hulianCallBack;
+        public final String hulianScene;
+        public final String videoLocalPath;
 
         public final WeakReference<Activity> activityRef;
 
@@ -176,19 +191,18 @@ public class ShareData {
          * @param imageUrlOrFilePath 不支持混合传递，要么全是URL，要么全是文件路径
          * */
         private QQZone(WeakReference<Activity> activityRef,int shareType, String title, String summary, String site,
-                       ArrayList<String> imageUrlOrFilePath, String targetUrl) {
+                       ArrayList<String> imageUrlOrFilePath, String targetUrl,String hulianCallBack,String hulianScene,String videoLocalPath) {
             this.shareType = shareType;
             this.title = title;
             this.summary = summary;
             this.site = site;
             this.imageUrlOrFilePath = imageUrlOrFilePath;
             this.targetUrl = targetUrl;
+            this.hulianCallBack = hulianCallBack;
+            this.hulianScene = hulianScene;
+            this.videoLocalPath = videoLocalPath;
 
             this.activityRef = activityRef;
-        }
-
-        private QQZone(WeakReference<Activity> activityRef,String title, String summary, String site, ArrayList<String> imageUrlOrFilePath, String targetUrl) {
-            this(activityRef,QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT, title, summary, site, imageUrlOrFilePath, targetUrl);
         }
 
         public void share(){
@@ -458,43 +472,60 @@ public class ShareData {
         }
     }//QQAudioBuilder end
 
-    //构建 QQ空间图文分享 的数据
-    public class QZoneImageTextBuilder {
-        private String title;
-        private String summary;
-        private String targetUrl;
-        private String site;
-        private ArrayList<String> netImageUrls;
-        private ArrayList<String> localImagePaths;
+    public static abstract class AbsQZoneBuilder{
+        protected String title;
+        protected String summary;
+        protected String targetUrl;
+        protected String site;
 
-        private final WeakReference<Activity> activityRef;
+        protected final WeakReference<Activity> activityRef;
 
-        private QZoneImageTextBuilder(@NonNull Activity activity) {
+        private AbsQZoneBuilder(@NonNull Activity activity) {
             activityRef = new WeakReference<>(activity);
         }
 
-        public QZoneImageTextBuilder title(String title) {
+        /**
+         * @param title 最多200字
+         * */
+        public AbsQZoneBuilder title(String title) {
             this.title = title;
             return this;
         }
 
-        public QZoneImageTextBuilder summary(String summary) {
+        /**
+         * @param summary 最多600字
+         * */
+        public AbsQZoneBuilder summary(String summary) {
             this.summary = summary;
             return this;
         }
 
-        public QZoneImageTextBuilder targetUrl(String targetUrl) {
+        public AbsQZoneBuilder targetUrl(String targetUrl) {
             this.targetUrl = targetUrl;
             return this;
         }
 
-        public QZoneImageTextBuilder site(String site) {
+        public AbsQZoneBuilder site(String site) {
             this.site = site;
             return this;
         }
 
+        abstract  ShareData.QQZone build();
+    }//
+
+    //构建 QQ空间图文 分享的数据
+    public class QZoneImageTextBuilder extends AbsQZoneBuilder{
+        private ArrayList<String> netImageUrls;
+        private ArrayList<String> localImagePaths;
+
+        private QZoneImageTextBuilder(@NonNull Activity activity) {
+            super(activity);
+        }
+
         /**
-         * @param imageNetUrls 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络）
+         *  QZone接口暂不支持发送多张图片的能力，若传入多张图片，则会自动选入第一张图片作为预览图。多图的能力将会在以后支持。
+         *
+         * @param imageNetUrls 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络），最多9张
          */
         public QZoneImageTextBuilder imageNetUrls(ArrayList<String> imageNetUrls) {
             this.netImageUrls = imageNetUrls;
@@ -502,13 +533,16 @@ public class ShareData {
         }
 
         /**
-         * @param imageLocalPaths 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络）
+         *  QZone接口暂不支持发送多张图片的能力，若传入多张图片，则会自动选入第一张图片作为预览图。多图的能力将会在以后支持。
+         *
+         * @param imageLocalPaths 不能本地和网络图片混着来，只能是一种类型（要么全是本地，要么全是网络），最多9张
          */
         public QZoneImageTextBuilder imageLocalPaths(ArrayList<String> imageLocalPaths) {
             this.localImagePaths = imageLocalPaths;
             return this;
         }
 
+        @Override
         public ShareData.QQZone build() {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl)) {
                 throw new IllegalArgumentException("title or targetUrl must not null!");
@@ -519,10 +553,105 @@ public class ShareData {
             } else {
                 images = localImagePaths;
             }
-            mQQZShareData = new QQZone(activityRef,title, summary, site, images, targetUrl);
+            mQQZShareData = new QQZone(activityRef,QQZone.TYPE_IMAGE_TEXT,title, summary, site, images, targetUrl,"","","");
             return mQQZShareData;
         }
     }//QZoneImageTextBuilder end
+
+    //构建 【QQ空间说说】 分享的数据
+    public class QZoneMoodBuilder{
+        private ArrayList<String> localImagePaths;
+        private String hulianCallBack;
+        private String summary;
+        private String hulianScene;
+
+
+        protected final WeakReference<Activity> activityRef;
+
+        private QZoneMoodBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
+        }
+
+        /**
+         *
+         * @param imageLocalPaths 只支持本地图片，<=9张时为发表说说，>9张时为上传到相册
+         */
+        public QZoneMoodBuilder imageLocalPaths(ArrayList<String> imageLocalPaths) {
+            this.localImagePaths = imageLocalPaths;
+            return this;
+        }
+
+        public QZoneMoodBuilder summary(String summary){
+            this.summary = summary;
+            return this;
+        }
+
+        public QZoneMoodBuilder hulianCallBack(String hulianCallBack){
+            this.hulianCallBack = hulianCallBack;
+            return this;
+        }
+
+        public QZoneMoodBuilder hulianScene(String scene){
+            this.hulianScene = scene;
+            return this;
+        }
+
+        QQZone build() {
+            mQQZShareData = new QQZone(activityRef, QQZone.TYPE_MOOD,"", summary, "", localImagePaths, "",hulianCallBack,hulianScene,"");
+            return mQQZShareData;
+        }
+    }//
+
+    //构建 【QQ空间说说】 分享的数据
+    public class QZonePublishVideoBuilder{
+        private String videoLocalPaths;
+        private String hulianCallBack;
+        private String summary;
+        private String hulianScene;
+
+        protected final WeakReference<Activity> activityRef;
+
+        private QZonePublishVideoBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
+        }
+
+        /**
+         * @param videoLocalPaths 只支持本地视频，：上传视频的大 小最好控別在100N以内（因为QQ普通用户上传视频必须在100M
+         *                        以內，黄站用户可上传1G以内视频，大于1G会直接报错。)
+         */
+        public QZonePublishVideoBuilder videoLocalPaths(String videoLocalPaths) {
+            this.videoLocalPaths = videoLocalPaths;
+            return this;
+        }
+
+        public QZonePublishVideoBuilder summary(String summary){
+            this.summary = summary;
+            return this;
+        }
+
+        public QZonePublishVideoBuilder hulianScene(String scene){
+            this.hulianScene = scene;
+            return this;
+        }
+
+        public QZonePublishVideoBuilder hulianCallBack(String hulianCallBack){
+            this.hulianCallBack = hulianCallBack;
+            return this;
+        }
+
+        QQZone build() {
+            if (TextUtils.isEmpty(videoLocalPaths)) {
+                throw new IllegalArgumentException("videoLocalPaths must not null!");
+            }
+            mQQZShareData = new QQZone(activityRef, QQZone.TYPE_PUBLISH_VIDEO,"", summary, "", new ArrayList<String>(0), "",hulianCallBack,hulianScene,videoLocalPaths);
+            return mQQZShareData;
+        }
+    }//
+
+    public class QQLoginBuilder{
+
+
+    }
 
     //构建 微信 分享数据
     public class WXBuilder {

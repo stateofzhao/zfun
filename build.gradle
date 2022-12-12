@@ -4,6 +4,15 @@ plugins {
 
 apply from: 'version-config.gradle'
 
+allprojects {
+    repositories {
+        flatDir {
+            dirs '../sharelib/libs'
+            dirs '../injectPlugin/libs'
+        }
+    }
+}
+
 
 //此种方式不行，不会去 settings.gradle 的 pluginManagement{resolutionStrategy{...}}
 //apply plugin: 'zfun.module.mgr'

@@ -128,9 +128,6 @@ public class AccessTokenUtils {
     public static QzoneOAuthV2 doReadTencentQzoneToken(Context context) {
         SharedPreferences pref = context.getSharedPreferences(TENCENT_QZONE_PREFERENCES, Context.MODE_APPEND);
         QzoneOAuthV2 oAuth = new QzoneOAuthV2();
-        oAuth.redirectUri = ShareConstant.QZONE_REDIRECT_URL;
-        oAuth.clientId =  ShareConstant.QQ_APP_ID;
-        oAuth.clientSecret = ShareConstant.QQ_SECRET;
         oAuth.accessToken = pref.getString("access_token", "");
         oAuth.openId = pref.getString("openid", "");
         oAuth.expiresIn = pref.getString("expiresin", "");

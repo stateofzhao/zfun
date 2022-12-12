@@ -13,7 +13,6 @@ public class InitParams {
 
     private String QQ_APP_ID;
     private String QQ_SECRET;
-    private String QZONE_REDIRECT_URL = "http://i.kuwo.cn/US/2013/mobile/login_ar_qq.htm";
 
     private String WX_APP_ID;
 
@@ -28,15 +27,6 @@ public class InitParams {
 
     public String SHARE_DEFAULT_COPY_URL;
     public String SHARE_DEFAULT_IMAGE_URL;
-
-
-    public void setQZONE_REDIRECT_URL(String QZONE_REDIRECT_URL) {
-        this.QZONE_REDIRECT_URL = QZONE_REDIRECT_URL;
-    }
-
-    public String getQZONE_REDIRECT_URL() {
-        return QZONE_REDIRECT_URL;
-    }
 
     public void setWX_APP_ID(String WX_APP_ID) {
         this.WX_APP_ID = WX_APP_ID;
@@ -125,7 +115,6 @@ public class InitParams {
         InitParams initParams = new InitParams();
         initParams.QQ_APP_ID = QQ_APP_ID;
         initParams.QQ_SECRET = QQ_SECRET;
-        initParams.QZONE_REDIRECT_URL = QZONE_REDIRECT_URL;
 
         initParams.WX_APP_ID = WX_APP_ID;
         initParams.MINIPTOGRAM_TYPE_RELEASE = MINIPTOGRAM_TYPE_RELEASE;
@@ -143,7 +132,6 @@ public class InitParams {
     public void from(@NonNull InitParams initParams){
         QQ_APP_ID = initParams.QQ_APP_ID;
         QQ_SECRET = initParams.QQ_SECRET;
-        QZONE_REDIRECT_URL = initParams.QZONE_REDIRECT_URL;
 
         WX_APP_ID = initParams.WX_APP_ID;
         MINIPTOGRAM_TYPE_RELEASE = initParams.MINIPTOGRAM_TYPE_RELEASE;

@@ -1,5 +1,6 @@
 package com.zfun.sharelib;
 
+import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_LOGIN_QQ;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_LOGIN_WX;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_QQ_FRIEND;
 import static com.zfun.sharelib.core.ShareConstant.SHARE_TYPE_QQ_ZONE;
@@ -14,6 +15,7 @@ import com.zfun.sharelib.core.IShareHandler;
 import com.zfun.sharelib.core.IShareMgr;
 import com.zfun.sharelib.core.ISharePlug;
 import com.zfun.sharelib.core.QQFriendShareHandler;
+import com.zfun.sharelib.core.QQLoginHandler;
 import com.zfun.sharelib.core.QQZoneShareHandler;
 import com.zfun.sharelib.core.ShareConstant;
 import com.zfun.sharelib.core.WeixinLoginHandler;
@@ -68,6 +70,9 @@ public class ShareMgrImpl implements IShareMgr {
         }
         if (shareTypeBuilder.useWXFriend) {
             mShareHandlers.put(SHARE_TYPE_WX_FRIEND, new WeixinFriendHandler());
+        }
+        if (shareTypeBuilder.useQQLogin){
+            mShareHandlers.put(SHARE_TYPE_LOGIN_QQ,new QQLoginHandler());
         }
         if (shareTypeBuilder.useWXTimeline) {
             mShareHandlers.put(SHARE_TYPE_WX_CYCLE, new WeixinCircleHandler());
@@ -216,6 +221,7 @@ public class ShareMgrImpl implements IShareMgr {
         private boolean useSinaWeibo = false;
         //
         private boolean useWXLogin = false;
+        private boolean useQQLogin = false;
 
         public ShareTypeBuilder addExtraHandler(int shareType, @NonNull IShareHandler shareHandler) {
             assert shareType > 100;
@@ -255,6 +261,11 @@ public class ShareMgrImpl implements IShareMgr {
 
         public ShareTypeBuilder useWXLogin(){
             useWXLogin = true;
+            return this;
+        }
+
+        public ShareTypeBuilder useQQLogin(){
+            useQQLogin = true;
             return this;
         }
     }//

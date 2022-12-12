@@ -92,6 +92,7 @@ include ':component-structure:annotation'
 include ':injectPlugin'
 include ':gradleFun'
 
+//让 flutter托管后，dependencyResolutionManagement{repositories{flatDir{}}}不起作用了，需要在 rootProject.build.gradle中再设置下
 //flutter
 setBinding(new Binding([gradle: this]))
 evaluate(new File(
