@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.zfun.sharelib">
-
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.zfun.sharelib">
+    <queries>
+        <package android:name="com.tencent.mobileqq"/>
+        <package android:name="com.tencent.tim"/>
+        <package android:name="com.tencent.qqlite"/>
+        <package android:name="com.tencent.mm"/>
+    </queries>
     <application>
 
     </application>

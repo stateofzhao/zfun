@@ -54,4 +54,5 @@
 #-keep class com.zfun.sharelib.core.ShareData$* #保留ShareData的所有内部类
 -keep class com.zfun.sharelib.core.ShareData$*{*;}#保留ShareData的所有内部类及其内部类方法
 -keep class com.zfun.sharelib.WxCallbackActivity
+-keep class com.zfun.sharelib.type.QzoneOAuthV2
 #======== me ================================end

@@ -8,9 +8,11 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.tencent.tauth.IUiListener;
 import com.zfun.sharelib.SdkApiProvider;
 import com.zfun.sharelib.ShareMgrImpl;
 import com.zfun.sharelib.core.IShareHandler;
+import com.zfun.sharelib.core.QQShareAbsHandler;
 import com.zfun.sharelib.core.SinaWeiboHandler;
 import com.sina.weibo.sdk.common.UiError;
 import com.sina.weibo.sdk.openapi.IWBAPI;
@@ -93,8 +95,17 @@ public class InternalShareInitBridge {
         }
 
         if (requestCode == 10103 || requestCode == 10104 || requestCode == 11101) {//QQ好友分享,QQ空间分享,QQ登录授权
-            if (null != data) { // data 为null的话是第三方分享界面“异常关闭”
+            if (null != data) { // data 为null的话是第三方分享界面“异常关闭/用户手动返回了”
                 return Tencent.onActivityResultData(requestCode, resultCode, data, null);
+            }else {
+                final IShareHandler handler = ShareMgrImpl.getInstance().getCurShareHandler();
+                if (handler instanceof QQShareAbsHandler){
+                    final IUiListener listener = ((QQShareAbsHandler) handler).getUiListener();
+                    if (null != listener){
+                        listener.onCancel();
+                    }
+                }
+                return true;
             }
         }
 
@@ -113,7 +124,7 @@ public class InternalShareInitBridge {
                 public void onError(UiError uiError) {
                     IShareHandler shareHandler = ShareMgrImpl.getInstance().getCurShareHandler();
                     if (shareHandler instanceof SinaWeiboHandler) {
-                        ((SinaWeiboHandler) shareHandler).postShareError();
+                        ((SinaWeiboHandler) shareHandler).postShareError(null!=uiError?uiError.errorMessage:"分享失败");
                     }
                 }
 
@@ -157,7 +168,7 @@ public class InternalShareInitBridge {
     @NonNull
     public IMessageHandler getMessageHandler() {
         if (null == messageHandler) {
-            return NullableMessageHandler.get();
+            messageHandler =  DefaultMainMessageHandler.get();
         }
         return messageHandler;
     }

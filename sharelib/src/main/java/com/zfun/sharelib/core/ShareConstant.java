@@ -55,27 +55,11 @@ public class ShareConstant {
 
     public final static String SHARE_TAG_STR = "==share";
 
-    public static final int MAX_WX_MUSIC_VIDEO_THUMBDATA_SIZE = 1024 * 1024 * 1024;//大小限制1M
-
-    // 分享菜单的配置
-    public static final int SONG_LIST_CARD = -1;//歌单卡片分享不显示QQ空间
-    public static final int TEMPLATE_AREA_CARD = -2;//歌单卡片分享不显示QQ空间
-    public static final int KSING_CHORUS_SHARE = -3;//邀请好友来合唱
-    public static final int GAME_SHARE = -4;//游戏分享不显示QQ空间 和复制链接
-    public static final int OTHER_SHARE = 0;
-    public static final int KSING_STORY_SHARE = -5;//分享音乐故事类型，不显示复制链接
-    public static final int FEED_RECOMMEND = -6;  //视频Feed流列表页中显示的分享，不包括视听、下载、酷我三个
-    public static final int AUDIO_STREAM_TOPIC = -7;  //音乐片段
-    public static final int PLAY_PAGE = -8;  //播放页不显示复制视听，显示音乐片段，歌词海报俩入口
-    public static final int LIBRARY_MUSIC = -9; //歌单 歌手的分享，添加音乐片段入口，不显示复制试听
-    public static final int AD_SHARE = -10;//网页广告分享
-    public static final int WX_MUSIC_THUMB_SIZE = 100;//分享音乐，缩略图尺寸
-
     //几个包名
     public final static String PACKAGE_TYPE_QQ = "com.tencent.mobileqq";
     public final static String PACKAGE_TYPE_WB = "com.sina.weibo";
     public final static String PACKAGE_TYPE_WX = "com.tencent.mm";
-    public static final int WX_IMAGE_THUMB_SIZE = 150;//分享图片，缩略图尺寸
+
     /**
      * 联网获取分享信息超时时间
      */
@@ -97,18 +81,16 @@ public class ShareConstant {
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({
             SHARE_TYPE_WX_FRIEND, SHARE_TYPE_WX_CYCLE, SHARE_TYPE_SINA_WEIBO, SHARE_TYPE_QQ_ZONE
-            , SHARE_TYPE_QQ_FRIEND, SHARE_TYPE_COPY_URL, SHARE_TYPE_CHORUS_URL, SHARE_TYPE_WX_MINI_PROGRAM
+            , SHARE_TYPE_QQ_FRIEND, SHARE_TYPE_COPY_URL, SHARE_TYPE_CHORUS_URL, SHARE_TYPE_WX_MINI_PROGRAM,
+            SHARE_TYPE_LOGIN_QQ
     })
     public @interface ShareType {
     }
 
-    @Retention(RetentionPolicy.SOURCE)
-    @IntDef({SONG_LIST_CARD, TEMPLATE_AREA_CARD, KSING_CHORUS_SHARE, GAME_SHARE, OTHER_SHARE,
-            KSING_STORY_SHARE, FEED_RECOMMEND, AUDIO_STREAM_TOPIC, PLAY_PAGE, AD_SHARE})
-    public @interface MenuType {
-    }
-
     //
-    public static final int MUSIC_THUMB_SIZE = 100;//分享音乐，缩略图尺寸
-    public static final int IMAGE_THUMB_SIZE = 150;//分享图片，缩略图尺寸
+    public static final int WX_MUSIC_THUMB_SIZE = 100;//分享音乐，缩略图尺寸
+    public static final int WX_MUSIC_VIDEO_THUMBDATA_MAX_SIZE = 1024 * 1024 * 1024;//大小限制1M
+
+    public static final int WX_IMAGE_THUMB_SIZE = 150;//分享图片，缩略图尺寸
+    public static final int WX_IMAGE_THUMBDATA_MAX_SIZE = 0x8000; //单位byte，微信分享缩略图必须小于32k。。。坑。。。否则返回false
 }

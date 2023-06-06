@@ -134,6 +134,10 @@ public class ShareMgrImpl implements IShareMgr {
         return mCurShareHandler;
     }
 
+    public void clearCurShareHandler(){
+        mCurShareHandler = null;
+    }
+
     @Override
     public void share(@ShareConstant.ShareType int type, @NonNull ISharePlug sharePlug) {
         initIfNeed();

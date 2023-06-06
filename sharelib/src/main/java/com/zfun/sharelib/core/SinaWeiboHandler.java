@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import com.zfun.sharelib.AccessTokenUtils;
 import com.zfun.sharelib.LiveState;
 import com.zfun.sharelib.SdkApiProvider;
+import com.zfun.sharelib.ShareMgrImpl;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.sina.weibo.sdk.api.ImageObject;
@@ -31,66 +32,69 @@ public class SinaWeiboHandler implements IShareHandler {
     private ShareData mNowShareData;//注意内存泄漏，这个handler是单例
 
     public void postShareSuccess() {
+        final String msg = "分享成功";
         if(null == mNowShareData){
-            NullableToast.showSysToast("分享成功");
+            NullableToast.showSysToast(msg);
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener listener = mNowShareData.mShareListener;
         if(null != listener){
-            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onSuccess();
-                    mNowShareData.mShareListener = null;
-                    mNowShareData = null;
-                }
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+                listener.onSuccess(msg);
+                mNowShareData.mShareListener = null;
+                mNowShareData = null;
             });
         } else {
             mNowShareData = null;
         }
+        ShareMgrImpl.getInstance().clearCurShareHandler();
         NullableToast.showSysToast("分享成功");
     }
 
-    public void postShareError() {
+    public void postShareError(String msg) {
         if(null == mNowShareData){
-            NullableToast.showSysToast("发送失败");
+            if (!TextUtils.isEmpty(msg)){
+                NullableToast.showSysToast(msg);
+            }
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener listener = mNowShareData.mShareListener;
         if(null != listener){
-            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onFail();
-                    mNowShareData.mShareListener = null;
-                    mNowShareData = null;
-                }
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+                listener.onFail(msg);
+                mNowShareData.mShareListener = null;
+                mNowShareData = null;
             });
         }else {
             mNowShareData = null;
         }
-        NullableToast.showSysToast("发送失败");
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
+        ShareMgrImpl.getInstance().clearCurShareHandler();
     }
 
     public void postShareCancel() {
+        final String msg = "取消分享";
         if(null == mNowShareData){
-            NullableToast.showSysToast("发送取消");
+            NullableToast.showSysToast(msg);
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener listener = mNowShareData.mShareListener;
         if(null != listener){
-            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onCancel();
-                    mNowShareData.mShareListener = null;
-                    mNowShareData = null;
-                }
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+                listener.onCancel(msg);
+                mNowShareData.mShareListener = null;
+                mNowShareData = null;
             });
         }else {
             mNowShareData = null;
         }
-        NullableToast.showSysToast("发送取消");
+        NullableToast.showSysToast(msg);
+        ShareMgrImpl.getInstance().clearCurShareHandler();
     }
 
     @Override
@@ -103,7 +107,7 @@ public class SinaWeiboHandler implements IShareHandler {
         }
 
         if (!LiveState.getInstance().isNetAvailable()) {
-            NullableToast.showSysToast("网络连接不可用");
+            postShareError("网络连接不可用");
             return;
         }
         if (null == mContext) {
@@ -142,13 +146,13 @@ public class SinaWeiboHandler implements IShareHandler {
                         AccessTokenUtils.keepAccessUid(mContext, webUid);
                         NullableToast.showSysToast("认证成功");
                     } catch (Exception e) {
-                        postShareError();
+                        postShareError("分享失败");
                     }
                 }
 
                 @Override
                 public void onError(UiError uiError) {
-                    postShareError();
+                    postShareError(uiError.errorMessage);
                 }
 
                 @Override

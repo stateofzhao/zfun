@@ -16,6 +16,7 @@ import com.tencent.mm.opensdk.modelbase.BaseReq;
 import com.tencent.mm.opensdk.modelbase.BaseResp;
 import com.tencent.mm.opensdk.modelmsg.SendAuth;
 import com.tencent.mm.opensdk.modelmsg.ShowMessageFromWX;
+import com.zfun.sharelib.core.WeixinAbsShareHandler;
 import com.zfun.sharelib.core.WeixinLoginHandler;
 
 /**
@@ -69,11 +70,17 @@ public class NullableOptWxCallback implements IOptWxCallback {
                     final String accessCode = ((SendAuth.Resp) baseResp).code;
                     final WeixinLoginHandler handler = getWeixinLoginHandler();
                     if(null != handler){
-                        handler.postSuc(accessCode,state);
+                        handler.postSuc(accessCode,state,resultMsg);
                     }
                 } else {
                     if (isShare) {
                         resultMsg = "分享成功";
+                        final WeixinAbsShareHandler handler = getWeixinShareHandler();
+                        if (null != handler){
+                            handler.postShareSuccess(resultMsg);
+                        }else {
+                            NullableToast.showDialogTip(resultMsg);
+                        }
                     }
                 }
                 break;
@@ -82,11 +89,17 @@ public class NullableOptWxCallback implements IOptWxCallback {
                     resultMsg = "用户取消授权";
                     final WeixinLoginHandler handler = getWeixinLoginHandler();
                     if(null != handler){
-                        handler.postCancel();
+                        handler.postCancel(resultMsg);
                     }
                 } else {
                     if (isShare) {
-                        resultMsg = "发送取消";
+                        resultMsg = "取消发送";
+                        final WeixinAbsShareHandler handler = getWeixinShareHandler();
+                        if (null != handler){
+                            handler.postShareCancel(resultMsg);
+                        }else {
+                            NullableToast.showDialogTip(resultMsg);
+                        }
                     }
                 }
                 break;
@@ -95,11 +108,17 @@ public class NullableOptWxCallback implements IOptWxCallback {
                     resultMsg = "用户拒绝授权";
                     final WeixinLoginHandler handler = getWeixinLoginHandler();
                     if(null != handler){
-                        handler.postFail();
+                        handler.postFail(resultMsg);
                     }
                 } else {
                     if (isShare) {
                         resultMsg = "发送被拒绝";
+                        final WeixinAbsShareHandler handler = getWeixinShareHandler();
+                        if (null != handler){
+                            handler.postShareError(resultMsg);
+                        }else {
+                            NullableToast.showDialogTip(resultMsg);
+                        }
                     }
                 }
                 break;
@@ -108,17 +127,22 @@ public class NullableOptWxCallback implements IOptWxCallback {
                     resultMsg = "授权失败";
                     final WeixinLoginHandler handler = getWeixinLoginHandler();
                     if(null != handler){
-                        handler.postFail();
+                        handler.postFail(resultMsg);
                     }
                 } else {
                     if (isShare) {
                         resultMsg = "发送失败";
+                        final WeixinAbsShareHandler handler = getWeixinShareHandler();
+                        if (null != handler){
+                            handler.postShareError(resultMsg);
+                        }else {
+                            NullableToast.showDialogTip(resultMsg);
+                        }
                     }
                 }
                 break;
         }
         WxCallbackActivity.finish();
-        NullableToast.showDialogTip(resultMsg);
     }
 
     private boolean isShareResp(@NonNull BaseResp baseResp) {
@@ -131,6 +155,15 @@ public class NullableOptWxCallback implements IOptWxCallback {
         final IShareHandler currentHandler = ShareMgrImpl.getInstance().getCurShareHandler();
         if(currentHandler instanceof WeixinLoginHandler){
             return (WeixinLoginHandler) currentHandler;
+        }
+        return null;
+    }
+
+    @Nullable
+    private WeixinAbsShareHandler getWeixinShareHandler(){
+        final IShareHandler currentHandler = ShareMgrImpl.getInstance().getCurShareHandler();
+        if(currentHandler instanceof WeixinAbsShareHandler){
+            return (WeixinAbsShareHandler) currentHandler;
         }
         return null;
     }

@@ -38,6 +38,7 @@ public class SdkApiProvider {
                     context.getApplicationContext(),
                     // 第三个参数是清单中注册的FileProvider的authorities属性
                     InternalShareInitBridge.getInstance().getInitParams().getFileProviderAuthorities());
+            Tencent.setIsPermissionGranted(true);
         }
         if (null == mTencent) {
             InternalShareInitBridge.getInstance().getDebugCheck().classicAssert(false, new Throwable("QQ分享SDK初始化时失败"));

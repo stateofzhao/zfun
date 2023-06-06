@@ -7,18 +7,14 @@ import java.lang.ref.WeakReference;
 /**
  * Created by lzf on 2021/12/21 5:18 下午
  */
-public class NullableMessageHandler implements IMessageHandler {
-    private static WeakReference<IMessageHandler> weakReference;
+public class DefaultMainMessageHandler implements IMessageHandler {
 
-    public static synchronized IMessageHandler get(){
-        if(null == weakReference || null == weakReference.get()){
-            weakReference = new WeakReference<>(new NullableMessageHandler());
-        }
-        return weakReference.get();
+    public static IMessageHandler get(){
+        return new DefaultMainMessageHandler();
     }
 
     private final Handler mainHandler;
-    private NullableMessageHandler(){
+    private DefaultMainMessageHandler(){
         mainHandler = new Handler(InternalShareInitBridge.getInstance().getApplicationContext().getMainLooper());
     }
     @Override

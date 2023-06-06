@@ -1,8 +1,11 @@
 package com.zfun.sharelib.core;
 
 import android.content.Context;
+import android.text.TextUtils;
+
 import androidx.annotation.Nullable;
 
+import com.zfun.sharelib.ShareMgrImpl;
 import com.zfun.sharelib.init.InitParams;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
@@ -15,6 +18,7 @@ import com.tencent.mm.opensdk.modelmsg.WXTextObject;
 import com.tencent.mm.opensdk.modelmsg.WXVideoObject;
 import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.zfun.sharelib.init.NullableToast;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -51,61 +55,68 @@ public abstract class WeixinAbsShareHandler implements IShareHandler {
         isSharing = sharing;
     }
 
-    public void postShareSuccess() {
+    public void postShareSuccess(String msg) {
         if(null == mNowShareData){
+            NullableToast.showSysToast(msg);
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener listener = mNowShareData.mShareListener;
         if(null != listener){
-            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onSuccess();
-                    mNowShareData.mShareListener = null;
-                    mNowShareData = null;
-                }
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+                listener.onSuccess(msg);
+                mNowShareData.mShareListener = null;
+                mNowShareData = null;
             });
         } else {
             mNowShareData = null;
         }
+        NullableToast.showSysToast(msg);
+        ShareMgrImpl.getInstance().clearCurShareHandler();
     }
 
-    public void postShareError() {
+    public void postShareError(String msg) {
         if(null == mNowShareData){
+            if (!TextUtils.isEmpty(msg)){
+                NullableToast.showSysToast(msg);
+            }
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener listener = mNowShareData.mShareListener;
         if(null != listener){
-            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onFail();
-                    mNowShareData.mShareListener = null;
-                    mNowShareData = null;
-                }
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+                listener.onFail(msg);
+                mNowShareData.mShareListener = null;
+                mNowShareData = null;
             });
         } else {
             mNowShareData = null;
         }
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
+        ShareMgrImpl.getInstance().clearCurShareHandler();
     }
 
-    public void postShareCancel() {
+    public void postShareCancel(String msg) {
         if(null == mNowShareData){
+            NullableToast.showSysToast(msg);
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener listener = mNowShareData.mShareListener;
         if(null != listener){
-            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onCancel();
-                    mNowShareData.mShareListener = null;
-                    mNowShareData = null;
-                }
+            InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+                listener.onCancel(msg);
+                mNowShareData.mShareListener = null;
+                mNowShareData = null;
             });
         } else {
             mNowShareData = null;
         }
+        NullableToast.showSysToast(msg);
+        ShareMgrImpl.getInstance().clearCurShareHandler();
     }
 
     void doShare(ShareData shareData, IWXAPI api) {

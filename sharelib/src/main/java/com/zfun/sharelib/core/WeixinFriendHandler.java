@@ -3,7 +3,6 @@ package com.zfun.sharelib.core;
 import androidx.annotation.NonNull;
 
 import com.zfun.sharelib.SdkApiProvider;
-import com.zfun.sharelib.init.NullableToast;
 import com.tencent.mm.opensdk.modelmsg.SendMessageToWX;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 
@@ -27,12 +26,10 @@ public class WeixinFriendHandler extends WeixinAbsShareHandler {
             if (api.getWXAppSupportAPI() >= SESSION_SUPPORTED_VERSION) {
                 doShare(shareData, api);
             } else {
-                postShareError();
-                NullableToast.showDialogTip( "微信版本过低");
+                postShareError("微信版本过低");
             }
         } else {
-            postShareError();
-            NullableToast.showDialogTip("微信未安装");
+            postShareError("微信未安装");
         }
     }
 

@@ -35,8 +35,6 @@ android {
             //consumerProguardFiles 'consumer-rules.pro' //automatically add your proguard rules into your library user
             //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-
-
     }
 
     productFlavors {

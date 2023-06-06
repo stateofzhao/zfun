@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 
 import com.zfun.sharelib.SdkApiProvider;
+import com.zfun.sharelib.ShareMgrImpl;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.tencent.connect.share.QQShare;
@@ -17,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * QQ好友分享
@@ -25,6 +27,7 @@ import androidx.annotation.NonNull;
  */
 public class QQFriendShareHandler extends QQShareAbsHandler {
     private final static String TAG = "QQFrendShareHandler";
+    private QShareUiListener listener;
 
     @Override
     public void share(@NonNull ShareData shareData) {
@@ -56,59 +59,77 @@ public class QQFriendShareHandler extends QQShareAbsHandler {
         if (null == params) {
             return;
         }
+        listener = new QShareUiListener(shareData);
+        tencent.shareToQQ(activity, params, listener);
+    }
 
-        tencent.shareToQQ(activity, params, new QShareUiListener(shareData));
+    @Nullable
+    @Override
+    public IUiListener getUiListener() {
+        return listener;
     }
 
     //发送分享结果
-    private void postShareSuccess(final ShareData shareData) {
+    private void postShareSuccess(final ShareData shareData,final String msg) {
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
         if (null == shareData) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener callback = shareData.mShareListener;
         if (null == callback) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
             @Override
             public void run() {
-                callback.onSuccess();
+                callback.onSuccess(msg);
                 shareData.mShareListener = null;
+                ShareMgrImpl.getInstance().clearCurShareHandler();
             }
         });
     }
 
-    private void postShareCancel(final ShareData shareData) {
+    private void postShareCancel(final ShareData shareData,final String msg) {
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
         if (null == shareData) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener callback = shareData.mShareListener;
         if (null == callback) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
-        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-            @Override
-            public void run() {
-                callback.onCancel();
-                shareData.mShareListener = null;
-            }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+            callback.onCancel(msg);
+            shareData.mShareListener = null;
+            ShareMgrImpl.getInstance().clearCurShareHandler();
         });
     }
 
-    private void postShareError(final ShareData shareData) {
+    private void postShareError(final ShareData shareData,final String msg) {
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
         if (null == shareData) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         final ShareData.OnShareListener callback = shareData.mShareListener;
         if (null == callback) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
-        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(new Runnable() {
-            @Override
-            public void run() {
-                callback.onFail();
-                shareData.mShareListener = null;
-            }
+        InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
+            callback.onFail(msg);
+            shareData.mShareListener = null;
+            ShareMgrImpl.getInstance().clearCurShareHandler();
         });
     }
 
@@ -121,6 +142,7 @@ public class QQFriendShareHandler extends QQShareAbsHandler {
 
         @Override
         public void onComplete(Object jsonOb) {
+            listener = null;
             if (isRelease) {
                 return;
             }
@@ -128,20 +150,18 @@ public class QQFriendShareHandler extends QQShareAbsHandler {
             try {
                 int ret = jsonObject.getInt("ret");
                 if (ret == 0) {
-                    NullableToast.showSysToast("分享成功");
-                    postShareSuccess(shareData);
+                    postShareSuccess(shareData,"分享成功");
                 } else {
-                    NullableToast.showSysToast("分享失败-" + ret);
-                    postShareError(shareData);
+                    postShareError(shareData,"分享失败-" + ret);
                 }
             } catch (JSONException e) {
-                NullableToast.showSysToast("分享失败");
-                postShareError(shareData);
+                postShareError(shareData,"分享失败");
             }
         }
 
         @Override
         public void onError(UiError uiError) {
+            listener = null;
             if (isRelease) {
                 return;
             }
@@ -152,22 +172,21 @@ public class QQFriendShareHandler extends QQShareAbsHandler {
                 NullableToast.showSysToast("分享出错，请稍后再试");
                 postShareError(shareData);
             }*/
-            NullableToast.showSysToast("分享出错，请稍后再试");
-            postShareError(shareData);
+            postShareError(shareData,"分享出错，请稍后再试");
         }
 
         @Override
         public void onCancel() {
+            listener = null;
             if (isRelease) {
                 return;
             }
-            NullableToast.showSysToast("取消分享");
-            postShareCancel(shareData);
+            postShareCancel(shareData,"取消分享");
         }
 
         @Override
         public void onWarning(int i) {
-
+            listener = null;
         }
     }
 

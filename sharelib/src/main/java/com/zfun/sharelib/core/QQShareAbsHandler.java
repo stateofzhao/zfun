@@ -2,19 +2,20 @@ package com.zfun.sharelib.core;
 
 import android.content.Context;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import android.text.TextUtils;
 
+import com.tencent.tauth.IUiListener;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.tencent.connect.share.QQShare;
-import com.tencent.tauth.Tencent;
 
 /**
  * QQ有关的分享。
  * <p/>
  * Created by zfun on 2017/8/4.
  */
-abstract class QQShareAbsHandler implements IShareHandler {
+public abstract class QQShareAbsHandler implements IShareHandler {
     protected Context mContext;
     protected boolean isRelease = true;
 
@@ -127,15 +128,9 @@ abstract class QQShareAbsHandler implements IShareHandler {
         return params;
     }
 
-    /**
-     * 获取应用分享的参数
-     */
-    Bundle getAppShareParams() {
+    @Nullable
+    public IUiListener getUiListener(){
         return null;
-    }
-
-    public Tencent createTencent(@NonNull Context applicationContext) {
-        return Tencent.createInstance(ShareConstant.QQ_APP_ID, applicationContext.getApplicationContext());
     }
 
     @Override

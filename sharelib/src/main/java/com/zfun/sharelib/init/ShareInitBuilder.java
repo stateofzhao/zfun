@@ -3,13 +3,17 @@ package com.zfun.sharelib.init;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.tencent.mm.opensdk.modelbase.BaseReq;
+import com.tencent.mm.opensdk.modelbase.BaseResp;
+import com.tencent.mm.opensdk.openapi.IWXAPI;
+import com.tencent.mm.opensdk.openapi.IWXAPIEventHandler;
+import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 import com.zfun.sharelib.ShareMgrImpl;
-import com.zfun.sharelib.WxCallbackActivity;
+import com.zfun.sharelib.core.ShareConstant;
 
 /**
  *
@@ -20,10 +24,14 @@ import com.zfun.sharelib.WxCallbackActivity;
  * openDefault-10.10.0
  * <P/>
  *
+ * 初始化API。<br/>
+ * 一定要调用{@link #init(Context, boolean, com.zfun.sharelib.ShareMgrImpl.ShareTypeBuilder)}方法，否则无法正常运行，并且要对其返回值 {@link InitParams}进行设置。<br/>
+ * {@link #configDebug(IDebugCheck)}configxxx()方法可以设置一些个性化的东西。<br/>
+ * 在所有调用分享方法的Activity的{@link Activity#onActivityResult(int, int, Intent)}方法中调用{@link #onActivityResult(Activity, int, int, Intent)}方法。<br/>
+ * <P/>
  * -------微信分享注意---------- start
  * 微信回调需要WxEntryActivity承接，如果自己不需要监听就写一个自己【xxx.wxapi.WXEntryActivity】继承{@link com.zfun.sharelib.WxCallbackActivity}并声明到Manifest中（xxx为自己app的包名），
- * 否则就在你的【微信回调Activity】中实例化{@link com.zfun.sharelib.WxCallbackActivity#WxCallbackActivity(Activity)}并且调用
- * {@link com.zfun.sharelib.WxCallbackActivity#onCreate(Bundle)
+ * 否则就在你的【微信回调Activity】的onCreate()方法中调用{@link ShareInitBuilder#wxEntryActivityOnCreate(Activity)}方法。
  *-------微信分享注意---------- end
  *
  * -------qq分享注意---------- start
@@ -67,8 +75,20 @@ public class ShareInitBuilder {
         return InternalShareInitBridge.getInstance().onActivityResult(activity,requestCode,resultCode,data);
     }
 
-    public static void wxEntryActivityOnCreate(Bundle bundle){
-        new WxCallbackActivity().onCreate(bundle);
+    public static void wxEntryActivityOnCreate(Activity activity){
+        IWXAPI api = WXAPIFactory.createWXAPI(activity, ShareConstant.WX_APP_ID, true);
+        api.registerApp(ShareConstant.WX_APP_ID);
+        api.handleIntent(activity.getIntent(), new IWXAPIEventHandler() {
+            @Override
+            public void onReq(BaseReq baseReq) {
+                InternalShareInitBridge.getInstance().getOptWxCallback(activity).onOptWxReq(baseReq);
+            }
+
+            @Override
+            public void onResp(BaseResp baseResp) {
+                InternalShareInitBridge.getInstance().getOptWxCallback(activity).onOptWxResp(baseResp);
+            }
+        });
     }
 
     public ShareInitBuilder privacyPolicyAgreed(boolean agreed) {

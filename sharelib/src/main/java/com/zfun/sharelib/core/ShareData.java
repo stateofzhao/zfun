@@ -8,6 +8,8 @@ import android.text.TextUtils;
 
 import com.zfun.sharelib.ShareMgrImpl;
 import com.tencent.connect.share.QQShare;
+import com.zfun.sharelib.type.QzoneOAuthV2;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
@@ -19,21 +21,28 @@ import java.util.ArrayList;
 public class ShareData {
 
     public interface OnShareListener {
-        void onSuccess();
+        void onSuccess(String msg);
 
-        void onFail();
+        void onFail(String msg);
 
-        void onCancel();
+        void onCancel(String msg);
     }//OnShareResult end
 
     public interface OnWXLoginListener{
-        void onFail();
-        void onCancel();
-        void onSuc(String code,String state);
+        void onFail(String msg);
+        void onCancel(String msg);
+        void onSuc(String code,String state,String msg);
     }//
+
+    public interface OnQQLoginListener{
+        void onFail(String msg);
+        void onCancel(String msg);
+        void onSuc(QzoneOAuthV2 authV2,String msg);
+    }
 
     private QQ mQQShareData;
     private QQZone mQQZShareData;
+    private QQLogin mQQLogin;
     private Wx mWxShareData;
     private SinaWeibo mSinaShareData;
 
@@ -42,6 +51,7 @@ public class ShareData {
 
     public OnShareListener mShareListener;
     public OnWXLoginListener mWXLoginListener;
+    public OnQQLoginListener mQQLoginListener;
 
     /**
      * 构建分享到QQ好友的 纯图片数据
@@ -69,6 +79,10 @@ public class ShareData {
 
     public QZoneMoodBuilder buildMood(@NonNull Activity activity){
         return new QZoneMoodBuilder(activity);
+    }
+
+    public QQLoginBuilder buildQQLogin(@NonNull Activity activity){
+        return new QQLoginBuilder(activity);
     }
 
     /** 构建微信分项数据 */
@@ -102,6 +116,10 @@ public class ShareData {
         mWXLoginListener = listener;
     }
 
+    public void setQQLoginListener(OnQQLoginListener qqLoginListener) {
+        this.mQQLoginListener = qqLoginListener;
+    }
+
     public String getCopyUrl() {
         return mUrl;
     }
@@ -114,6 +132,10 @@ public class ShareData {
     /** 获取 QQ好友 分项数据 */
     public QQ getQQFriendData() {
         return mQQShareData;
+    }
+
+    public QQLogin getQQLoginData(){
+        return mQQLogin;
     }
 
     public Wx getWxShareData() {
@@ -209,6 +231,18 @@ public class ShareData {
             ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_QQ_ZONE, ShareData.this);
         }
     }//QQZone end
+
+    public class QQLogin{
+        protected final WeakReference<Activity> activityRef;
+
+        public QQLogin(WeakReference<Activity> activityRef){
+            this.activityRef = activityRef;
+        }
+
+        public void login(){
+            ShareMgrImpl.getInstance().share(ShareConstant.SHARE_TYPE_LOGIN_QQ,ShareData.this);
+        }
+    }//
 
     public class Wx {
         public final static int TYPE_TEXT = 1;
@@ -472,7 +506,11 @@ public class ShareData {
         }
     }//QQAudioBuilder end
 
-    public static abstract class AbsQZoneBuilder{
+    //构建 QQ空间图文 分享的数据
+    public class QZoneImageTextBuilder{
+        private ArrayList<String> netImageUrls;
+        private ArrayList<String> localImagePaths;
+
         protected String title;
         protected String summary;
         protected String targetUrl;
@@ -480,14 +518,14 @@ public class ShareData {
 
         protected final WeakReference<Activity> activityRef;
 
-        private AbsQZoneBuilder(@NonNull Activity activity) {
-            activityRef = new WeakReference<>(activity);
+        private QZoneImageTextBuilder(@NonNull Activity activity) {
+            this.activityRef = new WeakReference<>(activity);
         }
 
         /**
          * @param title 最多200字
          * */
-        public AbsQZoneBuilder title(String title) {
+        public QZoneImageTextBuilder title(String title) {
             this.title = title;
             return this;
         }
@@ -495,31 +533,19 @@ public class ShareData {
         /**
          * @param summary 最多600字
          * */
-        public AbsQZoneBuilder summary(String summary) {
+        public QZoneImageTextBuilder summary(String summary) {
             this.summary = summary;
             return this;
         }
 
-        public AbsQZoneBuilder targetUrl(String targetUrl) {
+        public QZoneImageTextBuilder targetUrl(String targetUrl) {
             this.targetUrl = targetUrl;
             return this;
         }
 
-        public AbsQZoneBuilder site(String site) {
+        public QZoneImageTextBuilder site(String site) {
             this.site = site;
             return this;
-        }
-
-        abstract  ShareData.QQZone build();
-    }//
-
-    //构建 QQ空间图文 分享的数据
-    public class QZoneImageTextBuilder extends AbsQZoneBuilder{
-        private ArrayList<String> netImageUrls;
-        private ArrayList<String> localImagePaths;
-
-        private QZoneImageTextBuilder(@NonNull Activity activity) {
-            super(activity);
         }
 
         /**
@@ -542,7 +568,6 @@ public class ShareData {
             return this;
         }
 
-        @Override
         public ShareData.QQZone build() {
             if (TextUtils.isEmpty(title) || TextUtils.isEmpty(targetUrl)) {
                 throw new IllegalArgumentException("title or targetUrl must not null!");
@@ -648,10 +673,18 @@ public class ShareData {
         }
     }//
 
-    public class QQLoginBuilder{
+    public class QQLoginBuilder {
+        protected final WeakReference<Activity> activityRef;
 
+        private QQLoginBuilder(@NonNull Activity activity) {
+            activityRef = new WeakReference<>(activity);
+        }
 
-    }
+        QQLogin build() {
+            mQQLogin = new QQLogin(activityRef);
+            return mQQLogin;
+        }
+    }//
 
     //构建 微信 分享数据
     public class WXBuilder {

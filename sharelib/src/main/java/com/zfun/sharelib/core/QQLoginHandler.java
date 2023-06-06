@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.tencent.connect.common.Constants;
 import com.tencent.tauth.IUiListener;
@@ -12,6 +13,7 @@ import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
 import com.zfun.sharelib.AccessTokenUtils;
 import com.zfun.sharelib.SdkApiProvider;
+import com.zfun.sharelib.ShareMgrImpl;
 import com.zfun.sharelib.init.InternalShareInitBridge;
 import com.zfun.sharelib.init.NullableToast;
 import com.zfun.sharelib.type.QzoneOAuthV2;
@@ -19,6 +21,8 @@ import com.zfun.sharelib.type.QzoneOAuthV2;
 import org.json.JSONObject;
 
 public class QQLoginHandler extends QQShareAbsHandler{
+
+    private TencentLoginListener listener;
 
     @Override
     public void share(@NonNull ShareData shareData) {
@@ -28,15 +32,17 @@ public class QQLoginHandler extends QQShareAbsHandler{
         if (null == mContext) {
             return;
         }
-        final Activity activity = shareData.getQQZoneShareData().activityRef.get();
+        final Activity activity = shareData.getQQLoginData().activityRef.get();
         if(null == activity){
             return;
         }
         final Tencent tencent = SdkApiProvider.getTencentAPI(mContext);
 
         final QzoneOAuthV2 qzoneOAuth = AccessTokenUtils.doReadTencentQzoneToken(mContext);
-        tencent.setOpenId(qzoneOAuth.openId);
-        tencent.setAccessToken(qzoneOAuth.accessToken, qzoneOAuth.expiresIn);
+        if (!TextUtils.isEmpty(qzoneOAuth.openId) && !TextUtils.isEmpty(qzoneOAuth.accessToken) && !TextUtils.isEmpty(qzoneOAuth.expiresIn)) {
+            tencent.setOpenId(qzoneOAuth.openId);
+            tencent.setAccessToken(qzoneOAuth.accessToken, qzoneOAuth.expiresIn);
+        }
 
         /*HashMap<String, Object> params = new HashMap<String, Object>();
         if (getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
@@ -46,8 +52,14 @@ public class QQLoginHandler extends QQShareAbsHandler{
         params.put(KEY_QRCODE, false);
         params.put(KEY_ENABLE_SHOW_DOWNLOAD_URL, mShowWebDownloadUi.isChecked());
         mTencent.login(this, loginListener, params);*/
+        listener = new TencentLoginListener(shareData);
+        tencent.login(activity, ShareConstant.QZONE_SCOPE, listener);
+    }
 
-        tencent.login(activity, ShareConstant.QZONE_SCOPE, new TencentLoginListener(shareData));
+    @Nullable
+    @Override
+    public IUiListener getUiListener() {
+        return listener;
     }
 
     private class TencentLoginListener implements IUiListener {
@@ -59,16 +71,18 @@ public class QQLoginHandler extends QQShareAbsHandler{
 
         @Override
         public void onCancel() {
-            postShareCancel(shareData);
+            listener = null;
+            postShareCancel(shareData,"取消授权");
         }
 
         @Override
         public void onComplete(Object data) {
+            listener = null;
             if (isRelease) {
                 return;
             }
             if (null == data){
-                postShareError(shareData);
+                postShareError(shareData,"授权失败");
                 return;
             }
             JSONObject jdata = (JSONObject) data;
@@ -88,11 +102,9 @@ public class QQLoginHandler extends QQShareAbsHandler{
                     tencent.setAccessToken(accessToken, expiresIn);
                     tencent.setOpenId(openid);
                 }
-                postShareSuccess(shareData);
-                NullableToast.showSysToast("授权成功");
+                postShareSuccess(shareData,auth,"授权成功");
             } catch (Exception e) {
-                postShareError(shareData);
-                NullableToast.showSysToast("授权失败");
+                postShareError(shareData,"授权失败");
             }
             /*final Context context = mContext.getApplicationContext();
             if (context != null) {
@@ -128,59 +140,77 @@ public class QQLoginHandler extends QQShareAbsHandler{
 
         @Override
         public void onError(UiError arg0) {
+            listener = null;
             if (isRelease) {
                 return;
             }
-            postShareError(shareData);
-            NullableToast.showSysToast("授权失败");
+            postShareError(shareData,arg0.errorCode+" == "+arg0.errorDetail);
         }
 
         @Override
         public void onWarning(int i) {
-
+            listener = null;
         }
     }//
 
     //发送分享结果
-    private void postShareSuccess(final ShareData shareData) {
+    private void postShareSuccess(final ShareData shareData,final QzoneOAuthV2 authV2,final String msg) {
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
         if (null == shareData) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
-        final ShareData.OnShareListener callback = shareData.mShareListener;
+        final ShareData.OnQQLoginListener callback = shareData.mQQLoginListener;
         if (null == callback) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
-            callback.onSuccess();
-            shareData.mShareListener = null;
+            callback.onSuc(authV2,msg);
+            shareData.mQQLoginListener = null;
+            ShareMgrImpl.getInstance().clearCurShareHandler();
         });
     }
 
-    private void postShareCancel(final ShareData shareData) {
+    private void postShareCancel(final ShareData shareData,final String msg) {
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
         if (null == shareData) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
-        final ShareData.OnShareListener callback = shareData.mShareListener;
+        final ShareData.OnQQLoginListener callback = shareData.mQQLoginListener;
         if (null == callback) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
-            callback.onCancel();
-            shareData.mShareListener = null;
+            callback.onCancel(msg);
+            shareData.mQQLoginListener = null;
+            ShareMgrImpl.getInstance().clearCurShareHandler();
         });
     }
 
-    private void postShareError(final ShareData shareData) {
+    private void postShareError(final ShareData shareData,final String msg) {
+        if (!TextUtils.isEmpty(msg)){
+            NullableToast.showSysToast(msg);
+        }
         if (null == shareData) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
-        final ShareData.OnShareListener callback = shareData.mShareListener;
+        final ShareData.OnQQLoginListener callback = shareData.mQQLoginListener;
         if (null == callback) {
+            ShareMgrImpl.getInstance().clearCurShareHandler();
             return;
         }
         InternalShareInitBridge.getInstance().getMessageHandler().asyncRunInMainThread(() -> {
-            callback.onFail();
-            shareData.mShareListener = null;
+            callback.onFail(msg);
+            shareData.mQQLoginListener = null;
+            ShareMgrImpl.getInstance().clearCurShareHandler();
         });
     }
 }
