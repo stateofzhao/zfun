@@ -1,4 +1,4 @@
-# my_flutter
+# myflutter
 
 A new Flutter module project.
 
