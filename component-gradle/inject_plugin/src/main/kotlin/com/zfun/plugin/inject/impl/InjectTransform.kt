@@ -1,12 +1,9 @@
 package com.zfun.plugin.inject.impl
 
-import com.zfun.plugin.inject.Constants
 import com.zfun.plugin.inject.ITransform
-import javassist.ClassPool
 import javassist.CtClass
 import org.gradle.api.Project
 import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 
 class InjectTransform:ITransform {

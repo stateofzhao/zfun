@@ -22,7 +22,7 @@ dependencies{
     }
     implementation 'com.android.tools.build:gradle:7.0.0'
     implementation 'org.json:json:20180813'
-    implementation 'com.android.tools:common:30.3.1'
+    implementation 'com.android.tools:common:30.4.2'
     //implementation 'net.lingala.zip4j:zip4j:2.11.2' //zip文件处理
 }
 

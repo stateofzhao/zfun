@@ -9,7 +9,7 @@ dependencies{
 
     implementation 'com.squareup:javapoet:1.12.1'//生成代码的库，比手写方便
 
-    implementation project(':component-structure:annotation')
+    implementation project(':annotation')
 
 }
 

@@ -72,12 +72,12 @@ dependencyResolutionManagement{
         //本地aar依赖
         flatDir {
             dirs 'sharelib/libs'
-            dirs 'injectPlugin/libs'
+            dirs 'inject_plugin/libs'
         }
     }
 }
 
-include ':apk', ':zfunlib', ':observerUninstall', ':learn',  'sample'
+include ':apk', ':zfunlib', ':observer_uninstall', ':learn',  'sample'
 include ':audio'
 include ':sharelib'
 include ':xposedmodule'
@@ -87,10 +87,15 @@ include ':component-structure:component-1:module2'
 include ':component-structure:component-1:module3'
 include ':component-structure:component-1:app'
 include ':component-structure:component-1:base'
-include ':component-structure:initProcessor'
-include ':component-structure:annotation'
-include ':injectPlugin'
-include ':gradleFun'
+include ':init_processor'
+include ':annotation'
+include ':inject_plugin'
+include ':gradle_fun'
+
+project(':inject_plugin').projectDir = new File('component-gradle/inject_plugin')
+project(':gradle_fun').projectDir = new File('component-gradle/gradle_fun')
+project(':init_processor').projectDir = new File('component-annotation/init_processor')
+project(':annotation').projectDir = new File('component-annotation/annotation')
 
 //让 flutter托管后，dependencyResolutionManagement{repositories{flatDir{}}}不起作用了，需要在 rootProject.build.gradle中再设置下
 //flutter

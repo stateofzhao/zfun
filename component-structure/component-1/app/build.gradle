@@ -18,8 +18,8 @@ dependencies {
     implementation project(':component-structure:component-1:module1')
     implementation project(':component-structure:component-1:module2')
     implementation project(':component-structure:component-1:module3')
+    implementation project(':init_processor')
+    kapt project(':init_processor')
 
     //for init
-    implementation project(':component-structure:initProcessor')
-    kapt project(':component-structure:initProcessor')
 }

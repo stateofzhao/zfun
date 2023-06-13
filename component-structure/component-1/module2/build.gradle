@@ -12,10 +12,10 @@ android {
 dependencies {
     implementation project(':component-structure:component-1:base')
     implementation project(':component-structure:component-1:bridge')
+    implementation project(':init_processor')
 
     //
-    implementation project(':component-structure:initProcessor')
-    implementation project(':component-structure:annotation')
+    implementation project(':annotation')
 //    kapt project(':component-structure:initProcessor')
 
 }
