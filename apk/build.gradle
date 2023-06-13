@@ -57,12 +57,12 @@ def readChannelFromFile = { String path ->
 }
 multiChannel {
     prefix = "zfun_"
-    subfix = "_test"
     channelConfig {
         Full {
             childFlavors = readChannelFromFile('./channel_arm_list.txt').unique()
             lowMemory = false
             extraInfo = ["key1": "value1", "key2": "value2"]
+            subfix = "_test"
         }
     }
 }

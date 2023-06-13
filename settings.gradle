@@ -23,16 +23,16 @@ pluginManagement{
     // 此功能在 plugins{} 配置前执行，所以在此处不会拿到下面 plugins{} 块中配置的version值（requested.version==null），
     // 只有在调用地方给定version才能拿到，例如：在 build.gradle 文件明确指定version：
     // plugins {
-    //    id 'zfun.module.mgr' version '1.2.4-SNAPSHOT' apply true
+    //    id 'io.github.stateofzhao.module' version '1.3.0-SNAPSHOT' apply true
     // }
     // ...
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.id == 'zfun.module.mgr') {
-                println("zfun.module.mgr 插件版本："+requested.version)
-                useModule("io.github.stateofzhao:GradleModulePlugin:$io_github_stateofzhao_version")
-                //如果这里写死版本号，则外部plugins{id 'zfun.module.mgr'}即可，无需传递版本号
-                /*useModule("io.github.stateofzhao:GradleModulePlugin:1.2.4-SNAPSHOT")*/
+            if (requested.id.id == 'io.github.stateofzhao.module') {
+                println("io.github.stateofzhao.module 插件版本："+requested.version)
+                useModule("io.github.stateofzhao:GradleModulePlugin:$io_github_stateofzhao_module_v")
+                //如果这里写死版本号，则外部plugins{id 'io.github.stateofzhao.module'}即可，无需传递版本号
+                /*useModule("io.github.stateofzhao:GradleModulePlugin:1.3.0-SNAPSHOT")*/
             } else if(requested.id.id == 'zfun.module.inject'){
                 println("zfun.module.inject 插件版本："+requested.version)
                 useModule('io.github.stateofzhao:InjectPlugin:0.0.1-SNAPSHOT')
@@ -46,7 +46,7 @@ pluginManagement{
     plugins{
         id 'com.android.application' version '7.0.0' apply false
         id 'com.android.library' version com_android_library_version apply false
-        id 'zfun.module.mgr' version io_github_stateofzhao_version apply false
+        id 'io.github.stateofzhao.module' version io_github_stateofzhao_module_v apply false
         id 'kotlin-android' version kotlin_version apply false
         id 'org.jetbrains.kotlin.jvm' version kotlin_version apply false
         id 'org.jetbrains.kotlin.android' version kotlin_version apply false
