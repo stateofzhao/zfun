@@ -3,7 +3,7 @@ plugins {
 }
 //apply plugin: 'io.github.stateofzhao.module'//此种方式不行，不会调用到 settings.gradle 的 pluginManagement{resolutionStrategy{...}}
 apply from: 'version-config.gradle'//依赖统一版本配置文件
-apply from:'component-gradle/gradle_fun/downloadDependencies.gradle'//依赖拉取依赖到本地的gradle脚本
+apply from:'component-gradle/gradle-fun/downloadDependencies.gradle'//依赖拉取依赖到本地的gradle脚本
 
 allprojects {
     repositories {

@@ -1,6 +1,6 @@
 plugins {
-    id 'com.android.application'
-//    id 'zfun.module.inject' apply true
+    id 'com.android.application' apply true
+//    id 'io.github.stateofzhao.inject' apply true
 }
 
 android {

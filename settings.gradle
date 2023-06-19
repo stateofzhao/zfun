@@ -3,7 +3,7 @@
 //2，统一声明整个项目需要的插件（当然你也可以按照以前的方式在给子 module 中声明）。
 //【注意：只有明确的发布 xxx.gradle.plugin 插件文件到这些仓库中时，
 // 才可以直接通过 plugins{...}访问到，如果不是通过上述方式发布的插件，必须通过 resolutionStrategy{...}来"转译"下】
-pluginManagement{
+pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
@@ -13,10 +13,6 @@ pluginManagement{
         maven {
             url "https://jitpack.io"
         }
-
-        /*maven {
-            url rootProject.getProjectDir().getParent()+'/offlineDepdencies/maven/'
-        }*/
     }
 
     //与之前的 buildscript{dependencies{...}} 功能相同，
@@ -29,38 +25,40 @@ pluginManagement{
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == 'io.github.stateofzhao.module') {
-                println("io.github.stateofzhao.module 插件版本："+requested.version)
+                println("io.github.stateofzhao.module 插件版本：" + requested.version)
                 useModule("io.github.stateofzhao:GradleModulePlugin:$io_github_stateofzhao_module_v")
                 //如果这里写死版本号，则外部plugins{id 'io.github.stateofzhao.module'}即可，无需传递版本号
                 /*useModule("io.github.stateofzhao:GradleModulePlugin:1.3.0-SNAPSHOT")*/
-            } else if(requested.id.id == 'zfun.module.inject'){
-                println("zfun.module.inject 插件版本："+requested.version)
+            } else if (requested.id.id == 'io.github.stateofzhao.inject') {
+                println("io.github.stateofzhao.inject 插件版本：" + requested.version)
                 useModule('io.github.stateofzhao:InjectPlugin:0.0.1-SNAPSHOT')
-            } else if(requested.id.id == 'kotlin-android'){
+            } else if (requested.id.id == 'kotlin-android' || requested.id.id == 'kotlin-kapt' || requested.id.id == "org.jetbrains.kotlin.jvm") {
                 useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+            } else if (requested.id.id == 'io.github.stateofzhao.init') {
+                println("io.github.stateofzhao.init 插件版本：" + requested.version)
+                useModule("io.github.stateofzhao:InitPlugin:0.0.1-SNAPSHOT")
             }
         }
     }
 
     //下面这个可以省略，放到这里只是为了方便看到项目中总共应用了多少插件
-    plugins{
-        id 'com.android.application' version '7.0.0' apply false
+    plugins {
+        id 'com.android.application' version com_android_application_version apply false
         id 'com.android.library' version com_android_library_version apply false
         id 'io.github.stateofzhao.module' version io_github_stateofzhao_module_v apply false
         id 'kotlin-android' version kotlin_version apply false
-        id 'org.jetbrains.kotlin.jvm' version kotlin_version apply false
-        id 'org.jetbrains.kotlin.android' version kotlin_version apply false
-        id 'org.jetbrains.kotlin.kapt' version "1.4.20" apply false
-        id 'zfun.module.inject' version '0.0.1-SNAPSHOT' apply false
+        id 'io.github.stateofzhao.inject' apply false
+        id 'org.jetbrains.kotlin.jvm' apply false
+        id 'io.github.stateofzhao.init' apply false
     }
 }
 
 //项目开发依赖库配置，同样有两个功能：
 //1，配置依赖库仓库，类似之前的 allprojects{repositories{...}}。
 //2，统一声明整个项目的依赖项，但是不推荐在这里做，因为有的子 module 不需要其中的某些依赖，还是放到各自的子module来声明依赖比较好。
-dependencyResolutionManagement{
+dependencyResolutionManagement {
 //    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories{
+    repositories {
         google()
         mavenCentral()
         jcenter()
@@ -77,25 +75,33 @@ dependencyResolutionManagement{
     }
 }
 
-include ':apk', ':zfunlib', ':observer_uninstall', ':learn',  'sample'
+include ':apk', ':zfunlib', ':observer_uninstall', ':learn', 'sample'
 include ':audio'
 include ':sharelib'
 include ':xposedmodule'
+
 include ':component-structure:component-1:bridge'
 include ':component-structure:component-1:module1'
 include ':component-structure:component-1:module2'
 include ':component-structure:component-1:module3'
 include ':component-structure:component-1:app'
 include ':component-structure:component-1:base'
-include ':init_processor'
-include ':annotation'
-include ':inject_plugin'
-include ':gradle_fun'
 
-project(':inject_plugin').projectDir = new File('component-gradle/inject_plugin')
-project(':gradle_fun').projectDir = new File('component-gradle/gradle_fun')
-project(':init_processor').projectDir = new File('component-annotation/init_processor')
-project(':annotation').projectDir = new File('component-annotation/annotation')
+include ':inject-plugin'
+include ':gradle-fun'
+
+include ':init-compiler'
+include ':init-annotation'
+include ':init-api'
+include ':init-gradle-plugin'
+
+//
+project(':inject-plugin').projectDir = new File('component-gradle/inject-plugin')
+project(':gradle-fun').projectDir = new File('component-gradle/gradle-fun')
+project(':init-compiler').projectDir = new File('component-init/init-compiler')
+project(':init-annotation').projectDir = new File('component-init/init-annotation')
+project(':init-api').projectDir = new File('component-init/init-api')
+project(':init-gradle-plugin').projectDir = new File('component-init/init-gradle-plugin')
 
 //让 flutter托管后，dependencyResolutionManagement{repositories{flatDir{}}}不起作用了，需要在 rootProject.build.gradle中再设置下
 //flutter

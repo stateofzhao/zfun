@@ -2,7 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.zfun.component1.app">
 
-    <application android:name=".MyApplication">
+    <application
+        android:name="com.zfun.component1.MyApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="zfunStructure1"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
     </application>
+
 </manifest>

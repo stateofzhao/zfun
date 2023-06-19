@@ -1,15 +1,13 @@
 package com.zfun.component1.module1
 
+import android.util.Log
 import com.zfun.annotation.InitInAndroid
-import com.zfun.processor.init.IInit
-import com.zfun.processor.init.InitLifetime
+import com.zfun.initapi.IInit
+import com.zfun.initapi.InitLifecycle
 
 @InitInAndroid
 class Module1Init: IInit {
-    override fun init(lifetime: InitLifetime?) {
-        lifetime?:return
-        if (InitLifetime.APP_ONCREATE == lifetime){
-            println("app_onCreate方法调用")
-        }
+    override fun init(lifetime: InitLifecycle) {
+        Log.e("init","Module1#Init : ${lifetime.name}")
     }
 }

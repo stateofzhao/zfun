@@ -14,6 +14,4 @@ dependencies {
     implementation androidxKotlin
     implementation kotlinStdlib
     implementation androidxAppCompat
-
-//    kapt project(path:':component-structure:initProcessor')
 }

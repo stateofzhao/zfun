@@ -1,13 +1,13 @@
 plugins{
     id 'com.android.application' apply true
     id 'kotlin-android' apply true
-    id 'org.jetbrains.kotlin.kapt' apply true //kotlin 注解处理器
+    id 'io.github.stateofzhao.init' apply true
 }
 
 android{
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
+        compileSdk rootProject.ext.compileSdkVersion
+
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
     }
@@ -18,8 +18,9 @@ dependencies {
     implementation project(':component-structure:component-1:module1')
     implementation project(':component-structure:component-1:module2')
     implementation project(':component-structure:component-1:module3')
-    implementation project(':init_processor')
-    kapt project(':init_processor')
-
-    //for init
+    implementation project(':init-api')
+    //
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
 }

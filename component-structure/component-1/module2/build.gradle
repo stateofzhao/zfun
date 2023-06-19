@@ -1,21 +1,27 @@
 plugins {
     id 'com.android.library' apply true
     id 'kotlin-android' apply true
-    id 'org.jetbrains.kotlin.kapt' apply true //kotlin 注解处理器
+    id 'kotlin-kapt' apply true //kotlin 注解处理器
 }
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig{
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [INIT_MODULE_NAME: project.getName()]
+            }
+        }
+    }
 }
 
 dependencies {
     implementation project(':component-structure:component-1:base')
     implementation project(':component-structure:component-1:bridge')
-    implementation project(':init_processor')
-
+    implementation project(':init-api')
     //
-    implementation project(':annotation')
-//    kapt project(':component-structure:initProcessor')
+    kapt project(':init-compiler')
 
 }

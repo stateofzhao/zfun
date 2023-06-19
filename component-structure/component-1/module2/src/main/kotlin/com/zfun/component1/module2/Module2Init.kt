@@ -1,12 +1,13 @@
 package com.zfun.component1.module2
 
+import android.util.Log
 import com.zfun.annotation.InitInAndroid
-import com.zfun.processor.init.IInit
-import com.zfun.processor.init.InitLifetime
+import com.zfun.initapi.IInit
+import com.zfun.initapi.InitLifecycle
 
 @InitInAndroid
 class Module2Init : IInit {
-    override fun init(lifetime: InitLifetime?) {
-        println("Module2Init : ${lifetime?.name}")
+    override fun init(lifetime: InitLifecycle) {
+        Log.e("init","Module2#Init1 : ${lifetime.name}")
     }
 }
