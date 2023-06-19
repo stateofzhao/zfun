@@ -26,31 +26,28 @@ pluginManagement {
         eachPlugin {
             if (requested.id.id == 'io.github.stateofzhao.module') {
                 println("io.github.stateofzhao.module 插件版本：" + requested.version)
-                useModule("io.github.stateofzhao:GradleModulePlugin:$io_github_stateofzhao_module_v")
-                //如果这里写死版本号，则外部plugins{id 'io.github.stateofzhao.module'}即可，无需传递版本号
-                /*useModule("io.github.stateofzhao:GradleModulePlugin:1.3.0-SNAPSHOT")*/
+                useModule("io.github.stateofzhao:GradleModulePlugin:" + requested.version)
             } else if (requested.id.id == 'io.github.stateofzhao.inject') {
                 println("io.github.stateofzhao.inject 插件版本：" + requested.version)
-                useModule('io.github.stateofzhao:InjectPlugin:0.0.1-SNAPSHOT')
+                useModule('io.github.stateofzhao:InjectPlugin:' + requested.version)
             } else if (requested.id.id == 'kotlin-android' || requested.id.id == 'kotlin-kapt' || requested.id.id == "org.jetbrains.kotlin.jvm") {
                 useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
             } else if (requested.id.id == 'io.github.stateofzhao.init') {
                 println("io.github.stateofzhao.init 插件版本：" + requested.version)
-                useModule("io.github.stateofzhao:InitPlugin:0.0.1-SNAPSHOT")
+                useModule("io.github.stateofzhao:InitPlugin:${requested.version}")
             }
         }
     }
+}
 
-    //下面这个可以省略，放到这里只是为了方便看到项目中总共应用了多少插件
-    plugins {
-        id 'com.android.application' version com_android_application_version apply false
-        id 'com.android.library' version com_android_library_version apply false
-        id 'io.github.stateofzhao.module' version io_github_stateofzhao_module_v apply false
-        id 'kotlin-android' version kotlin_version apply false
-        id 'io.github.stateofzhao.inject' apply false
-        id 'org.jetbrains.kotlin.jvm' apply false
-        id 'io.github.stateofzhao.init' apply false
-    }
+plugins {
+    id 'com.android.application' version "$AGP_V" apply false
+    id 'com.android.library' version "$AGP_V" apply false
+    id 'io.github.stateofzhao.module' version "$io_github_stateofzhao_module_v" apply false
+    //id 'io.github.stateofzhao.inject' version "$io_github_stateofzhao_inject_v" apply false
+    id 'io.github.stateofzhao.init' version "$io_github_stateofzhao_init_v" apply false
+    id 'kotlin-android' version "$kotlin_version" apply false
+    id 'org.jetbrains.kotlin.jvm' apply false
 }
 
 //项目开发依赖库配置，同样有两个功能：
