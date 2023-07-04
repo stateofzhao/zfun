@@ -17,8 +17,10 @@ description: A new Flutter module project.
 # on any other native host app that you embed your Flutter project into.
 version: 1.0.0+1
 
+# dart语法版本和flutter SDK版本没有对应关系，可以分别单独配置。
 environment:
-  sdk: '>=2.18.4 <3.0.0'
+  sdk: '>=2.18.4 <3.0.0' #dart语法版本
+  # flutter: '>=3.10.5 <4.0.0'
 
 dependencies:
   flutter:

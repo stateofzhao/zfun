@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+//依赖配置全部是 compileOnly，依赖方自己来真正引入这样依赖方可以自定义打包流程来只把本项目源码打包进去
+dependencies {
+    compileOnly gradleApi()
+    compileOnly localGroovy()
+    //
+    compileOnly 'com.android.tools.build:gradle:7.1.2'
+    compileOnly 'commons-io:commons-io:2.13.0'
+    compileOnly 'commons-codec:commons-codec:1.15'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}

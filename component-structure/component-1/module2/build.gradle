@@ -11,7 +11,7 @@ android {
     defaultConfig{
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [INIT_MODULE_NAME: project.getName()]
+                arguments = [INIT_MODULE_NAME: project.getName(),REGISTER_MODULE_NAME:project.getName()]
             }
         }
     }
@@ -20,8 +20,10 @@ android {
 dependencies {
     implementation project(':component-structure:component-1:base')
     implementation project(':component-structure:component-1:bridge')
-    implementation project(':init-api')
-    //
+    //for init
     kapt project(':init-compiler')
-
+    implementation project(':init-api')
+    //for register
+    implementation project(':register-api')
+    kapt project(':register-compiler')
 }

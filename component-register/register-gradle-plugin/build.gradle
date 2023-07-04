@@ -1,0 +1,60 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm'
+    id 'java-gradle-plugin'
+}
+
+dependencies {
+    implementation gradleApi()
+    implementation localGroovy()
+
+    implementation 'com.android.tools.build:gradle:7.1.2'
+    implementation 'commons-io:commons-io:2.13.0'
+    implementation 'commons-codec:commons-codec:1.15'
+
+    //
+    //这里注意！！！gradle插件项目，打包发布插件时，不会将依赖的本地项目打包进去！！！！当引用插件时，gradle获取maven仓来寻找这里的依赖（结果当然是找不到了）。
+    //解决方案：
+    //这里只在编译时引用（这样gradle不会在此插件的pom中定义依赖于ib-android_transform），然后打包发布时再把 lib-android_transform 代码打包进来。
+    //compileOnly project(':lib-android_transform')
+}
+
+//自定义打包来把 lib-android_transform 打包进来失败，这里简单处理吧，把 lib-android_transform 源码设置进来
+sourceSets {
+    main{
+        kotlin{
+            srcDirs += "${rootProject.getProjectDir()}/component-gradle/lib-android_transform/src/main/kotlin"
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+/*jar {
+    def EMPTY_DEPENDENCIES_ARRAY = new Dependency[0]
+    def Dependency dependency = null
+    project.configurations.forEach{
+        if (it.name == "compileOnly"){
+            it.dependencies.forEach{
+                if (it.name == "lib-android_transform"){
+                    dependency = it
+                }
+            }
+        }
+    }
+    if (null != dependency){
+        def configurationCopy = project.configurations.detachedConfiguration([dependency].toArray(EMPTY_DEPENDENCIES_ARRAY))
+        // 配置插件的JAR任务
+        from {
+            configurationCopy.collect {
+                it.isDirectory() ? it : files(it)
+            }
+        }
+    }
+    // 可以添加其他自定义配置
+}*/
+
+apply from:'https://raw.githubusercontent.com/stateofzhao/GradleModulePlugin/master/publish-maven.gradle'

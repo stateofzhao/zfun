@@ -1,0 +1,19 @@
+plugins{
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+dependencies{
+    implementation 'com.google.auto.service:auto-service-annotations:1.0.1'//google 的 auto service 库，自动生成 service，省去了手动配置 resource/META-INFO/services
+    annotationProcessor 'com.google.auto.service:auto-service:1.0.1'//使用 google auto 库来解析 com.google.auto.service:auto-service-annotations 中的注解
+
+    implementation 'com.squareup:javapoet:1.12.1'//生成代码的库，比手写方便
+    implementation project(':register-annotation')
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+apply from:'https://raw.githubusercontent.com/stateofzhao/GradleModulePlugin/master/publish-maven.gradle'

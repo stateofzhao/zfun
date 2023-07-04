@@ -1,18 +1,45 @@
-plugins {
-    id 'io.github.stateofzhao.module' apply true
+buildscript {
+    repositories {
+        mavenLocal()
+        google()
+        mavenCentral()
+        maven {
+            url uri('https://s01.oss.sonatype.org/content/repositories/snapshots/')
+        }
+    }
+
+    dependencies {
+        classpath "com.android.tools.build:gradle:$AGP_V"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "io.github.stateofzhao:GradleModulePlugin:$io_github_stateofzhao_module_v"
+        //classpath "io.github.stateofzhao:InjectPlugin:$io_github_stateofzhao_inject_v"
+        classpath "io.github.stateofzhao:InitPlugin:$io_github_stateofzhao_init_v"//for init
+        classpath "io.github.stateofzhao:RegisterPlugin:$io_github_stateofzhao_register_v"//for register
+    }
 }
-//apply plugin: 'io.github.stateofzhao.module'//此种方式不行，不会调用到 settings.gradle 的 pluginManagement{resolutionStrategy{...}}
+
+apply plugin:'io.github.stateofzhao.module'
 apply from: 'version-config.gradle'//依赖统一版本配置文件
 apply from:'component-gradle/gradle-fun/downloadDependencies.gradle'//依赖拉取依赖到本地的gradle脚本
 
+
 allprojects {
     repositories {
-        flatDir {
-            dirs '../sharelib/libs'
-            dirs '../component-gradle/inject_plugin/libs'
+        google()
+        mavenCentral()
+        maven {
+            url uri('https://s01.oss.sonatype.org/content/repositories/snapshots/')
         }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://developer.huawei.com/repo/' }
+        maven { url "https://jitpack.io" }
     }
 }
+
 
 funBuildType{
     debug = true

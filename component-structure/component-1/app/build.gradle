@@ -1,13 +1,14 @@
 plugins{
-    id 'com.android.application' apply true
-    id 'kotlin-android' apply true
-    id 'io.github.stateofzhao.init' apply true
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'io.github.stateofzhao.init'//for init
+    id 'io.github.stateofzhao.register'//for register
 }
 
 android{
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
-        compileSdk rootProject.ext.compileSdkVersion
-
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
     }
@@ -19,6 +20,7 @@ dependencies {
     implementation project(':component-structure:component-1:module2')
     implementation project(':component-structure:component-1:module3')
     implementation project(':init-api')
+    implementation project(':register-api')
     //
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'

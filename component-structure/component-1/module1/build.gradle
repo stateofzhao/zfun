@@ -14,7 +14,7 @@ android {
 
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [INIT_MODULE_NAME: project.getName()]
+                arguments = [INIT_MODULE_NAME: project.getName(),REGISTER_MODULE_NAME:project.getName()]
             }
         }
     }
@@ -23,10 +23,15 @@ android {
 dependencies {
     implementation project(':component-structure:component-1:base')
     implementation project(':component-structure:component-1:bridge')
-    implementation project(':init-api')
+
     //for init
+    implementation project(':init-api')
     kapt project(':init-compiler')
     //annotationProcessor project(':init_processor')//java项目采用这种方式
+
+    //for register
+    implementation project(':register-api')
+    kapt project(':register-compiler')
 
     implementation timber
     implementation androidxAppCompat
