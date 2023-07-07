@@ -10,13 +10,24 @@ public class RegisterCenter {
     private static final Map<Object, Class<?>> sRegisterProviderMap = new HashMap<>();
     private static final List<IRegisterProvider> sRegisterProviderList = new ArrayList<>();
 
-
      public static <T> T getValue(Class<?> key){
-        return (T) sRegisterProviderMap.get(key);
+         final Object value = sRegisterProviderMap.get(key);
+         if (null == value){
+             return null;
+         }
+        return (T) value;
      }
 
      public static <T> T getValue(String key){
-         return (T) sRegisterProviderMap.get(key);
+         final Object value = sRegisterProviderMap.get(key);
+         if (null == value){
+             return null;
+         }
+         return (T) value;
+     }
+
+     public static List<IRegisterProvider> getRegisterProviderList(){
+         return new ArrayList<>(sRegisterProviderList);
      }
 
      public static void printAllRegister(){

@@ -1,0 +1,121 @@
+//发布到maven仓库，以maven方式引用。
+
+//Maven形式发布的插件，必须通过 buildscript block 方式来引用插件，插件Id通过 `main/resources/META-INF/gradle-plugins` 方式来声明；
+//artifactId 默认为工程名称：GradleModulePlugin。最终引用方式为：
+//buildscript{dependencies{classpath '${group}:${artifactId}:${version}'}}。
+
+//release版发布后，需要去：https://s01.oss.sonatype.org/#stagingRepositories 中台来确认发布后，才能同步到mavenCentral()官方库中。
+
+//发布命令：publish
+
+//plugins{}方法声明插件方式只能在"直接build.gradle"或者Setting的gradle文件中用，这种被其它gradle apply from的不能用。
+/*plugins{
+    id 'maven-publish'
+    id 'signing'
+}*/
+apply plugin :'maven-publish'//generate the published metadata for your plugin（生成插件文件的原始数据，例如，编译好的jar和java doc）
+apply plugin :'signing'//发布远程maven用 - 发布正式版时需要签名
+
+group = GROUP                   //指定仓库的groupId
+version = VERSION_NAME          //发布到仓库的版本
+
+def isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+//有下面两种方式来声明发布的内容：
+//====publish case--1 ==start
+java{
+    withJavadocJar()
+    withSourcesJar()
+}
+//====publish case--1 ==end
+
+//下面这种方式，发布非插件的jar包时有问题
+//====publish case--2 == start
+//task sourceJar(type: Jar,dependsOn:classes) {
+//    from sourceSets.main.allSource
+//    archiveClassifier = "sources"
+//}
+//task javadocJar(type: Jar, dependsOn:javadoc) {
+//    classifier = 'javadoc'
+//    from javadoc.destinationDir
+//}
+//=====public case--2  ==end
+
+//发布插件
+publishing {
+    publications{
+        pluginMaven(MavenPublication) {
+            //====publish case--1 == start
+            if(!project.getPlugins().hasPlugin('java-gradle-plugin')){//java-gradle-plugin插件会额外给你指定要发布的jar，如果这里再声明 from components.java 会报错：Maven publication 'pluginMaven' cannot include multiple components
+                from components.java
+            }
+            //=====public case--1  ==end
+
+            //====publish case--2 ==start
+            //artifact sourceJar
+            //artifact javadocJar
+            //====publish case--2 ==end
+
+            artifactId ARTIFACT_ID
+            pom {
+                name = POM_NAME
+                description = POM_DESC
+                url = POM_URL
+                licenses {
+                    license {
+                        name = POM_LICENSES_NAME
+                        url = POM_LISENSES_URL
+                    }
+                }
+                developers {
+                    developer {
+                        id = POM_DEVELOPERS_ID
+                        name = POM_DEVELOPERS_NAME
+                        email = POM_DEVELOPERS_EMAIL
+                        url = POM_DEVELOPERS_URL
+                    }
+                }
+                scm {
+                    connection = POM_SCM_CONNECTION
+                    developerConnection = POM_SCM_DEVELOPER_CONNECTION
+                    url = POM_SCM_URL
+                }
+            }
+        }
+    }
+    //发布到指定仓库时，仓库信息的描述
+    repositories {
+        //发布到本地
+        if ("true" == publish2Local) {
+            /*maven {
+                url = uri('./../../repo')
+            }*/
+            mavenLocal()
+        } else {
+            //发布到OSSRH仓库
+            maven {
+                def releaseUrl = MAVEN_REP_RELEASE_URL
+                def snapshotUrl =MAVEN_REP_SNAPSHORT_URL
+                url = version.endsWith('SNAPSHOT') ? snapshotUrl : releaseUrl
+
+                credentials {
+                    if (rootProject.hasProperty("ossrhUsername") && rootProject.hasProperty("ossrhPassword")) {
+                        username = rootProject.ossrhUsername
+                        password = rootProject.ossrhPassword
+                    }
+                }
+            }
+        }
+    }
+
+    //Gradle官方插件库（以xxx.gradle.plugin二进制文件形式发布）时不需要签名
+    if(!gradle.startParameter.taskNames.contains('publishPlugins')){
+        //gpg签名配置
+        signing{
+            required { isReleaseVersion }//是否需要签名
+            //发布maven仓库时需要签名的所有文件
+            sign publishing.publications.pluginMaven
+        }
+    }
+}
+

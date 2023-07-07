@@ -13,8 +13,8 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "io.github.stateofzhao:GradleModulePlugin:$io_github_stateofzhao_module_v"
         //classpath "io.github.stateofzhao:InjectPlugin:$io_github_stateofzhao_inject_v"
-        classpath "io.github.stateofzhao:InitPlugin:$io_github_stateofzhao_init_v"//for init
-        classpath "io.github.stateofzhao:RegisterPlugin:$io_github_stateofzhao_register_v"//for register
+        classpath "io.github.stateofzhao:init-plugin:$io_github_stateofzhao_init_v"//for init
+        classpath "io.github.stateofzhao:register-plugin:$io_github_stateofzhao_register_v"//for register
     }
 }
 

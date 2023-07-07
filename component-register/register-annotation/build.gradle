@@ -7,4 +7,4 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-apply from:'https://raw.githubusercontent.com/stateofzhao/GradleModulePlugin/master/publish-maven.gradle'
+apply from:"${project.rootProject.projectDir}/publish-maven.gradle"

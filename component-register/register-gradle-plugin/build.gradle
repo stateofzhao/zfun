@@ -57,4 +57,4 @@ java {
     // 可以添加其他自定义配置
 }*/
 
-apply from:'https://raw.githubusercontent.com/stateofzhao/GradleModulePlugin/master/publish-maven.gradle'
+apply from:"${project.rootProject.projectDir}/publish-maven.gradle"

@@ -27,11 +27,8 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
-
-import jdk.javadoc.internal.doclets.toolkit.builders.MethodBuilder;
 
 //生成的类：com.zfun.register.registers.Zfun__Register__${REGISTER_MODULE_NAME}__${被注解的类name.replaceAll('.','_')}
 @AutoService(Processor.class)
