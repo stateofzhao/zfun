@@ -20,7 +20,7 @@ public class InitMgr {
         PrintMsg.println("InitMgr static -- ");
     }
 
-    public static void init(InitLifecycle initLifecycle,InitCallback callback) {
+    public static void init(IInitLifecycle initLifecycle, InitCallback callback) {
         PrintMsg.println("原始 initList 大小：" + iInitList.size());
         sortIfNeeded();
         PrintMsg.println("有依赖关系的初始化List大小：" + dependentInitList.size());
