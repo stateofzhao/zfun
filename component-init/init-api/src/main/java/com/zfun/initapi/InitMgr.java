@@ -23,8 +23,8 @@ public class InitMgr {
     public static void init(IInitLifecycle initLifecycle, InitCallback callback) {
         PrintMsg.println("原始 initList 大小：" + iInitList.size());
         sortIfNeeded();
-        PrintMsg.println("有依赖关系的初始化List大小：" + dependentInitList.size());
-        PrintMsg.println("【无】有依赖关系的初始化List大小：" + noDependentInitList.size());
+        PrintMsg.println("【有】依赖关系的初始化List大小：" + dependentInitList.size());
+        PrintMsg.println("【无】依赖关系的初始化List大小：" + noDependentInitList.size());
 
         //开两个线成初始化，后续其实可以根据 noDependentInitList 大小，来多开几个线程初始化，
         // 但是 dependentInitList 只能在一个线程中初始化
@@ -35,9 +35,36 @@ public class InitMgr {
             }
         }).start();*/
 
-        final int size = iInitList.size();
+        /*final int size = iInitList.size();
         for (int i = size - 1; i >= 0; i--) {
             final IInitProvider iInitProvider = iInitList.get(i);
+            final Object initObj = iInitProvider.get();
+            if (initObj instanceof IInit) {
+                ((IInit) initObj).init(initLifecycle, null);
+            }
+        }*/
+
+        /*final int size = iInitList.size();
+        for (int i = size - 1; i >= 0; i--) {
+            final IInitProvider iInitProvider = iInitList.get(i);
+            final Object initObj = iInitProvider.get();
+            if (initObj instanceof IInit) {
+                ((IInit) initObj).init(initLifecycle, null);
+            }
+        }*/
+
+        int size = dependentInitList.size();
+        for (int i =0; i <size ; i++) {
+            final IInitProvider iInitProvider = dependentInitList.get(i);
+            final Object initObj = iInitProvider.get();
+            if (initObj instanceof IInit) {
+                ((IInit) initObj).init(initLifecycle, null);
+            }
+        }
+
+        size = noDependentInitList.size();
+        for (int i =0; i <size ; i++) {
+            final IInitProvider iInitProvider = noDependentInitList.get(i);
             final Object initObj = iInitProvider.get();
             if (initObj instanceof IInit) {
                 ((IInit) initObj).init(initLifecycle, null);
@@ -53,7 +80,9 @@ public class InitMgr {
         PrintMsg.println("InitMgr 排序 start-- ");
         final List<IInitProvider> sortList = SortUtil.sortDependencies(iInitList);
         dependentInitList.addAll(sortList);
-        if (sortList.size() > 0 && sortList.size() < iInitList.size()) {
+        if (sortList.size() == 0){
+            noDependentInitList.addAll(iInitList);
+        } else if (sortList.size() < iInitList.size()) {
             for (IInitProvider srcItem : iInitList) {
                 boolean isNotInDependentList = true;
                 for (IInitProvider sortItem : sortList) {
@@ -67,6 +96,7 @@ public class InitMgr {
                 }
             }
         }
+
         PrintMsg.println("InitMgr 排序 end-- ");
     }
 

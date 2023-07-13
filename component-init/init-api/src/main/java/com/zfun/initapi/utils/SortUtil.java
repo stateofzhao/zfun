@@ -8,8 +8,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SortUtil {
+
+    private static final AtomicInteger pos = new AtomicInteger(0);
 
     //只访问 list，不会对其进行更改；
     //只会返回有依赖关系的List；
@@ -20,14 +23,11 @@ public class SortUtil {
         // 创建有向图的邻接表表示
         final Map<String, List<String>> graph = new HashMap<>();
         for (IInitProvider a : list) {
-            final String name = a.name();
+            String name = a.name();
             if (null == name || name.length()==0){
-                continue;
+                name = a.getClass().getName()+pos.getAndIncrement();
             }
             final String[] depOnArray = a.dependsOn();
-            if (depOnArray.length==0){
-                continue;
-            }
             List<String> value = graph.get(name);
             if (null == value) {
                 value = new ArrayList<>();
