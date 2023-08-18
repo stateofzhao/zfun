@@ -41,14 +41,20 @@ public class XPullRefreshActivity extends AppCompatActivity {
     private void initView() {
         recyclerView = findViewById(R.id.recycler_view);
         pullRefreshLayout = findViewById(R.id.rl);
-
         recyclerView.setVisibility(View.VISIBLE);
 
+        configRefreshLayout();
         refreshData();
+    }
 
+    private void configRefreshLayout(){
+        final XPullRefreshLayout.Params params = new XPullRefreshLayout.Params();
+        params.disableControlHeaderView = true;
+        params.headerPullRefreshLimit = 400;
         pullRefreshLayout.setOnRefreshListener(() -> {
-            handler.postDelayed(new RefreshTask(), 5000);//延迟两秒，模拟网络操作
+            handler.postDelayed(new RefreshTask(), 2000);//延迟两秒，模拟网络操作
         });
+        pullRefreshLayout.setParams(params);
     }
 
     private void refreshData() {
