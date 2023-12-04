@@ -48,7 +48,7 @@ public class XPullRefreshActivity extends AppCompatActivity {
     }
 
     private void configRefreshLayout(){
-        final XPullRefreshLayout.Params params = new XPullRefreshLayout.Params();
+        final XPullRefreshLayout.Params params = new XPullRefreshLayout.Params(XPullRefreshLayout.STYLE_PULL_REFRESH);
         params.disableControlHeaderView = true;
         params.headerPullRefreshLimit = 400;
         pullRefreshLayout.setOnRefreshListener(() -> {

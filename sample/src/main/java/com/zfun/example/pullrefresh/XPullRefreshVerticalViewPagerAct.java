@@ -40,7 +40,7 @@ public class XPullRefreshVerticalViewPagerAct extends AppCompatActivity {
         pullRefreshLayout = findViewById(R.id.rl);
 
         recyclerView.setVisibility(View.VISIBLE);
-        pullRefreshLayout.setStyle(XPullRefreshLayout.STYLE_VERTICAL_PAGE);
+        pullRefreshLayout.setParams(new XPullRefreshLayout.Params(XPullRefreshLayout.STYLE_VERTICAL_PAGE));
 
         refreshData();
     }
