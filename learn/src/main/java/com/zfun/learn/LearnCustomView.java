@@ -16,6 +16,14 @@ import android.view.ViewGroup;
  * 总结来说，自定义View(非ViewGroup)一般实现
  * onSizeChanged(),onDraw()即可，如果你需要更好地控制你的视图的布局参数需要实现onMeasure()方法； 自定义ViewGroup
  * 需要实现 onMeasure()和 onLayout()即可。
+ * <P>
+ * 说一个容易混淆的知识点：
+ * View.transform 与 View.scroll 与 Canvas.transform
+ * - View.transform : 让View本身移动，不影响layout（也就是View的layout属性不会变），会影响 MotionEvent，也就是所有的 MotionEvent 在分发的时候都要经过 transform 这种变形移位。
+ * - View.scroll : 让View中的子View移动，自己本身不移动，会影响 MotionEvent，也就是所有的 MotionEvent 在分发的时候都要经过 scroll 这种变形移位。
+ * - Canvas.transform : View.transform 与 View.scroll 的效果都是通过 Canvas.transform 来实现的。
+ *    也就是说Canvas就一直在那里永远不会偏移（View layout后就确定了，也就是View的 mLeft，mRight，mTop，mBottome 所指定的区域）。
+ *    绘制时会根据 View.transform 和 View.scroll 来进行移动，从而在视觉上实现View的移动。
  */
 public class LearnCustomView extends ViewGroup {
 
