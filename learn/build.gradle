@@ -10,7 +10,10 @@ plugins {
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    //flavorDimensions "learn"//com.android.tools.build:gradle 版本3.0+的时候 配置了 productFlavors 时必须配置这个
+
+    //定义纬度（可以把他想像成二/三。。。维坐标系，X轴为learn，Y轴为sdk，Z轴。。。），所有productFlavors必须属于一个纬度，
+    // 最终组合包必须为纬度的交叉点！
+    //flavorDimensions "learn,sdk"//com.android.tools.build:gradle 版本3.0+的时候 配置了 productFlavors 时必须配置这个
 
     //所有 productFlavor 的基类
     defaultConfig {
@@ -18,7 +21,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
     }
 
-    //Android Build Variants = productFlavor + buildType；
+    //Android Build Variants = productFlavor（纬度交叉点，本例中有两个纬度，那么此处必须是learnSDK或者FullSDK） + buildType；
     // 比如 learnDebug 就表示采用 productFlavors.learn + buildTypes+debug 的配置来构建.
     /*productFlavors {
         learn {
@@ -27,6 +30,10 @@ android {
 
         Full {
             dimension "learn"
+        }
+
+        SDK {
+            dimension "sdk"
         }
     }*/
 
