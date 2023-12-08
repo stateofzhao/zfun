@@ -55,6 +55,7 @@ class RegisterTransform : Transform() {
     //每个 Transform 的 TransformInvocation 都是独立的，所以 outPutProvider.deleteAll() 只会删除本转换器产出的文件，不影响其它 Transform 的文件
     override fun transform(transformInvocation: TransformInvocation) {
         Logger.i("start transform isIncremental:${isIncremental} ====")
+        val leftSlash = File.separator == "/"
         scanComponent.forEach {
             it.classList.clear()
         }
@@ -69,7 +70,7 @@ class RegisterTransform : Transform() {
                 processJarInputWithIncremental(jarInput, outPutProvider, isIncremental)
             }
             input.directoryInputs.forEach { directoryInput ->
-                processDirectoryInputWithIncremental(directoryInput, outPutProvider, isIncremental)
+                processDirectoryInputWithIncremental(directoryInput, outPutProvider, isIncremental,leftSlash)
             }
         }
         //
@@ -135,7 +136,12 @@ class RegisterTransform : Transform() {
     }
 
     //=====classes
-    private fun processDirectoryInputWithIncremental(directoryInput: DirectoryInput, outPutProvider: TransformOutputProvider, isIncremental: Boolean) {
+    private fun processDirectoryInputWithIncremental(
+        directoryInput: DirectoryInput,
+        outPutProvider: TransformOutputProvider,
+        isIncremental: Boolean,
+        fileSeparatorIsLeftSlash: Boolean
+    ) {
         val destDir = outPutProvider.getContentLocation(
                 directoryInput.name,
                 directoryInput.contentTypes,
@@ -156,7 +162,7 @@ class RegisterTransform : Transform() {
 
                     Status.CHANGED, Status.ADDED -> {
                         FileUtils.touch(desFile)
-                        transformSingleFile(changedInputFile, desFile, srcDirPath)
+                        transformSingleFile(changedInputFile, desFile, srcDirPath,fileSeparatorIsLeftSlash)
                     }
 
                     Status.REMOVED -> {
@@ -167,16 +173,16 @@ class RegisterTransform : Transform() {
                 }
             }
         } else {
-            transformDirectoryInput(directoryInput, destDir)
+            transformDirectoryInput(directoryInput, destDir,fileSeparatorIsLeftSlash)
         }
     }
 
-    private fun transformDirectoryInput(directoryInput: DirectoryInput, desDir: File) {
+    private fun transformDirectoryInput(directoryInput: DirectoryInput, desDir: File,fileSeparatorIsLeftSlash: Boolean) {
         Logger.i("transformDirectoryInput：${directoryInput.file.absolutePath}")
         FileUtils.forceMkdir(desDir)
         eachFileRecurse(directoryInput.file){
             val desFile = File(it.absolutePath.replace(directoryInput.file.absolutePath, desDir.absolutePath))
-            transformSingleFile(it, desFile, directoryInput.file.absolutePath)
+            transformSingleFile(it, desFile, directoryInput.file.absolutePath,fileSeparatorIsLeftSlash)
         }
     }
 
@@ -191,15 +197,18 @@ class RegisterTransform : Transform() {
         }
     }
 
-    private fun transformSingleFile(inputFile: File, desFile: File, srcDirPath: String) {
+    private fun transformSingleFile(inputFile: File, desFile: File, srcDirPath: String,fileSeparatorIsLeftSlash: Boolean) {
         Logger.i("transformSingleFile：${inputFile.absolutePath}")
         var correctSrcDirPath = srcDirPath
         if (!correctSrcDirPath.endsWith(File.separator)) {
             correctSrcDirPath += File.separator
         }
         //
-        val path = inputFile.absolutePath.replace(correctSrcDirPath, "")//去除多余的路径
-        if (TransformProcessUtil.shouldProcessClassFile(path)) {
+        var path = inputFile.absolutePath.replace(correctSrcDirPath, "")//去除多余的路径
+        if (!fileSeparatorIsLeftSlash) {
+            path = path.replace("\\", "/")
+        }
+        if (inputFile.isFile && TransformProcessUtil.shouldProcessClassFile(path)) {
             TransformProcessUtil.scanClass(inputFile)
         }
         FileUtils.copyFile(inputFile, desFile)

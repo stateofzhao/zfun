@@ -15,6 +15,8 @@ public @interface AutoInit {
 
     /**
      * 如果依赖多个模块，以","分割（这里不分先后）
+     *
+     * @return 返回依赖的模块名
      * */
     String dependsOn() default "";
 }

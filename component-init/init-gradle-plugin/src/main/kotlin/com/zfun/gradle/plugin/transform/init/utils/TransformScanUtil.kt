@@ -19,7 +19,6 @@ object TransformProcessUtil {
 
     fun shouldProcessClassFile(path: String): Boolean {
         return path.startsWith(Constants.ANNOTATION_PROCESSOR_GENERATE_PACKAGE_NAME)
-                || path.startsWith(Constants.ANNOTATION_PROCESSOR_GENERATE_PACKAGE_NAME_WINDOWS)
     }
 
     fun scanJar(srcFile: File, desFile: File) {
