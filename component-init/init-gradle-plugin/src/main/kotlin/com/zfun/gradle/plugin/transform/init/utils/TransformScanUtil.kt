@@ -21,8 +21,10 @@ object TransformProcessUtil {
         return path.startsWith(Constants.ANNOTATION_PROCESSOR_GENERATE_PACKAGE_NAME)
     }
 
+    //由于 要注入代码的类（com/zfun/initapi/InitMgr）肯定会被主项目以依赖的方式引用，所以一定存在于jar包中。
+    //扫描jar包里面的 1，查找注解处理器生成的类找到后保存起来；2，检测jar包是否包涵要注入代码的类。
     fun scanJar(srcFile: File, desFile: File) {
-        Logger.i("scan jar：${srcFile.absolutePath}")
+        //Logger.i("scan jar：${srcFile.absolutePath}")
         if (srcFile.exists()) {
             val srcJarFile = JarFile(srcFile)
             val enumeration = srcJarFile.entries()

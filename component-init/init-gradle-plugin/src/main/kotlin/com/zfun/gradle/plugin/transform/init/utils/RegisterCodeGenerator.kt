@@ -20,6 +20,15 @@ import java.util.zip.ZipEntry
 object RegisterCodeGenerator {
 
     fun insertInitCode2JarFile(jarFile: File) {
+        if(null == RegisterTransform.fileForInjectCode){
+            Logger.i("没有要注入代码的类，跳过字节码修改～")
+            return
+        }
+        if (RegisterTransform.scanComponent.isEmpty()){
+            Logger.i("没有注解生成的类，跳过字节码修改～～")
+            return
+        }
+
         val optJar = File(jarFile.parent, jarFile.name + ".opt")
         if (optJar.exists()) {
             FileUtils.forceDelete(optJar)
@@ -140,6 +149,7 @@ class RegisterClassVisitor constructor(api: Int, cv: ClassVisitor) : ClassVisito
                         methodVisitor.visitInsn(Opcodes.POP)
                         index += 1
                     }
+                    scanItem.markProcessed = true
                 }
             }
             methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;")

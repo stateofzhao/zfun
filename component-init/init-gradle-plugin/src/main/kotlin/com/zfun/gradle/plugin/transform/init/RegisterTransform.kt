@@ -17,11 +17,33 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.codec.digest.DigestUtils
 import java.io.File
 
-class RegisterTransform : Transform() {
+class RegisterTransform (private val transEndFormListener:(()->Unit)?): Transform() {
 
     companion object {
         var fileForInjectCode: File? = null
         val scanComponent = arrayOf(ScanItem(Constants.INIT_COMPONENT_NAME))
+
+        fun init(){
+            fileForInjectCode = null
+            scanComponent.forEach {
+                it.markProcessed = false
+                it.classList.clear()
+            }
+        }
+
+        fun isEmptyForProcess():Boolean{
+            if (scanComponent.isEmpty()){
+                return true
+            }
+            var isEmpty = true
+            for (scanItem in scanComponent) {
+                if (scanItem.classList.isNotEmpty()) {
+                    isEmpty = false
+                    break
+                }
+            }
+            return isEmpty
+        }
     }
 
     /**
@@ -78,7 +100,7 @@ class RegisterTransform : Transform() {
             //修改 fileForInjectCode 字节码
             RegisterCodeGenerator.insertInitCode2JarFile(this)
         }
-
+        transEndFormListener?.invoke()
     }
 
     //=====jar
@@ -92,7 +114,7 @@ class RegisterTransform : Transform() {
         val desFile = outPutProvider.getContentLocation(destName + "_" + hexName, jarInput.contentTypes, jarInput.scopes, Format.JAR)
         if (isIncremental) {
             val status = jarInput.status
-            Logger.i("processJarInputWithIncremental##jarInput.status：${status.name}")
+            //Logger.i("processJarInputWithIncremental##jarInput.status：${status.name}")
             if (null == status) {
                 if (desFile.exists()) {
                     desFile.delete()
@@ -147,7 +169,7 @@ class RegisterTransform : Transform() {
                 directoryInput.contentTypes,
                 directoryInput.scopes,
                 Format.DIRECTORY)
-        Logger.i("processDirectoryInputWithIncremental##isIncremental：${isIncremental}")
+        //Logger.i("processDirectoryInputWithIncremental##isIncremental：${isIncremental}")
         if (isIncremental) {
             val srcDirPath = directoryInput.file.absolutePath
             val destDirPath = destDir.absolutePath
@@ -178,7 +200,7 @@ class RegisterTransform : Transform() {
     }
 
     private fun transformDirectoryInput(directoryInput: DirectoryInput, desDir: File,fileSeparatorIsLeftSlash: Boolean) {
-        Logger.i("transformDirectoryInput：${directoryInput.file.absolutePath}")
+        //Logger.i("transformDirectoryInput：${directoryInput.file.absolutePath}")
         FileUtils.forceMkdir(desDir)
         eachFileRecurse(directoryInput.file){
             val desFile = File(it.absolutePath.replace(directoryInput.file.absolutePath, desDir.absolutePath))
@@ -197,8 +219,9 @@ class RegisterTransform : Transform() {
         }
     }
 
+    //查找注解处理器生成的类找到后保存起来
     private fun transformSingleFile(inputFile: File, desFile: File, srcDirPath: String,fileSeparatorIsLeftSlash: Boolean) {
-        Logger.i("transformSingleFile：${inputFile.absolutePath}")
+        //Logger.i("transformSingleFile：${inputFile.absolutePath}")
         var correctSrcDirPath = srcDirPath
         if (!correctSrcDirPath.endsWith(File.separator)) {
             correctSrcDirPath += File.separator
